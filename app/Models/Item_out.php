@@ -35,4 +35,9 @@ class Item_out extends Model
     {
         return 'Rp ' . number_format($this->quantity * ($this->item->price ?? 0), 0, ',', '.');
     }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class, 'unit_id');
+    }
 }

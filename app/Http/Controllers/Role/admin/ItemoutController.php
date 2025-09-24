@@ -20,11 +20,11 @@ class ItemoutController extends Controller
      */
     public function index()
     {
-        // cart milik user
+        // cart milik user (ambil SEMUA item, tidak filter scanned_at)
         $approvedItems = Cart::with(['cartItems.item', 'user'])
             ->where('status', 'approved')
-            ->orderBy('created_at', 'desc')
-            ->paginate(5); // tampil 5 data per halaman
+            ->latest()
+            ->paginate(10);
 
         // cart milik guest
         $guestRequests = Guest_carts::with(['guestCartItems.item', 'guest'])
@@ -34,51 +34,64 @@ class ItemoutController extends Controller
         return view('role.admin.itemout', compact('approvedItems', 'guestRequests'));
     }
 
+
     // scan
-    public function scan(Request $request, $cartItemId)
+   public function scan(Request $request, $cartItemId)
     {
         $request->validate([
             'barcode' => 'required|string|max:255',
         ]);
 
         $cartItem = CartItem::with(['item', 'cart'])->findOrFail($cartItemId);
-
         $barcode = $request->input('barcode');
 
         if ($cartItem->item->code === $barcode) {
-            // update status di cart_item
+            // kalau sudah pernah discan → jangan ulang
+            if ($cartItem->scanned_at) {
+                return back()->with('info', 'ℹ️ Item ini sudah discan sebelumnya.');
+            }
+
+            // tandai sudah discan
             $cartItem->update([
                 'scanned_at' => now(),
             ]);
 
-            // update picked_up_at di parent cart
+            // update parent cart picked_up_at kalau belum ada
             if (!$cartItem->cart->picked_up_at) {
                 $cartItem->cart->update([
                     'picked_up_at' => now(),
                 ]);
             }
 
-            // catat ke tabel item_out
-            DB::table('item_out')->insert([
-                'cart_id'      => $cartItem->cart->id,
-                'item_id'      => $cartItem->item->id,
-                'quantity'     => $cartItem->quantity,
-                'picked_up_at' => now(), // ini bagian yang sebelumnya kosong
-                'created_at'   => now(),
-                'updated_at'   => now(),
-            ]);
+            // catat ke tabel item_out (jika belum ada)
+            $exists = Item_out::where('cart_id', $cartItem->cart->id)
+                ->where('item_id', $cartItem->item->id)
+                ->exists();
 
-            return back()->with('success', 'Barang berhasil discan dan dicatat ke item_out.');
+            if (!$exists) {
+                Item_out::create([
+                    'cart_id'     => $cartItem->cart->id,
+                    'item_id'     => $cartItem->item->id,
+                    'quantity'    => $cartItem->quantity,
+                    'released_at' => now(),
+                    'approved_by' => Auth::id(),
+                ]);
+
+                // kurangi stok item
+                $cartItem->item->decrement('stock', $cartItem->quantity);
+            }
+
+            return back()->with('success', '✅ Barang berhasil discan dan masuk ke item_out.');
         }
 
-        return back()->with('error', 'Barcode tidak sesuai dengan item.');
+        return back()->with('error', '❌ Barcode tidak sesuai dengan item.');
     }
 
     // struk
     public function struk($id)
     {
         // Ambil data cart berdasarkan ID
-        $cart = Cart::with(['user', 'guest', 'cartItems.item'])->findOrFail($id);
+        $cart = Cart::with(['user', 'cartItems.item'])->findOrFail($id);
 
         // Ambil data item_out yang terkait dengan cart ini
         $itemOut = Item_out::where('cart_id', $cart->id)->get();

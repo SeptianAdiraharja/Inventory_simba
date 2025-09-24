@@ -17,11 +17,6 @@ class Cart extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function guest()
-    {
-        return $this->belongsTo(Guest::class);
-    }
-
     // relasi many-to-many ke Item lewat cart_items
     public function items()
     {
@@ -41,4 +36,5 @@ class Cart extends Model
     {
         return $this->hasMany(Item_out::class, 'cart_id');
     }
+
 }

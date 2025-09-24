@@ -13,7 +13,7 @@ class Unit extends Model
         return $this->hasMany(Item::class);
     }
 
-    public function itemOut()
+    public function itemOuts()
     {
         return $this->hasMany(Item_out::class);
     }

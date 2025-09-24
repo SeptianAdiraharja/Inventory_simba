@@ -50,40 +50,18 @@
                                         <span class="badge bg-warning">Belum Scan</span>
                                     @endif
                                 </td>
-                                <td>
-                                    <button class="btn btn-sm btn-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#scanModal{{ $cart_item->id }}">
-                                        Scan
-                                    </button>
+                               <td>
+                                    @if(!$cart_item->scanned_at) {{-- hanya bisa scan kalau belum --}}
+                                        <form action="{{ route('admin.itemout.scan', $cart_item->id) }}" method="POST" style="display:inline;">
+                                            @csrf
+                                            <input type="text" name="barcode" placeholder="Scan barcode">
+                                            <button type="submit" class="btn btn-sm btn-primary">Scan</button>
+                                        </form>
+                                    @else
+                                        <span class="text-muted">✔️ Sudah discan</span>
+                                    @endif
                                 </td>
                             </tr>
-
-                            <!-- Modal Scan -->
-                            <div class="modal fade" id="scanModal{{ $cart_item->id }}" tabindex="-1" aria-labelledby="scanModalLabel{{ $cart_item->id }}" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <form action="{{ route('admin.itemout.scan', $cart_item->id) }}" method="POST">
-                                            @csrf
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="scanModalLabel{{ $cart_item->id }}">Scan Barang</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <p>Silakan scan barcode untuk item <strong>{{ $cart_item->item->name }}</strong>.</p>
-                                                <div class="mb-3">
-                                                    <label for="barcode{{ $cart_item->id }}" class="form-label">Barcode</label>
-                                                    <input type="text" name="barcode" id="barcode{{ $cart_item->id }}" class="form-control" autofocus>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                                <button type="submit" class="btn btn-primary">Proses Scan</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
                         @endforeach
                     </tbody>
                 </table>

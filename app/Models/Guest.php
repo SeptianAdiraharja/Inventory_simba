@@ -18,11 +18,6 @@ class Guest extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function carts()
-    {
-        return $this->hasMany(Guest_carts::class, 'guest_id');
-    }
-
     public function itemOuts()
     {
         return $this->hasMany(Item_out::class, 'guest_id'); // pakai guest_id di item_outs

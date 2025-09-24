@@ -32,7 +32,6 @@
                 <th>Nama Barang</th>
                 <th>Kode</th>
                 <th>Qty</th>
-                <th>Tanggal Ambil</th>
             </tr>
         </thead>
         <tbody>
@@ -42,12 +41,6 @@
                     <td>{{ $cart_item->item->name }}</td>
                     <td>{{ $cart_item->item->code }}</td>
                     <td>{{ $cart_item->quantity }}</td>
-                    <td>
-                        @php
-                            $out = $itemOut->firstWhere('item_id', $cart_item->item_id);
-                        @endphp
-                        {{ $out && $out->picked_up_at ? \Carbon\Carbon::parse($out->picked_up_at)->format('d-m-Y H:i') : '-' }}
-                    </td>
                 </tr>
             @endforeach
         </tbody>

@@ -31,9 +31,9 @@ class User extends Authenticatable
         return $this->hasMany(Item::class, 'created_by');
     }
 
-    public function itemIn()
+    public function itemIns()
     {
-        return $this->hasMany(Item_in::class, 'received_by');
+        return $this->hasMany(Item_in::class, 'created_by');
     }
 
     public function itemOut()

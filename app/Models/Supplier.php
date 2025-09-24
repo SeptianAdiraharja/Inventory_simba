@@ -13,9 +13,9 @@ class Supplier extends Model
         return $this->hasMany(Item::class);
     }
 
-    public function itemIn()
+    public function itemIns()
     {
-        return $this->hasMany(item_in::class);
+        return $this->hasMany(Item_in::class, 'supplier_id');
     }
 
 }

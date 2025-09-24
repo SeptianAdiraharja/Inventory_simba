@@ -102,8 +102,8 @@ Route::middleware(['auth', 'role:admin'])
             ->name('itemout.struk');
 
         // Scan barang
-        Route::get('/itemout/{cart}/scan', [ItemoutController::class, 'scan'])
-            ->name('itemout.scan');
+        Route::post('/itemout/{cartItem}/scan', [ItemoutController::class, 'scan'])
+        ->name('itemout.scan');
 
         // Request
         Route::get('/request', [RequestController::class, 'index'])->name('request');
@@ -119,7 +119,6 @@ Route::middleware(['auth', 'role:admin'])
         // Guest Cart
 
 });
-
 
 /*
 |--------------------------------------------------------------------------
