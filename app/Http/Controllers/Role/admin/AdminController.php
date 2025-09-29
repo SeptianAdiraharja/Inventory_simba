@@ -6,7 +6,6 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Controller; // Base controller Laravel
 use App\Repositories\Contracts\AdminRepositoryInterface; // Interface untuk repository Admin
 use Illuminate\Http\Request;
-use App\Models\Notification;
 use App\Models\Cart;
 
 class AdminController extends Controller
@@ -67,19 +66,46 @@ class AdminController extends Controller
             $dataKeluar[] = $barangKeluar[$i] ?? 0;
         }
 
-        // Kirim semua data ke view dashboard admin
+          $carts = Cart::with(['user', 'cartItems.item'])->get();
+
         return view('role.admin.dashboard', compact(
             'totalBarangKeluar',
             'totalRequest',
             'totalGuest',
             'labels',
-            'dataMasuk',
             'dataKeluar',
             'latestBarangKeluar',
             'latestRequest',
-            'topRequesters'
+            'topRequesters',
+            'carts'
         ));
     }
+
+    public function loadModalData($type)
+{
+    if ($type === 'barang_keluar') {
+        $items = \App\Models\Item_out::with('item')->latest()->paginate(5);
+    } elseif ($type === 'request') {
+        $items = \App\Models\Cart::with(['items', 'user'])->latest()->paginate(5);
+    } else {
+        return response()->json(['error' => 'Invalid type'], 400);
+    }
+
+    $html = view('partials.modal-content', compact('items', 'type'))->render();
+    return response()->json(['html' => $html]);
+}
+
+public function barangKeluarModal()
+{
+    // Ambil data barang keluar (atau sesuaikan nama model-nya)
+    $barangKeluar = \App\Models\Item_out::latest()->take(10)->get();
+
+    return response()->json([
+        'status' => 'success',
+        'data' => $barangKeluar
+    ]);
+}
+
 
     /**
      * Endpoint Ajax Chart
@@ -111,12 +137,6 @@ class AdminController extends Controller
         $cart->save();
 
         // Buat notifikasi via NotificationController
-        $notifController = new NotificationController();
-        $notifController->store(
-            $cart->user_id,
-            'Permintaan Barang',
-            "Permintaan #{$cart->id} telah " . ($status == 'approved' ? 'disetujui' : 'ditolak')
-        );
 
         return redirect()->back()->with('success', "Permintaan berhasil di {$status}.");
     }

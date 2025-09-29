@@ -20,71 +20,110 @@ class ItemoutController extends Controller
      */
     public function index()
     {
-        // cart milik user (ambil SEMUA item, tidak filter scanned_at)
+        // Ambil cart milik user
         $approvedItems = Cart::with(['cartItems.item', 'user'])
             ->where('status', 'approved')
             ->latest()
-            ->paginate(10);
+            ->get()
+            ->map(function ($cart) {
+                $cart->all_scanned = $cart->cartItems->every(fn($i) => $i->scanned_at);
+                return $cart;
+            });
 
-        // cart milik guest
-        $guestRequests = Guest_carts::with(['guestCartItems.item', 'guest'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Guest requests
+        $guestRequests = Item_out::select('item_outs.*', 'guests.name as guest_name')
+            ->leftJoin('guests', 'item_outs.guest_id', '=', 'guests.id')
+            ->with('item')
+            ->whereNull('item_outs.cart_id')
+            ->latest()
+            ->get();
 
         return view('role.admin.itemout', compact('approvedItems', 'guestRequests'));
     }
 
 
-    // scan
-   public function scan(Request $request, $cartItemId)
+   // Scan item berdasarkan barcode
+    public function scan(Request $request, $cartId)
     {
         $request->validate([
             'barcode' => 'required|string|max:255',
         ]);
 
-        $cartItem = CartItem::with(['item', 'cart'])->findOrFail($cartItemId);
-        $barcode = $request->input('barcode');
+        $cart = Cart::with('cartItems.item')->findOrFail($cartId);
+        $barcode = $request->barcode;
 
-        if ($cartItem->item->code === $barcode) {
-            // kalau sudah pernah discan → jangan ulang
-            if ($cartItem->scanned_at) {
-                return back()->with('info', 'ℹ️ Item ini sudah discan sebelumnya.');
-            }
+        $cartItem = $cart->cartItems->firstWhere('item.code', $barcode);
 
-            // tandai sudah discan
-            $cartItem->update([
-                'scanned_at' => now(),
+        if (!$cartItem) {
+            return response()->json([
+                'success' => false,
+                'message' => '❌ Barcode tidak ditemukan pada cart ini.',
             ]);
-
-            // update parent cart picked_up_at kalau belum ada
-            if (!$cartItem->cart->picked_up_at) {
-                $cartItem->cart->update([
-                    'picked_up_at' => now(),
-                ]);
-            }
-
-            // catat ke tabel item_out (jika belum ada)
-            $exists = Item_out::where('cart_id', $cartItem->cart->id)
-                ->where('item_id', $cartItem->item->id)
-                ->exists();
-
-            if (!$exists) {
-                Item_out::create([
-                    'cart_id'     => $cartItem->cart->id,
-                    'item_id'     => $cartItem->item->id,
-                    'quantity'    => $cartItem->quantity,
-                    'released_at' => now(),
-                    'approved_by' => Auth::id(),
-                ]);
-
-                // kurangi stok item
-                $cartItem->item->decrement('stock', $cartItem->quantity);
-            }
-
-            return back()->with('success', '✅ Barang berhasil discan dan masuk ke item_out.');
         }
 
-        return back()->with('error', '❌ Barcode tidak sesuai dengan item.');
+        // update status scanned_at
+        $cartItem->update(['scanned_at' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'message' => '✅ Barang berhasil discan.',
+            'item' => [
+                'id' => $cartItem->item->id,
+                'name' => $cartItem->item->name,
+                'code' => $cartItem->item->code,
+                'quantity' => $cartItem->quantity,
+                'scanned_at' => $cartItem->scanned_at,
+            ],
+        ]);
+    }
+
+
+    // Release barang keluar
+    public function release(Request $request, $cartId)
+    {
+        $cart = Cart::with('cartItems.item')->findOrFail($cartId);
+        $items = $request->input('items', []);
+
+        if (empty($items)) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada item yang discan.']);
+        }
+
+        foreach ($items as $scannedItem) {
+            $item = Item::find($scannedItem['id']);
+            if (!$item) continue;
+
+            // insert ke item_outs
+            Item_out::create([
+                'cart_id'     => $cart->id,
+                'item_id'     => $item->id,
+                'quantity'    => $scannedItem['quantity'],
+                'released_at' => now(),
+                'approved_by' => Auth::id(),
+            ]);
+
+            // update stok
+            $item->decrement('stock', $scannedItem['quantity']);
+
+            // 🔑 update scanned_at di cart_items
+            $cartItem = CartItem::where('cart_id', $cart->id)
+                ->where('item_id', $item->id)
+                ->first();
+
+            if ($cartItem) {
+                $cartItem->update(['scanned_at' => now()]);
+            }
+        }
+
+        $cart->update(['picked_up_at' => now()]);
+
+        return response()->json(['success' => true, 'message' => '✅ Semua barang berhasil dikeluarkan.']);
+    }
+
+    public function checkAllScanned($cartId)
+    {
+        $cart = Cart::with('cartItems')->findOrFail($cartId);
+        $allScanned = $cart->cartItems->every(fn($i) => $i->scanned_at);
+        return response()->json(['all_scanned' => $allScanned]);
     }
 
     // struk
@@ -148,6 +187,14 @@ class ItemoutController extends Controller
         if ($item->stock < 1) {
             return back()->with('error', 'Stok tidak mencukupi.');
         }
+
+        $guestCart = Guest_carts::firstOrCreate(
+            [
+                'session_id' => session()->getId(),
+                'guest_id'   => $request->guest_id,
+            ]
+        );
+
 
         Item_out::create([
             'item_id'    => $item->id,

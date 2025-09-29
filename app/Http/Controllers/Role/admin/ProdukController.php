@@ -21,7 +21,7 @@ class ProdukController extends Controller
 
    public function showByGuest($id)
     {
-        $guest = Guest::with('carts.items')->findOrFail($id);
+        $guest = Guest::with('guestCarts.items')->findOrFail($id);
 
         // Ambil semua barang (meskipun guest_cart_items kosong)
         $items = Item::with('category')->get();

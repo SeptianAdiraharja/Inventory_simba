@@ -21,8 +21,7 @@ use App\Http\Controllers\Role\admin\RequestController;
 use App\Http\Controllers\Role\admin\GuestController;
 use App\Http\Controllers\Role\admin\ProdukController;
 use App\Http\Controllers\Role\admin\GuestCartController;
-
-
+use App\Http\Controllers\SearchController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,6 +54,9 @@ Route::middleware(['auth', 'role:super_admin'])
     ->as('super_admin.')
     ->group(function () {
         Route::get('/dashboard', [SuperAdminController::class, 'index'])->name('dashboard');
+        Route::get('/admin/dashboard/modal/{type}', [AdminController::class, 'loadModalData']);
+        Route::get('/dashboard/modal/barang_keluar', [AdminController::class, 'barangKeluarModal'])
+            ->name('dashboard.modal.barang_keluar');
 
         // CRUD Master Data
         Route::resources([
@@ -72,15 +74,15 @@ Route::middleware(['auth', 'role:super_admin'])
 
         // Export Barang Masuk
         Route::get('/export/barang-masuk/excel', [ExportController::class, 'exportBarangMasukExcel'])
-            ->name('export.barang_masuk.excel');
+            ->name('exports.barang_masuk.excel');
         Route::get('/export/barang-masuk/pdf', [ExportController::class, 'exportBarangMasukPdf'])
-            ->name('export.barang_masuk.pdf');
+            ->name('exports.barang_masuk.pdf');
 
         // Export Barang Keluar
         Route::get('/export/barang-keluar/excel', [ExportController::class, 'exportBarangKeluarExcel'])
-            ->name('export.barang_keluar.excel');
+            ->name('exports.barang_keluar.excel');
         Route::get('/export/barang-keluar/pdf', [ExportController::class, 'exportBarangKeluarPdf'])
-            ->name('export.barang_keluar.pdf');
+            ->name('exports.barang_keluar.pdf');
     });
 
 /*
@@ -95,15 +97,19 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
         Route::get('/dashboard/data', [AdminController::class, 'getChartData']);
 
+        Route::get('/dashboard/modal/{type}', [AdminController::class, 'loadModalData'])
+            ->name('dashboard.modal.data');
+        Route::get('/dashboard/modal/barang_keluar', [AdminController::class, 'barangKeluarModal'])
+            ->name('dashboard.modal.barang_keluar');
+
         // Item Out
         Route::resource('itemout', ItemoutController::class);
-        // Struk PDF
-        Route::get('/itemout/{cart}/struk', [ItemoutController::class, 'struk'])
-            ->name('itemout.struk');
-
-        // Scan barang
-        Route::post('/itemout/{cartItem}/scan', [ItemoutController::class, 'scan'])
+        Route::get('/itemout/{cart}/struk', [ItemoutController::class, 'struk'])->name('itemout.struk');
+        Route::post('/itemout/scan/{cart}', [ItemoutController::class, 'scan'])
         ->name('itemout.scan');
+        Route::get('/admin/itemout/check-all-scanned/{cart}', [ItemoutController::class, 'checkAllScanned']);
+        Route::post('/itemout/release/{cart}', [ItemoutController::class, 'release'])
+        ->name('itemout.release');
 
         // Request
         Route::get('/request', [RequestController::class, 'index'])->name('request');
@@ -116,9 +122,10 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/produk/guest/{id}', [ProdukController::class, 'showByGuest'])
             ->name('produk.byGuest');
 
-        // Guest Cart
-
-});
+        // ✅ Search Guests (untuk search bar di navbar)
+        Route::get('/guests/search', [SearchController::class, 'searchGuests'])
+            ->name('guests.search');
+    });
 
 /*
 |--------------------------------------------------------------------------
@@ -134,13 +141,18 @@ Route::middleware(['auth', 'role:pegawai'])
 
         // Produk & Permintaan
         Route::get('/produk', [PermintaanController::class, 'index'])->name('produk');
+
+        // ✅ Search Produk (pakai SearchController@index)
+        Route::get('/produk/search', [SearchController::class, 'index'])
+            ->name('produk.search');
+
         Route::get('/permintaan', [PermintaanController::class, 'permintaan'])->name('permintaan.index');
         Route::get('/permintaan/pending', [PermintaanController::class, 'pendingPermintaan'])->name('permintaan.pending');
         Route::get('/permintaan/{id}', [PermintaanController::class, 'detailPermintaan'])->name('permintaan.detail');
 
         Route::post('/permintaan/create', [PermintaanController::class, 'createPermintaan'])->name('permintaan.create');
         Route::post('/permintaan/{id}/submit', [PermintaanController::class, 'submitPermintaan'])->name('permintaan.submit');
-});
+    });
 
 /*
 |--------------------------------------------------------------------------

@@ -10,7 +10,7 @@ class Guest_carts extends Model
     use HasFactory;
 
     protected $table = 'guest_carts';
-    protected $fillable = ['session_id'];
+    protected $fillable = ['session_id', 'guest_id'];
 
 
     // relasi belongsToMany ke Item lewat pivot guest_cart_items

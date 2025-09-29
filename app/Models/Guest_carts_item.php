@@ -12,7 +12,7 @@ class Guest_carts_item extends Model
 
     protected $fillable = ['guest_cart_id', 'item_id', 'quantity'];
 
-    public function cart()
+    public function Guestcart()
     {
         return $this->belongsTo(Guest_carts::class, 'guest_cart_id');
     }
@@ -22,6 +22,6 @@ class Guest_carts_item extends Model
         return $this->belongsTo(Item::class, 'item_id');
     }
 
-    
+
 
 }

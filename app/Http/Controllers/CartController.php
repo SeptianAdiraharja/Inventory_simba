@@ -7,11 +7,31 @@ use App\Models\CartItem;
 use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 
 class CartController extends Controller
 {
+
     /**
-     * Display a listing of the resource.
+     * Hitung total pengajuan minggu ini (status pending/approved).
+     */
+    private function getWeeklyRequestCount(): int
+    {
+        $now = Carbon::now('Asia/Jakarta');
+
+        // awal minggu = Senin
+        $daysToSubtract = ($now->dayOfWeek === Carbon::SUNDAY) ? 6 : $now->dayOfWeek - 1;
+        $startOfWeek = $now->copy()->subDays($daysToSubtract)->startOfDay();
+        $endOfWeek   = $startOfWeek->copy()->addDays(6)->endOfDay();
+
+        return Cart::where('user_id', Auth::id())
+            ->whereIn('status', ['pending', 'approved'])
+            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+            ->count();
+    }
+
+    /**
+     * Tampilkan keranjang aktif user.
      */
     public function index()
     {
@@ -20,7 +40,9 @@ class CartController extends Controller
                     ->with('cartItems.item')
                     ->first();
 
-        return view('role.pegawai.cart', compact('cart'));
+        $countThisWeek = $this->getWeeklyRequestCount();
+
+        return view('role.pegawai.cart', compact('cart', 'countThisWeek'));
     }
 
 

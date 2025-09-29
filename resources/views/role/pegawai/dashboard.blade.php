@@ -5,14 +5,26 @@
     <div class="col-xl-12 col-md-6">
         <div class="card">
             <div class="card-header">
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between align-items-center w-100">
                     <h5 class="mb-1">Request Overview ({{ ucfirst($range) }})</h5>
-                    <form method="GET" action="{{ route('pegawai.dashboard') }}">
-                        <select name="range" onchange="this.form.submit()" class="form-select form-select-sm">
-                            <option value="week" {{ $range == 'week' ? 'selected' : '' }}>1 Minggu</option>
-                            <option value="month" {{ $range == 'month' ? 'selected' : '' }}>1 Bulan</option>
-                            <option value="year" {{ $range == 'year' ? 'selected' : '' }}>1 Tahun</option>
-                        </select>
+
+                    <form method="GET" action="{{ route('pegawai.dashboard') }}" class="d-flex gap-2">
+                        <input type="hidden" name="range" id="rangeInput">
+
+                        <button type="submit" onclick="setRange('week')"
+                            class="btn btn-sm {{ $range == 'week' ? 'btn-primary' : 'btn-outline-primary' }}">
+                            1 Minggu
+                        </button>
+
+                        <button type="submit" onclick="setRange('month')"
+                            class="btn btn-sm {{ $range == 'month' ? 'btn-primary' : 'btn-outline-primary' }}">
+                            1 Bulan
+                        </button>
+
+                        <button type="submit" onclick="setRange('year')"
+                            class="btn btn-sm {{ $range == 'year' ? 'btn-primary' : 'btn-outline-primary' }}">
+                            1 Tahun
+                        </button>
                     </form>
                 </div>
             </div>
@@ -66,6 +78,10 @@
 {{-- ChartJS --}}
 <script>
 const ctx = document.getElementById('weeklyOverviewChart');
+
+function setRange(value) {
+    document.getElementById('rangeInput').value = value;
+}
 
 new Chart(ctx, {
     type: 'line',

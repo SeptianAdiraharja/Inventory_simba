@@ -10,10 +10,21 @@ use Illuminate\Support\Facades\Auth;
 
 class GuestController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $guests = Guest::with('creator')->latest()->paginate(10);
-        return view('role.admin.guest', compact('guests'));
+        $query = $request->input('q');
+
+        $guests = \App\Models\Guest::with('creator')
+            ->when($query, function ($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                ->orWhere('phone', 'like', "%{$query}%")
+                ->orWhere('description', 'like', "%{$query}%");
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString(); // supaya query ?q= tetap terbawa saat pagination
+
+        return view('role.admin.guest', compact('guests', 'query'));
     }
 
     public function store(Request $request)

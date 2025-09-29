@@ -69,8 +69,18 @@
     <!-- Search -->
     <div class="navbar-nav align-items-center">
       <div class="nav-item d-flex align-items-center">
-        <i class="ri ri-search-line icon-lg lh-0"></i>
-        <input type="text" class="form-control border-0 shadow-none" placeholder="Search..." aria-label="Search..." />
+      <form action="{{ request()->is('admin/*') ? route('admin.guests.index') : route('pegawai.produk') }}"
+            method="GET"
+            class="d-flex align-items-center">
+
+            <i class="ri ri-search-line icon-lg lh-0"></i>
+            <input type="text"
+                  name="q"
+                  class="form-control border-0 shadow-none"
+                  placeholder="Search..."
+                  aria-label="Search..."
+                  value="{{ request('q') }}" />
+        </form>
       </div>
     </div>
     <!-- /Search -->

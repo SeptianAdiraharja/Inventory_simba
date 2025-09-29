@@ -9,7 +9,7 @@
         <small class="text-body-secondary">Form input item masuk baru</small>
       </div>
       <div class="card-body">
-        <form action="{{ route('super_admin.item_ins.store') }}" method="POST">
+        <form action="{{ route('super_admin.item_ins.store') }}" method="POST" x-data="{ useExpired: true }">
           @csrf
 
           <div class="row mb-4">
@@ -46,21 +46,35 @@
             </div>
           </div>
 
-         <div class="row mb-3 align-items-center">
-              <label for="expired_at" class="col-sm-2 col-form-label text-muted fw-semibold">Tanggal Kedaluwarsa</label>
+          <!-- Input Tanggal Kedaluwarsa dengan toggle -->
+          <div class="row mb-3 align-items-center">
+              <label class="col-sm-2 col-form-label text-muted fw-semibold">
+                  Tanggal Kedaluwarsa
+              </label>
               <div class="col-sm-10">
-                  <input 
-                      type="date" 
-                      name="expired_at" 
-                      id="expired_at"
-                      min="{{ \Carbon\Carbon::today()->toDateString() }}"
-                      value="{{ old('expired_at', isset($item_in) && $item_in->expired_at ? \Carbon\Carbon::parse($item_in->expired_at)->format('Y-m-d') : '') }}"
-                      class="form-control @error('expired_at') is-invalid @enderror"
-                      required
-                  >
-                  @error('expired_at')
-                      <div class="text-danger small mt-1">{{ $message }}</div>
-                  @enderror
+                  <!-- Input hanya muncul jika toggle ON -->
+                  <div x-show="useExpired" x-transition>
+                      <input
+                          type="date"
+                          name="expired_at"
+                          id="expired_at"
+                          min="{{ \Carbon\Carbon::today()->toDateString() }}"
+                          value="{{ old('expired_at', isset($item_in) && $item_in->expired_at ? \Carbon\Carbon::parse($item_in->expired_at)->format('Y-m-d') : '') }}"
+                          class="form-control @error('expired_at') is-invalid @enderror"
+                          x-bind:required="useExpired"
+                      >
+                      @error('expired_at')
+                          <div class="text-danger small mt-1">{{ $message }}</div>
+                      @enderror
+                  </div>
+
+                  <!-- Switch ON/OFF -->
+                  <div class="form-check form-switch mt-2">
+                      <input class="form-check-input" type="checkbox" id="toggleExpired" x-model="useExpired">
+                      <label class="form-check-label" for="toggleExpired">
+                          Gunakan tanggal kedaluwarsa
+                      </label>
+                  </div>
               </div>
           </div>
 

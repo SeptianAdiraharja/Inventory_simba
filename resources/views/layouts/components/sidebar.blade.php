@@ -1,117 +1,147 @@
-<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
-          <div class="app-brand demo">
-            <a href="index.html" class="app-brand-link">
-              <span class="app-brand-logo demo me-1">
-                <span class="text-primary">
+<aside id="layout-menu" class="layout-menu menu-vertical bg-dark">
+    <!-- Logo & Brand -->
+    <div class="app-brand demo py-3 d-flex align-items-center justify-content-center">
+        <a href="index.html" class="app-brand-link d-flex align-items-center">
+            <img src="{{ asset('assets/img/icons/simba.jpg') }}" alt="Logo" class="rounded-circle" width="40" height="40">
+            <span class="app-brand-text fw-bold ms-2 text-white">UPTD Upelkes</span>
+        </a>
+    </div>
+    <small class="d-block text-center text-light mb-3">SIMBA</small>
 
-                </span>
-              </span>
-              <span class="app-brand-text demo menu-text fw-semibold ms-2">SIMBA</span>
+    <div class="menu-inner-shadow"></div>
+    <ul class="menu-inner py-2 text-white">
+
+        <!-- Dashboard -->
+        @if (auth()->user()->role === 'super_admin')
+        <li class="menu-item {{ Route::is('super_admin.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('super_admin.dashboard') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-dashboard-line me-2"></i>
+                <span>Dashboard</span>
+                <span class="badge bg-primary ms-auto">1</span>
             </a>
-          </div>
-          <div class="menu-inner-shadow"></div>
-          <ul class="menu-inner py-1">
-            <!-- Dashboards -->
-            @if (auth()->user()->role === 'super_admin')
-            <li class="menu-item {{ Route::is('super_admin.dashboard') ? 'active' : '' }}">
-              <a href="{{route('super_admin.dashboard')}}" class="menu-link">
-                <div data-i18n="Analytics">Dashboard</div>
-              </a>
-            </li>
-            @endif
-            @if (auth()->user()->role === 'admin')
-            <li class="menu-item {{ Route::is('admin.dashboard') ? 'active' : '' }}">
-              <a href="{{route('admin.dashboard')}}" class="menu-link">
-                <div data-i18n="Analytics">Dashboard</div>
-              </a>
-            </li>
-            @endif
-            @if (auth()->user()->role === 'pegawai')
-            <li class="menu-item {{ Route::is('pegawai.dashboard') ? 'active' : '' }}">
-              <a href="{{route('pegawai.dashboard')}}" class="menu-link">
-                <div data-i18n="Analytics">Dashboard</div>
-              </a>
-            </li>
-            <li class="menu-item {{ Route::is('pegawai.produk') ? 'active' : '' }}">
-              <a href="{{route('pegawai.produk')}}" class="menu-link">
-                <i class="menu-icon icon-base ri ri-shopping-cart-line"></i>
-                <div data-i18n="Basic">Produk</div>
-              </a>
-            </li>
-            <li class="menu-item {{ Route::is('pegawai.permintaan.pending') ? 'active' : '' }}">
-                <a href="{{ route('pegawai.permintaan.pending') }}" class="menu-link">
-                    <i class="menu-icon icon-base ri ri-time-line"></i>
-                    <div data-i18n="Basic">Permintaan Pending</div>
-                </a>
-            </li>
-            @endif
-            <!-- Super Admin -->
-            @if (auth()->user()->role === 'super_admin')
-            <li class="menu-header mt-7">
-              <span class="menu-header-text">Super Admin</span>
-            </li>
-            <li class="menu-item {{ Route::is('super_admin.categories.index') ? 'active' : '' }}">
-              <a href="{{route('super_admin.categories.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ri ri-stack-line"></i>
-                <div data-i18n="Basic">Kategori</div>
-              </a>
-            </li>
-            <li class="menu-item {{ Route::is('super_admin.units.index') ? 'active' : '' }}">
-              <a href="{{route('super_admin.units.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ri ri-price-tag-3-line"></i>
-                <div data-i18n="Basic">Satuan Barang</div><div class=""></div>
-              </a>
-            </li>
-            <li class="menu-item {{ Route::is('super_admin.suppliers.index') ? 'active' : '' }}">
-              <a href="{{route('super_admin.suppliers.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ri ri-briefcase-3-line"></i>
-                <div data-i18n="Basic">Supplier</div><div class=""></div>
-              </a>
-            </li>
-            <li class="menu-item {{ Route::is('super_admin.items.index') ? 'active' : '' }}">
-              <a href="{{route('super_admin.items.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ri ri-box-3-line"></i>
-                <div data-i18n="Basic">Barang</div>
-              </a>
-            </li>
-            <li class="menu-item {{ Route::is('super_admin.item_ins.index') ? 'active' : '' }}">
-              <a href="{{route('super_admin.item_ins.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ri ri-inbox-archive-line"></i>
-                <div data-i18n="Basic">Barang Masuk</div>
-              </a>
-            </li>
-            <li class="menu-item {{ Route::is('super_admin.users.index') ? 'active' : '' }}">
-              <a href="{{route('super_admin.users.index')}}" class="menu-link">
-                <i class="menu-icon icon-base ri ri-group-line"></i>
-                <div data-i18n="Basic">List Pegawai</div><div class=""></div>
-              </a>
-            </li>
-            @endif
-           @if (auth()->user()->role === 'admin')
-              <!-- Admin -->
-              <li class="menu-header mt-7"><span class="menu-header-text">Admin</span></li>
-              <!-- ScanQr -->
-              <li class="menu-item {{ Route::is('admin.itemout.*') ? 'active' : '' }}">
-                <a href="{{ route('admin.itemout.index') }}" class="menu-link">
-                  <i class="bi bi-upc-scan"></i>
-                  <div data-i18n="Basic">ScanQr</div><div class=""></div>
-                </a>
-              </li>
-              <!-- End ScanQr -->
-              <!-- Cards -->
-              <li class="menu-item {{ Route::is('admin.request') ? 'active' : '' }}">
-                <a href="{{route('admin.request')}}" class="menu-link">
-                  <i class="menu-icon icon-base ri ri-group-line"></i>
-                  <div data-i18n="Basic">Request</div><div class=""></div>
-                </a>
-              </li>
-              <!-- Cards -->
-              <li class="menu-item {{ Route::is('admin.guests.index') ? 'active' : '' }}">
-                  <a href="{{ route('admin.guests.index') }}" class="menu-link">
-                      <i class="menu-icon icon-base ri ri-group-line"></i>
-                      <div data-i18n="Basic">Guest</div>
-                  </a>
-              </li>
-            @endif
-          </ul>
-        </aside>
+        </li>
+        @endif
+
+        @if (auth()->user()->role === 'admin')
+        <li class="menu-item {{ Route::is('admin.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('admin.dashboard') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-dashboard-line me-2"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        @endif
+
+        @if (auth()->user()->role === 'pegawai')
+        <li class="menu-item {{ Route::is('pegawai.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('pegawai.dashboard') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-dashboard-line me-2"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        <li class="menu-item {{ Route::is('pegawai.produk') ? 'active' : '' }}">
+            <a href="{{ route('pegawai.produk') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-shopping-cart-line me-2"></i>
+                <span>Produk</span>
+            </a>
+        </li>
+        <li class="menu-item {{ Route::is('pegawai.permintaan.pending') ? 'active' : '' }}">
+            <a href="{{ route('pegawai.permintaan.pending') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-time-line me-2"></i>
+                <span>Permintaan Pending</span>
+            </a>
+        </li>
+        @endif
+
+        <!-- Super Admin -->
+        @if (auth()->user()->role === 'super_admin')
+        <li class="menu-header mt-4 text-uppercase small fw-bold text-secondary">Super Admin</li>
+        <li class="menu-item {{ Route::is('super_admin.categories.index') ? 'active' : '' }}">
+            <a href="{{ route('super_admin.categories.index') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-stack-line me-2"></i>
+                <span>Kategori</span>
+            </a>
+        </li>
+        <li class="menu-item {{ Route::is('super_admin.units.index') ? 'active' : '' }}">
+            <a href="{{ route('super_admin.units.index') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-price-tag-3-line me-2"></i>
+                <span>Satuan Barang</span>
+            </a>
+        </li>
+        <li class="menu-item {{ Route::is('super_admin.suppliers.index') ? 'active' : '' }}">
+            <a href="{{ route('super_admin.suppliers.index') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-briefcase-3-line me-2"></i>
+                <span>Supplier</span>
+            </a>
+        </li>
+        <li class="menu-item {{ Route::is('super_admin.items.index') ? 'active' : '' }}">
+            <a href="{{ route('super_admin.items.index') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-box-3-line me-2"></i>
+                <span>Barang</span>
+            </a>
+        </li>
+        <li class="menu-item {{ Route::is('super_admin.item_ins.index') ? 'active' : '' }}">
+            <a href="{{ route('super_admin.item_ins.index') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-inbox-archive-line me-2"></i>
+                <span>Barang Masuk</span>
+            </a>
+        </li>
+        <li class="menu-item {{ Route::is('super_admin.users.index') ? 'active' : '' }}">
+            <a href="{{ route('super_admin.users.index') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-group-line me-2"></i>
+                <span>List Pegawai</span>
+            </a>
+        </li>
+        @endif
+
+        <!-- Admin -->
+        @if (auth()->user()->role === 'admin')
+        <li class="menu-header mt-4 text-uppercase small fw-bold text-secondary">Admin</li>
+        <li class="menu-item {{ Route::is('admin.itemout.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.itemout.index') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-qr-scan-2-line me-2"></i>
+                <span>ScanQr</span>
+            </a>
+        </li>
+        <li class="menu-item {{ Route::is('admin.request') ? 'active' : '' }}">
+            <a href="{{ route('admin.request') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-file-list-3-line me-2"></i>
+                <span>Request</span>
+            </a>
+        </li>
+        <li class="menu-item {{ Route::is('admin.guests.index') ? 'active' : '' }}">
+            <a href="{{ route('admin.guests.index') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-user-line me-2"></i>
+                <span>Guest</span>
+            </a>
+        </li>
+        @endif
+    </ul>
+</aside>
+
+<!-- Custom CSS -->
+<style>
+    .menu-link {
+        color: #fff !important;
+        padding: 10px 15px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .menu-link:hover {
+        background-color: #fff !important;
+        color: #000 !important;
+    }
+
+    .menu-link:hover i {
+        color: #000 !important;
+    }
+
+    .menu-item.active > .menu-link {
+        background-color: #0d6efd !important; /* biru bootstrap */
+        color: #fff !important;
+    }
+
+    .menu-item.active > .menu-link i {
+        color: #fff !important;
+    }
+</style>

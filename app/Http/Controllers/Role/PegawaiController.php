@@ -29,8 +29,8 @@ class PegawaiController extends Controller
 
         $userId = Auth::id();
 
-        // Ambil list request user yg login saja
-        $users = DB::table('users')
+            // Ambil list request user yg login saja
+            $users = DB::table('users')
             ->where('users.id', $userId)
             ->leftJoin('carts', 'users.id', '=', 'carts.user_id')
             ->leftJoin('cart_items', 'carts.id', '=', 'cart_items.cart_id')
@@ -43,6 +43,11 @@ class PegawaiController extends Controller
             )
             ->groupBy('users.id', 'users.name', 'users.email', 'users.role')
             ->get();
+
+        // Pastikan $history memiliki format array yang kita pakai di blade
+        if (!is_array($history) || !isset($history['labels']) || !isset($history['data'])) {
+            $history = ['labels' => [], 'data' => []];
+        }
 
         return view('role.pegawai.dashboard', compact('history', 'range', 'users'));
     }

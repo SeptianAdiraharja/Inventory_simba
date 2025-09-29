@@ -76,7 +76,7 @@ class ExportController extends Controller
             return $itemIn;
         });
 
-        $pdf = Pdf::loadView('export.barang_masuk_pdf', compact('items', 'period'))
+        $pdf = Pdf::loadView('exports.barang_masuk_pdf', compact('items', 'period'))
                   ->setPaper('a4', 'landscape');
 
         ExportLog::create([
@@ -133,7 +133,7 @@ class ExportController extends Controller
             return $itemOut;
         });
 
-        $pdf = Pdf::loadView('export.barang_keluar_pdf', compact('items', 'period'))
+        $pdf = Pdf::loadView('exports.barang_keluar_pdf', compact('items', 'period'))
                   ->setPaper('a4', 'landscape');
 
         ExportLog::create([
