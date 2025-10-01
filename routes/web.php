@@ -72,6 +72,9 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('items/{item}/barcode-pdf', [ItemController::class, 'printBarcode'])
             ->name('items.barcode.pdf');
 
+        Route::get('/export', [ExportController::class, 'index'])
+            ->name('export.index');
+
         // Export Barang Masuk
         Route::get('/export/barang-masuk/excel', [ExportController::class, 'exportBarangMasukExcel'])
             ->name('exports.barang_masuk.excel');
@@ -83,6 +86,13 @@ Route::middleware(['auth', 'role:super_admin'])
             ->name('exports.barang_keluar.excel');
         Route::get('/export/barang-keluar/pdf', [ExportController::class, 'exportBarangKeluarPdf'])
             ->name('exports.barang_keluar.pdf');
+        Route::get('/export/download', [ExportController::class, 'download'])
+            ->name('export.download'); 
+
+
+
+
+
     });
 
 /*

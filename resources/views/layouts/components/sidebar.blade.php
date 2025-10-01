@@ -91,6 +91,12 @@
                 <span>List Pegawai</span>
             </a>
         </li>
+        <li class="menu-item {{ Route::is('super_admin.export.index') ? 'active' : '' }}">
+            <a href="{{ route('super_admin.export.index') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-download-2-line me-2"></i>
+                <span>Ekspor Data</span>
+            </a>
+        </li>
         @endif
 
         <!-- Admin -->

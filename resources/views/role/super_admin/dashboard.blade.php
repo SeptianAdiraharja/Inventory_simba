@@ -167,7 +167,10 @@
                               <li class="d-flex mb-3 align-items-center pb-2 border-bottom">
                                 <div class="flex-grow-1">
                                   <h6 class="mb-1 fw-semibold">{{ $item->item->name }}</h6>
-                                  <small class="text-muted">Jumlah: {{ $item->quantity }}</small>
+                                  <small class="text-muted">
+                                    Jumlah: {{ $item->quantity }} <br>
+                                    Tanggal: {{ $item->created_at->format('d M Y') }}
+                                  </small>
                                 </div>
                                 <span class="badge bg-success-subtle text-success">
                                   +{{ $item->quantity }}
@@ -252,60 +255,9 @@
                 </div>
                 <!-- /Barang Masuk / Barang Keluar / Hampir Kedaluwarsa -->
 
-                {{-- Ekspor --}}
-                <div class="card shadow-sm border-0 rounded-3 p-4 mt-4 mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold mb-0">
-                            <i class="bi bi-file-earmark-arrow-down me-2 text-primary"></i> Ekspor Data
-                        </h5>
-                        <small class="text-muted">Pilih jenis data dan format untuk diekspor</small>
-                    </div>
-
-                    <form id="exportForm" method="GET" action="">
-                        <div class="row g-4">
-                            <!-- Jenis Data -->
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Jenis Data</label>
-                                <select class="form-select shadow-sm" name="type" id="type" required>
-                                    <option value="" disabled selected>-- Pilih Jenis --</option>
-                                    <option value="barang_masuk">Barang Masuk</option>
-                                    <option value="barang_keluar">Barang Keluar</option>
-                                </select>
-                            </div>
-
-                            <!-- Periode -->
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Periode</label>
-                                <select class="form-select shadow-sm" name="period" id="period" required>
-                                    <option value="" disabled selected>-- Pilih Periode --</option>
-                                    <option value="weekly">Minggu</option>
-                                    <option value="monthly">Bulan</option>
-                                    <option value="yearly">Tahun</option>
-                                </select>
-                            </div>
-
-                            <!-- Format -->
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Format</label>
-                                <select class="form-select shadow-sm" name="format" id="format" required>
-                                    <option value="" disabled selected>-- Pilih Format --</option>
-                                    <option value="pdf">PDF</option>
-                                    <option value="excel">Excel</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 text-end">
-                            <button type="submit" class="btn btn-primary px-4">
-                                <i class="bi bi-download me-2"></i> Ekspor
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                {{-- Akhir Ekspor --}}
 
                 <!-- 5 Pengguna Teratas -->
-              <div class="col-12">
+              <div class="col-12 mt-5">
                 <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
                   <div class="card-header d-flex justify-content-between align-items-center bg-white">
                     <h5 class="fw-bold mb-0">

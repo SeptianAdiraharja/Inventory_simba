@@ -49,30 +49,6 @@
 </div>
 <!--/ Transactions -->
 
-
-<!-- Weekly Overview Chart -->
-<div class="col-xl-12 mb-5">
-  <div class="card h-100 shadow-sm animate__animated animate__fadeInUp animate__slow">
-    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-      <div>
-        <h5 class="card-title m-0">Traffic</h5>
-        <p class="small mb-0">Barang Masuk dan Keluar</p>
-      </div>
-     <div class="btn-group btn-group-sm">
-      <button class="btn btn-outline-primary hover-scale" onclick="updateChart('week')">1 Minggu</button>
-      <button class="btn btn-outline-primary hover-scale" onclick="updateChart('month')">1 Bulan</button>
-      <button class="btn btn-outline-primary hover-scale" onclick="updateChart('year')">1 Tahun</button>
-    </div>
-    </div>
-    <div class="card-body">
-      <div style="width:100%; height:400px;">
-        <canvas id="trafficChart"></canvas>
-      </div>
-    </div>
-  </div>
-</div>
-<!--/ Weekly Overview Chart -->
-
 <div class="col-xl-12 mt-5">
   <div class="card animate__animated animate__zoomIn">
     <div class="card-body row">
@@ -84,6 +60,7 @@
       <!-- Request -->
       <div class="col-md-6 ps-md-4 border-start fade-in-card animate__delay-1s">
         <x-dashboard-list-card title="Request" :items="$latestRequest" type="request"/>
+        
       </div>
     </div>
   </div>
@@ -129,6 +106,29 @@
   </div>
 </div>
 <!--/ Top 5 Permintaan -->
+
+<!-- Weekly Overview Chart -->
+<div class="col-xl-12 mb-5">
+  <div class="card h-100 shadow-sm animate__animated animate__fadeInUp animate__slow">
+    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+      <div>
+        <h5 class="card-title m-0">Traffic</h5>
+        <p class="small mb-0">Barang Masuk dan Keluar</p>
+      </div>
+     <div class="btn-group btn-group-sm">
+      <button class="btn btn-outline-primary hover-scale" onclick="updateChart('week')">1 Minggu</button>
+      <button class="btn btn-outline-primary hover-scale" onclick="updateChart('month')">1 Bulan</button>
+      <button class="btn btn-outline-primary hover-scale" onclick="updateChart('year')">1 Tahun</button>
+    </div>
+    </div>
+    <div class="card-body">
+      <div style="width:100%; height:400px;">
+        <canvas id="trafficChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+<!--/ Weekly Overview Chart -->
 
 @endsection
 

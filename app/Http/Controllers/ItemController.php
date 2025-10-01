@@ -56,7 +56,7 @@ class ItemController extends Controller
     public function show(Request $request, Item $item)
     {
         $supplierId = $request->get('supplier_id');
-        $itemInQuery = $item->itemIn();
+        $itemInQuery = $item->itemIns();
 
         if ($supplierId) {
             $itemInQuery->where('supplier_id', $supplierId);
