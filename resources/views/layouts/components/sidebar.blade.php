@@ -55,37 +55,37 @@
         <!-- Super Admin -->
         @if (auth()->user()->role === 'super_admin')
         <li class="menu-header mt-4 text-uppercase small fw-bold text-secondary">Super Admin</li>
-        <li class="menu-item {{ Route::is('super_admin.categories.index') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('super_admin.categories.index') ? 'active' : '' }} {{ Route::is('super_admin.categories.create') ? 'active' : '' }} {{ Route::is('super_admin.categories.edit') ? 'active' : '' }}">
             <a href="{{ route('super_admin.categories.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-stack-line me-2"></i>
                 <span>Kategori</span>
             </a>
         </li>
-        <li class="menu-item {{ Route::is('super_admin.units.index') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('super_admin.units.index') ? 'active' : '' }} {{ Route::is('super_admin.units.create') ? 'active' : '' }} {{ Route::is('super_admin.units.edit') ? 'active' : '' }}">
             <a href="{{ route('super_admin.units.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-price-tag-3-line me-2"></i>
                 <span>Satuan Barang</span>
             </a>
         </li>
-        <li class="menu-item {{ Route::is('super_admin.suppliers.index') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('super_admin.suppliers.index') ? 'active' : '' }} {{ Route::is('super_admin.suppliers.create') ? 'active' : '' }} {{ Route::is('super_admin.suppliers.edit') ? 'active' : '' }}">
             <a href="{{ route('super_admin.suppliers.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-briefcase-3-line me-2"></i>
                 <span>Supplier</span>
             </a>
         </li>
-        <li class="menu-item {{ Route::is('super_admin.items.index') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('super_admin.items.index') ? 'active' : '' }} {{ Route::is('super_admin.items.create') ? 'active' : '' }} {{ Route::is('super_admin.items.edit') ? 'active' : '' }}">
             <a href="{{ route('super_admin.items.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-box-3-line me-2"></i>
                 <span>Barang</span>
             </a>
         </li>
-        <li class="menu-item {{ Route::is('super_admin.item_ins.index') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('super_admin.item_ins.index') ? 'active' : '' }} {{ Route::is('super_admin.item_ins.create') ? 'active' : '' }} {{ Route::is('super_admin.item_ins.edit') ? 'active' : '' }}">
             <a href="{{ route('super_admin.item_ins.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-inbox-archive-line me-2"></i>
                 <span>Barang Masuk</span>
             </a>
         </li>
-        <li class="menu-item {{ Route::is('super_admin.users.index') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('super_admin.users.index') ? 'active' : '' }} {{ Route::is('super_admin.users.create') ? 'active' : '' }} {{ Route::is('super_admin.users.edit') ? 'active' : '' }}">
             <a href="{{ route('super_admin.users.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-group-line me-2"></i>
                 <span>List Pegawai</span>
