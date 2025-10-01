@@ -20,26 +20,27 @@ class ItemoutController extends Controller
      */
     public function index()
     {
-        // Ambil cart milik user
+        // Ambil cart milik user dengan pagination
         $approvedItems = Cart::with(['cartItems.item', 'user'])
             ->where('status', 'approved')
             ->latest()
-            ->get()
-            ->map(function ($cart) {
+            ->paginate(10) // 🔑 tampil 10 data per halaman
+            ->through(function ($cart) {
                 $cart->all_scanned = $cart->cartItems->every(fn($i) => $i->scanned_at);
                 return $cart;
             });
 
-        // Guest requests
+        // Guest requests (kalau juga mau dipaginasi, sama caranya)
         $guestRequests = Item_out::select('item_outs.*', 'guests.name as guest_name')
             ->leftJoin('guests', 'item_outs.guest_id', '=', 'guests.id')
             ->with('item')
             ->whereNull('item_outs.cart_id')
             ->latest()
-            ->get();
+            ->paginate(10);
 
         return view('role.admin.itemout', compact('approvedItems', 'guestRequests'));
     }
+
 
 
    // Scan item berdasarkan barcode
