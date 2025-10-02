@@ -2,9 +2,28 @@
 
 @section('content')
 <div class="container">
-    <h3>Daftar Request Pending & Rejected</h3>
-    <table class="table table-bordered  table-responsive">
-        <thead>
+    <!-- Header + Filter -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Daftar Request Pending & Rejected</h3>
+        <div class="dropdown">
+            <!-- Tombol filter -->
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-funnel"></i> Filter
+            </button>
+
+            <!-- Dropdown filter -->
+            <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                <!-- Pastikan pakai route name yang sesuai di web.php -->
+                <li><a class="dropdown-item" href="{{ route('admin.request', ['status' => 'all']) }}">Semua</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.request', ['status' => 'pending']) }}">Pending</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.request', ['status' => 'rejected']) }}">Rejected</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Table daftar request -->
+    <table class="table table-bordered table-hover table-responsive">
+        <thead class="table-light">
             <tr>
                 <th>No</th>
                 <th>User</th>
@@ -17,13 +36,14 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($requests as $index => $req)
+            @forelse($requests as $index => $req)
                 <tr>
-                    <td>{{ $index + 1 }}</td>
+                    <td class="text-center">{{ $index + 1 }}</td>
                     <td>{{ $req->name }}</td>
                     <td>{{ $req->email }}</td>
                     <td>{{ ucfirst($req->role) }}</td>
                     <td>
+                        <!-- Badge status -->
                         <span class="badge
                             @if($req->status == 'pending') bg-warning
                             @elseif($req->status == 'rejected') bg-danger
@@ -32,8 +52,8 @@
                             {{ ucfirst($req->status) }}
                         </span>
                     </td>
-                    <td>{{ $req->total_quantity }}</td>
-                    <td>{{ $req->created_at }}</td>
+                    <td class="text-center">{{ $req->total_quantity }}</td>
+                    <td>{{ $req->created_at->format('d-m-Y H:i') }}</td>
                     <td>
                         @if($req->status == 'pending')
                             <!-- Tombol approve -->
@@ -58,8 +78,18 @@
                         @endif
                     </td>
                 </tr>
-            @endforeach
+            @empty
+                <!-- Jika tidak ada data -->
+                <tr>
+                    <td colspan="8" class="text-center text-muted">Tidak ada request untuk ditampilkan.</td>
+                </tr>
+            @endforelse
         </tbody>
     </table>
+
+    <!-- Pagination -->
+    <div class="mt-3">
+        {{ $requests->links() }}
+    </div>
 </div>
 @endsection

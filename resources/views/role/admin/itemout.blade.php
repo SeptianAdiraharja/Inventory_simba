@@ -81,7 +81,7 @@
                                     <tbody>
                                         @foreach($cart->cartItems as $j => $item)
                                             <tr>
-                                                <td class="text-center">{{ $j+1 }}</td>
+                                                <td class="text-center">{{ $approvedItems->firstItem() + $i }}</td>
                                                 <td>{{ $item->item->name }}</td>
                                                 <td>{{ $item->item->code }}</td>
                                                 <td class="text-center">{{ $item->quantity }}</td>
@@ -116,7 +116,11 @@
 {{-- MODALS --}}
 {{-- =============================== --}}
 @foreach($approvedItems as $cart)
-<div class="modal fade" id="scanModal{{ $cart->id }}" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="scanModal{{ $cart->id }}"
+     tabindex="-1"
+     aria-hidden="true"
+     data-scan-url="{{ route('admin.itemout.scan', $cart->id) }}"
+     data-release-url="{{ route('admin.itemout.release', $cart->id) }}">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -142,7 +146,25 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{-- Akan diisi JS setelah scan --}}
+                        {{-- isi awal dengan cartItems --}}
+                        @foreach($cart->cartItems as $j => $ci)
+                        <tr data-item-id="{{ $ci->item->id }}"
+                            data-code="{{ $ci->item->code }}"
+                            data-qty="{{ $ci->quantity }}"
+                            data-scanned="{{ $ci->scanned_at ? 'true' : 'false' }}">
+                            <td class="text-center">{{ $j+1 }}</td>
+                            <td>{{ $ci->item->name }}</td>
+                            <td>{{ $ci->item->code }}</td>
+                            <td class="text-center">{{ $ci->quantity }}</td>
+                            <td class="text-center">
+                                @if($ci->scanned_at)
+                                    <span class="badge bg-success small">Sudah di-scan</span>
+                                @else
+                                    <span class="badge bg-secondary small">Belum di-scan</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @endforeach
                     </tbody>
                 </table>
             </div>
@@ -160,6 +182,7 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    // Filter (tetap pakai)
     const filterButtons = document.querySelectorAll(".filter-btn");
     const rows = document.querySelectorAll(".cart-item");
 
@@ -183,6 +206,131 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     });
+
+    // CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    // Setup per-modal scan/release handlers
+    document.querySelectorAll('div[id^="scanModal"]').forEach(modalEl => {
+        const modalId = modalEl.id; // e.g. scanModal12
+        const cartId = modalId.replace('scanModal', '');
+        const scanInput = modalEl.querySelector('#barcodeInput' + cartId);
+        const scanTable = modalEl.querySelector('#scanTable' + cartId + ' tbody');
+        const releaseBtn = modalEl.querySelector('#releaseBtn' + cartId);
+        const scanUrl = modalEl.dataset.scanUrl;
+        const releaseUrl = modalEl.dataset.releaseUrl;
+
+        // helper: find row by item id or code
+        function findRowByItem(itemId, code) {
+            return scanTable.querySelector(`tr[data-item-id="${itemId}"], tr[data-code="${code}"]`);
+        }
+
+        async function doScan(barcode) {
+            if (!barcode) return;
+            try {
+                const res = await fetch(scanUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ barcode })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    alert(data.message || 'Gagal scan.');
+                    return;
+                }
+
+                const itm = data.item;
+                const row = findRowByItem(itm.id, itm.code);
+
+                if (row) {
+                    row.setAttribute('data-scanned', 'true');
+                    const statusCell = row.querySelector('td:last-child');
+                    statusCell.innerHTML = '<span class="badge bg-success small">Sudah di-scan</span>';
+                } else {
+                    // jika item tidak ada pada tabel (jarang), tambahkan baris baru
+                    const newRow = document.createElement('tr');
+                    newRow.setAttribute('data-item-id', itm.id);
+                    newRow.setAttribute('data-code', itm.code);
+                    newRow.setAttribute('data-qty', itm.quantity);
+                    newRow.setAttribute('data-scanned', 'true');
+                    newRow.innerHTML = `
+                        <td class="text-center">-</td>
+                        <td>${itm.name}</td>
+                        <td>${itm.code}</td>
+                        <td class="text-center">${itm.quantity}</td>
+                        <td class="text-center"><span class="badge bg-success small">Sudah di-scan</span></td>
+                    `;
+                    scanTable.appendChild(newRow);
+                }
+
+                // clear input
+                scanInput.value = '';
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan saat scan. Cek console.');
+            }
+        }
+
+        // Enter untuk scan
+        scanInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const val = this.value.trim();
+                if (val) doScan(val);
+            }
+        });
+
+        // juga bisa blur / tombol (jika mau later)
+        // Release handler
+        releaseBtn.addEventListener('click', async function () {
+            // kumpulkan semua baris ber- data-scanned=true
+            const scannedRows = scanTable.querySelectorAll('tr[data-scanned="true"]');
+            const items = Array.from(scannedRows).map(r => {
+                return {
+                    id: parseInt(r.getAttribute('data-item-id')),
+                    quantity: parseInt(r.getAttribute('data-qty') || 1)
+                };
+            });
+
+            if (items.length === 0) {
+                alert('Belum ada item yang discan.');
+                return;
+            }
+
+            if (!confirm('Yakin ingin mengeluarkan ' + items.length + ' barang?')) return;
+
+            try {
+                const res = await fetch(releaseUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ items })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    alert(data.message || 'Gagal mengeluarkan barang.');
+                    return;
+                }
+
+                alert(data.message || 'Berhasil mengeluarkan barang.');
+                // refresh halaman agar status dan stok ter-update
+                location.reload();
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan saat mengeluarkan barang. Cek console.');
+            }
+        });
+    });
 });
 </script>
+
 

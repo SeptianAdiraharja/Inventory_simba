@@ -13,11 +13,14 @@ class RequestController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        // Ambil filter dari query string (?status=pending / ?status=rejected)
+        $statusFilter = $request->get('status');
+
         $requests = DB::table('carts')
             ->join('users', 'carts.user_id', '=', 'users.id')
-            ->leftJoin('cart_items', 'carts.id', '=', 'cart_items.cart_id') // pakai left join
+            ->leftJoin('cart_items', 'carts.id', '=', 'cart_items.cart_id')
             ->select(
                 'carts.id as cart_id',
                 'users.name',
@@ -25,23 +28,40 @@ class RequestController extends Controller
                 'users.role',
                 'carts.status',
                 'carts.created_at',
+                'carts.updated_at',
                 DB::raw('COALESCE(SUM(cart_items.quantity), 0) as total_quantity')
             )
-            ->whereIn('carts.status', ['pending', 'rejected']) // 🔹 tambahkan approved juga biar bisa tampil
+            ->where(function($query) use ($statusFilter) {
+                // Filter sesuai pilihan dropdown
+                if ($statusFilter === 'pending') {
+                    $query->where('carts.status', 'pending');
+                } elseif ($statusFilter === 'rejected') {
+                    // Rejected hanya muncul selama 3 hari terakhir
+                    $query->where('carts.status', 'rejected')
+                          ->where('carts.updated_at', '>=', now()->subDays(3));
+                } else {
+                    // Default "all" → pending + rejected (<= 3 hari)
+                    $query->where('carts.status', 'pending')
+                          ->orWhere(function($sub) {
+                              $sub->where('carts.status', 'rejected')
+                                  ->where('carts.updated_at', '>=', now()->subDays(3));
+                          });
+                }
+            })
             ->groupBy(
                 'carts.id',
                 'users.name',
                 'users.email',
                 'users.role',
                 'carts.status',
-                'carts.created_at'
+                'carts.created_at',
+                'carts.updated_at'
             )
             ->orderBy('carts.created_at', 'desc')
-            ->get();
+            ->paginate(10); // pagination biar rapi
 
-        return view('role.admin.request', compact('requests'));
+        return view('role.admin.request', compact('requests', 'statusFilter'));
     }
-
 
     /**
      * Show the form for creating a new resource.

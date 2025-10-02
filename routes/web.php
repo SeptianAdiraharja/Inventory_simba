@@ -87,7 +87,7 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('/export/barang-keluar/pdf', [ExportController::class, 'exportBarangKeluarPdf'])
             ->name('exports.barang_keluar.pdf');
         Route::get('/export/download', [ExportController::class, 'download'])
-            ->name('export.download'); 
+            ->name('export.download');
 
 
 
@@ -115,11 +115,9 @@ Route::middleware(['auth', 'role:admin'])
         // Item Out
         Route::resource('itemout', ItemoutController::class);
         Route::get('/itemout/{cart}/struk', [ItemoutController::class, 'struk'])->name('itemout.struk');
-        Route::post('/itemout/scan/{cart}', [ItemoutController::class, 'scan'])
-        ->name('itemout.scan');
-        Route::get('/admin/itemout/check-all-scanned/{cart}', [ItemoutController::class, 'checkAllScanned']);
-        Route::post('/itemout/release/{cart}', [ItemoutController::class, 'release'])
-        ->name('itemout.release');
+        Route::post('/itemout/scan/{cart}', [ItemoutController::class, 'scan'])->name('itemout.scan');
+        Route::get('/itemout/check-all-scanned/{cart}', [ItemoutController::class, 'checkAllScanned'])->name('itemout.checkAllScanned');
+        Route::post('/itemout/release/{cart}', [ItemoutController::class, 'release'])->name('itemout.release');
 
         // Request
         Route::get('/request', [RequestController::class, 'index'])->name('request');

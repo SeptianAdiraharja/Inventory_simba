@@ -1,19 +1,19 @@
 @extends('layouts.index')
 @section('content')
 
-<!-- Transactions -->
+<!-- Transaksi -->
 <div class="col-xl-12 mb-5">
   <div class="card h-100 shadow-sm animate__animated animate__fadeInDown animate__faster">
     <div class="card-header d-flex align-items-center justify-content-between">
-      <h5 class="card-title m-0 me-2">Transactions</h5>
+      <h5 class="card-title m-0 me-2">Transaksi</h5>
       <div class="dropdown">
         <button class="btn text-body-secondary p-0" type="button" id="transactionID" data-bs-toggle="dropdown">
           <i class="ri-more-2-line icon-24px"></i>
         </button>
         <div class="dropdown-menu dropdown-menu-end" aria-labelledby="transactionID">
-          <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
-          <a class="dropdown-item" href="javascript:void(0);">Share</a>
-          <a class="dropdown-item" href="javascript:void(0);">Update</a>
+          <a class="dropdown-item" href="javascript:void(0);">Muat Ulang</a>
+          <a class="dropdown-item" href="javascript:void(0);">Bagikan</a>
+          <a class="dropdown-item" href="javascript:void(0);">Perbarui</a>
         </div>
       </div>
     </div>
@@ -29,7 +29,7 @@
 
       <x-dashboard-card
         class="animate__animated animate__fadeInUp animate__delay-2s"
-        title="Guest"
+        title="Tamu"
         :value="$totalGuest"
         icon="ri-group-line"
         color="warning"
@@ -38,7 +38,7 @@
 
       <x-dashboard-card
         class="animate__animated animate__fadeInRight animate__delay-3s"
-        title="Request"
+        title="Permintaan"
         :value="$totalRequest"
         icon="ri-price-tag-3-line"
         color="danger"
@@ -47,7 +47,7 @@
     </div>
   </div>
 </div>
-<!--/ Transactions -->
+<!--/ Transaksi -->
 
 <div class="col-xl-12 mt-5">
   <div class="card animate__animated animate__zoomIn">
@@ -57,21 +57,20 @@
         <x-dashboard-list-card title="Barang Keluar" :items="$latestBarangKeluar" type="barang_keluar"/>
       </div>
 
-      <!-- Request -->
+      <!-- Permintaan -->
       <div class="col-md-6 ps-md-4 border-start fade-in-card animate__delay-1s">
-        <x-dashboard-list-card title="Request" :items="$latestRequest" type="request"/>
-        
+        <x-dashboard-list-card title="Permintaan" :items="$latestRequest" type="request"/>
       </div>
     </div>
   </div>
 </div>
 
 
-<!-- Top 5 Permintaan -->
+<!-- 5 Permintaan Terbanyak -->
 <div class="col-12 mt-5">
   <div class="card overflow-hidden shadow-sm animate__animated animate__fadeInUp animate__slower">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="card-title mb-0">Top 5 Permintaan Paling Banyak</h5>
+      <h5 class="card-title mb-0">5 Permintaan Terbanyak</h5>
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
@@ -79,10 +78,10 @@
           <thead class="table-light">
             <tr>
               <th>No</th>
-              <th>User</th>
+              <th>Pengguna</th>
               <th>Email</th>
-              <th>Role</th>
-              <th>Quantity</th>
+              <th>Peran</th>
+              <th>Jumlah</th>
             </tr>
           </thead>
           <tbody>
@@ -96,7 +95,7 @@
               </tr>
             @empty
               <tr>
-                <td colspan="5" class="text-center">Tidak ada data permintaan.</td>
+                <td colspan="5" class="text-center">Tidak terdapat data permintaan.</td>
               </tr>
             @endforelse
           </tbody>
@@ -105,21 +104,21 @@
     </div>
   </div>
 </div>
-<!--/ Top 5 Permintaan -->
+<!--/ 5 Permintaan Terbanyak -->
 
-<!-- Weekly Overview Chart -->
-<div class="col-xl-12 mb-5">
+<!-- Ikhtisar Lalu Lintas -->
+<div class="col-xl-12 mt-5">
   <div class="card h-100 shadow-sm animate__animated animate__fadeInUp animate__slow">
     <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
       <div>
-        <h5 class="card-title m-0">Traffic</h5>
-        <p class="small mb-0">Barang Masuk dan Keluar</p>
+        <h5 class="card-title m-0">Lalu Lintas</h5>
+        <p class="small mb-0">Barang Masuk dan Barang Keluar</p>
       </div>
-     <div class="btn-group btn-group-sm">
-      <button class="btn btn-outline-primary hover-scale" onclick="updateChart('week')">1 Minggu</button>
-      <button class="btn btn-outline-primary hover-scale" onclick="updateChart('month')">1 Bulan</button>
-      <button class="btn btn-outline-primary hover-scale" onclick="updateChart('year')">1 Tahun</button>
-    </div>
+      <div class="btn-group btn-group-sm">
+        <button class="btn btn-outline-primary hover-scale" onclick="updateChart('week')">1 Minggu</button>
+        <button class="btn btn-outline-primary hover-scale" onclick="updateChart('month')">1 Bulan</button>
+        <button class="btn btn-outline-primary hover-scale" onclick="updateChart('year')">1 Tahun</button>
+      </div>
     </div>
     <div class="card-body">
       <div style="width:100%; height:400px;">
@@ -128,7 +127,7 @@
     </div>
   </div>
 </div>
-<!--/ Weekly Overview Chart -->
+<!--/ Ikhtisar Lalu Lintas -->
 
 @endsection
 
@@ -154,6 +153,6 @@
 }
 </style>
 
-<!-- Muat file JS dari public/js -->
+<!-- Muat berkas JS dari public/js -->
 <script src="{{ asset('js/dashboard.js') }}"></script>
 @endsection
