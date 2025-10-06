@@ -15,9 +15,16 @@ class RequestController extends Controller
      */
     public function index(Request $request)
     {
-        // Ambil filter dari query string (?status=pending / ?status=rejected)
+        // 🔹 1. Hapus otomatis request yang sudah approved lebih dari 3 hari
+        DB::table('carts')
+            ->where('status', 'approved')
+            ->where('updated_at', '<', now()->subDays(3))
+            ->delete();
+
+        // 🔹 Ambil filter dari query string (?status=pending / ?status=rejected / ?status=all)
         $statusFilter = $request->get('status');
 
+        // 🔹 2. Ambil data sesuai filter
         $requests = DB::table('carts')
             ->join('users', 'carts.user_id', '=', 'users.id')
             ->leftJoin('cart_items', 'carts.id', '=', 'cart_items.cart_id')
@@ -32,11 +39,12 @@ class RequestController extends Controller
                 DB::raw('COALESCE(SUM(cart_items.quantity), 0) as total_quantity')
             )
             ->where(function($query) use ($statusFilter) {
-                // Filter sesuai pilihan dropdown
+                // 🔸 Filter sesuai dropdown
                 if ($statusFilter === 'pending') {
+                    // Semua pending tanpa batas waktu
                     $query->where('carts.status', 'pending');
                 } elseif ($statusFilter === 'rejected') {
-                    // Rejected hanya muncul selama 3 hari terakhir
+                    // Rejected hanya yang 3 hari terakhir
                     $query->where('carts.status', 'rejected')
                           ->where('carts.updated_at', '>=', now()->subDays(3));
                 } else {
@@ -58,7 +66,7 @@ class RequestController extends Controller
                 'carts.updated_at'
             )
             ->orderBy('carts.created_at', 'desc')
-            ->paginate(10); // pagination biar rapi
+            ->paginate(10);
 
         return view('role.admin.request', compact('requests', 'statusFilter'));
     }
@@ -95,7 +103,7 @@ class RequestController extends Controller
         //
     }
 
-    /**
+   /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
@@ -107,10 +115,8 @@ class RequestController extends Controller
                 'updated_at' => now()
             ]);
 
-        // Ambil cart untuk tahu user_id siapa
         $cart = DB::table('carts')->where('id', $id)->first();
 
-        // Tambahkan notifikasi untuk user tersebut
         if ($cart) {
             Notification::create([
                 'user_id' => $cart->user_id,

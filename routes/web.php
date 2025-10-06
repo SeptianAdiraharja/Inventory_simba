@@ -135,13 +135,6 @@ Route::middleware(['auth', 'role:admin'])
 
         /*
         |----------------------------------------------------------------------
-        | Item Out Guest (Barang Keluar untuk tamu/guest)
-        |----------------------------------------------------------------------
-        */
-        Route::resource('itemoutguest', ItemoutGuestController::class);
-
-        /*
-        |----------------------------------------------------------------------
         | Requests & Carts
         |----------------------------------------------------------------------
         | - RequestController digunakan untuk mengelola permintaan (approval/reject)
