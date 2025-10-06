@@ -1,11 +1,11 @@
 @auth
-   @if(Auth::user()->role === "pegawai" || Auth::user()->role === "guest")
+  @if(Auth::user()->role === "pegawai" OR Auth::user()->role === "admin")
     @php
       $cartsitems = \App\Models\Cart::where('user_id', Auth::id())
           ->where('status', 'active')
           ->with('cartItems.item')
           ->first();
-
+      $categories = \App\Models\Category::all();
       $notifications = \App\Models\Notification::where('user_id', Auth::id())
           ->where('status', 'unread')
           ->latest()
@@ -66,24 +66,43 @@
   </div>
 
   <div class="navbar-nav-right d-flex align-items-center justify-content-end" id="navbar-collapse">
+    @if(Auth::user()->role === "pegawai" OR Auth::user()->role === "admin")
     <!-- Search -->
     <div class="navbar-nav align-items-center">
       <div class="nav-item d-flex align-items-center">
-      <form action="{{ request()->is('admin/*') ? route('admin.guests.index') : route('pegawai.produk') }}"
+      <form action="{{ request()->is('admin/*') ? route('admin.guests.index') : route('pegawai.produk.search') }}"
             method="GET"
             class="d-flex align-items-center">
 
             <i class="ri ri-search-line icon-lg lh-0"></i>
-            <input type="text"
-                  name="q"
-                  class="form-control border-0 shadow-none"
-                  placeholder="Search..."
-                  aria-label="Search..."
-                  value="{{ request('q') }}" />
+
+            <select
+              name="kategori"
+              class="form-select border-0 bg-transparent text-secondary"
+              style="width: 150px; font-size: 14px; outline: none; box-shadow: none;"
+              onchange="this.form.submit()"
+            >
+              <option value="none">Pilih Kategori</option>
+              @foreach($categories as $category)
+              <option value="{{ $category->name }}" {{ request('kategori') == $category->name ? 'selected' : '' }}>{{ $category->name }}</option>
+              @endforeach
+            </select>
+
+            <!-- Input search -->
+            <input
+              type="text"
+              name="q"
+              class="form-control border-0 bg-transparent shadow-none"
+              placeholder="Search..."
+              aria-label="Search..."
+              style="font-size: 14px; width: 180px;"
+              value="{{ request('q') }}"
+            />
         </form>
       </div>
     </div>
     <!-- /Search -->
+    @endif
 
     <ul class="navbar-nav flex-row align-items-center ms-auto">
       @auth
