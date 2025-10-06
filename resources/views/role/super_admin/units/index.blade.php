@@ -12,7 +12,7 @@
       <thead>
         <tr>
           <th>Nama Satuan Barang</th>
-          <th>Actions</th>
+          <th>Aksi</th>
         </tr>
       </thead>
       @forelse($units as $unit)

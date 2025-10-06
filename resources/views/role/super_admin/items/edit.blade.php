@@ -6,7 +6,7 @@
     <div class="card">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Edit Item</h5>
-        <small class="text-body-secondary">Form ubah data item</small>
+        <small class="text-body-secondary">ubah data item</small>
       </div>
       <div class="card-body">
         <form action="{{ route('super_admin.items.update', $item->id) }}" method="POST" enctype="multipart/form-data">
@@ -68,7 +68,7 @@
 
           <div class="row justify-content-end">
             <div class="col-sm-10">
-              <button type="submit" class="btn btn-primary btn-sm">Update</button>
+              <button type="submit" class="btn btn-primary btn-sm">Perbarui</button>
               <a href="{{ route('super_admin.items.index') }}" class="btn btn-secondary btn-sm">Kembali</a>
             </div>
           </div>

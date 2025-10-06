@@ -12,7 +12,7 @@
             <thead>
                 <tr>
                     <th>Nama Kategori</th>
-                    <th>Actions</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             @forelse($categories as $category)

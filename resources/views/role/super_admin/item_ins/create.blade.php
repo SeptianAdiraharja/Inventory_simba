@@ -6,7 +6,7 @@
     <div class="card">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Tambah Barang Masuk</h5>
-        <small class="text-body-secondary">Form input item masuk baru</small>
+        <small class="text-body-secondary">tambah input item masuk baru</small>
       </div>
       <div class="card-body">
         <form action="{{ route('super_admin.item_ins.store') }}" method="POST" x-data="{ useExpired: true }">

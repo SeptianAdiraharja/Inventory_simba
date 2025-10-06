@@ -17,7 +17,6 @@
             <a href="{{ route('super_admin.dashboard') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-dashboard-line me-2"></i>
                 <span>Dashboard</span>
-                <span class="badge bg-primary ms-auto">1</span>
             </a>
         </li>
         @endif

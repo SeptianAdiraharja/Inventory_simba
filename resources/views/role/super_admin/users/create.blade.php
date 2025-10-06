@@ -6,7 +6,7 @@
     <div class="card">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Tambah Akun</h5>
-        <small class="text-body-secondary">Form input akun baru</small>
+        <small class="text-body-secondary">tambah input akun baru</small>
       </div>
       <div class="card-body">
         <form action="{{ route('super_admin.users.store') }}" method="POST">
@@ -44,7 +44,7 @@
           </div>
 
           <div class="row mb-4">
-            <label class="col-sm-2 col-form-label">Role</label>
+            <label class="col-sm-2 col-form-label">Peran</label>
             <div class="col-sm-10">
               <select name="role" class="form-select" required>
                 <option value="pegawai">Pegawai</option>

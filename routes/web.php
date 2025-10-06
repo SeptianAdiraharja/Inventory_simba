@@ -89,9 +89,7 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('/export/download', [ExportController::class, 'download'])
             ->name('export.download'); 
 
-
-
-
+        Route::delete('/export/clear', [ExportController::class, 'clearLogs'])->name('export.clear');
 
     });
 
@@ -132,7 +130,6 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/produk/guest/{id}', [ProdukController::class, 'showByGuest'])
             ->name('produk.byGuest');
 
-        // ✅ Search Guests (untuk search bar di navbar)
         Route::get('/guests/search', [SearchController::class, 'searchGuests'])
             ->name('guests.search');
     });
@@ -152,7 +149,6 @@ Route::middleware(['auth', 'role:pegawai'])
         // Produk & Permintaan
         Route::get('/produk', [PermintaanController::class, 'index'])->name('produk');
 
-        // ✅ Search Produk (pakai SearchController@index)
         Route::get('/produk/search', [SearchController::class, 'index'])
             ->name('produk.search');
 

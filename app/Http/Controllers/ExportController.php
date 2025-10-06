@@ -14,6 +14,7 @@ use App\Exports\BarangMasukExport;
 
 class ExportController extends Controller
 {
+    /** Filter by range tanggal */
     private function filterByDateRange($query, $startDate, $endDate)
     {
         if ($startDate && $endDate) {
@@ -25,22 +26,38 @@ class ExportController extends Controller
         return $query;
     }
 
+    /** Filter by period (weekly, monthly, yearly) */
+    private function filterByPeriod($query, $period)
+    {
+        if ($period === 'weekly') {
+            return $query->whereBetween('created_at', [
+                now()->startOfWeek(),
+                now()->endOfWeek()
+            ]);
+        } elseif ($period === 'monthly') {
+            return $query->whereYear('created_at', now()->year)
+                         ->whereMonth('created_at', now()->month);
+        } elseif ($period === 'yearly') {
+            return $query->whereYear('created_at', now()->year);
+        }
+        return $query;
+    }
+
+    /** Index export log */
     public function index(Request $request)
     {
         $items = [];
         $query = ExportLog::orderBy('created_at', 'desc');
-        $logs  = ExportLog::latest()->take(10)->get();
 
         $startDate = $request->query('start_date');
         $endDate   = $request->query('end_date');
-        $period    = $request->query('period'); // optional
-        $format    = $request->query('format', 'excel'); // ⬅️ default excel
+        $period    = $request->query('period'); 
+        $format    = $request->query('format', 'excel'); 
 
         if ($request->filled(['start_date','end_date'])) {
             $type = $request->query('type', 'masuk');
-
-            $query = $type === 'masuk' ? Item_in::with('item') : Item_out::with('item');
-            $items = $this->filterByDateRange($query, $startDate, $endDate)->get();
+            $queryItem = $type === 'masuk' ? Item_in::with('item') : Item_out::with('item');
+            $items = $this->filterByDateRange($queryItem, $startDate, $endDate)->get();
 
             $items->map(function ($row) {
                 $row->total_price = $row->item->price * $row->quantity;
@@ -57,23 +74,6 @@ class ExportController extends Controller
         return view('role.super_admin.exports.index', compact('items','logs','period','startDate','endDate','format'));
     }
 
-    private function filterByPeriod($query, $period)
-    {
-        if ($period === 'weekly') {
-            return $query->whereBetween('created_at', [
-                now()->startOfWeek(),
-                now()->endOfWeek()
-            ]);
-        } elseif ($period === 'monthly') {
-            return $query->whereYear('created_at', now()->year)
-                         ->whereMonth('created_at', now()->month);
-        } elseif ($period === 'yearly') {
-            return $query->whereYear('created_at', now()->year);
-        }
-
-        return $query;
-    }
-
     /** Export Barang Masuk Excel */
     public function exportBarangMasukExcel(Request $request)
     {
@@ -82,7 +82,6 @@ class ExportController extends Controller
 
         $query = Item_in::with('item');
         $items = $this->filterByPeriod($query, $period)->get();
-
         $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
 
         ExportLog::create([
@@ -90,10 +89,11 @@ class ExportController extends Controller
             'type'      => $period,
             'data_type' => 'masuk',
             'format'    => 'excel',
-            'file_path' => 'exports/' . $fileName,
+            'file_path' => "role/super_admin/exports/{$fileName}",
+            'period'    => $period,
         ]);
 
-        return Excel::download(new \App\Exports\BarangMasukExport($items), $fileName);
+        return Excel::download(new BarangMasukExport($items), $fileName);
     }
 
     /** Export Barang Masuk PDF */
@@ -104,10 +104,9 @@ class ExportController extends Controller
 
         $query = Item_in::with('item');
         $items = $this->filterByPeriod($query, $period)->get();
-
         $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
 
-        $pdf = Pdf::loadView('exports.barang_masuk_pdf', compact('items', 'period'))
+        $pdf = Pdf::loadView('role.super_admin.exports.barang_masuk_pdf', compact('items', 'period'))
                   ->setPaper('a4', 'landscape');
 
         ExportLog::create([
@@ -115,7 +114,8 @@ class ExportController extends Controller
             'type'      => $period,
             'data_type' => 'masuk',
             'format'    => 'pdf',
-            'file_path' => 'exports/' . $fileName,
+            'file_path' => "role/super_admin/exports/{$fileName}",
+            'period'    => $period,
         ]);
 
         return $pdf->download($fileName);
@@ -129,7 +129,6 @@ class ExportController extends Controller
 
         $query = Item_out::with('item');
         $items = $this->filterByPeriod($query, $period)->get();
-
         $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
 
         ExportLog::create([
@@ -137,10 +136,11 @@ class ExportController extends Controller
             'type'      => $period,
             'data_type' => 'keluar',
             'format'    => 'excel',
-            'file_path' => 'exports/' . $fileName,
+            'file_path' => "role/super_admin/exports/{$fileName}",
+            'period'    => $period,
         ]);
 
-        return Excel::download(new \App\Exports\BarangKeluarExport($items), $fileName);
+        return Excel::download(new BarangKeluarExport($items), $fileName);
     }
 
     /** Export Barang Keluar PDF */
@@ -151,10 +151,9 @@ class ExportController extends Controller
 
         $query = Item_out::with('item');
         $items = $this->filterByPeriod($query, $period)->get();
-
         $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
 
-        $pdf = Pdf::loadView('exports.barang_keluar_pdf', compact('items', 'period'))
+        $pdf = Pdf::loadView('role.super_admin.exports.barang_keluar_pdf', compact('items', 'period'))
                   ->setPaper('a4', 'landscape');
 
         ExportLog::create([
@@ -162,13 +161,14 @@ class ExportController extends Controller
             'type'      => $period,
             'data_type' => 'keluar',
             'format'    => 'pdf',
-            'file_path' => 'exports/' . $fileName,
+            'file_path' => "role/super_admin/exports/{$fileName}",
+            'period'    => $period,
         ]);
 
         return $pdf->download($fileName);
     }
 
-    /** Custom Download (pilih tanggal & jenis data) */
+    /** Custom Download by Date Range */
     public function download(Request $request)
     {
         $startDate = $request->query('start_date');
@@ -180,7 +180,6 @@ class ExportController extends Controller
 
         $query = $type === 'masuk' ? Item_in::with('item') : Item_out::with('item');
         $items = $this->filterByDateRange($query, $startDate, $endDate)->get();
-
         $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
 
         $fileName = "barang_{$type}_{$startDate}_to_{$endDate}_" . now()->format('Ymd_His');
@@ -188,10 +187,10 @@ class ExportController extends Controller
         ExportLog::create([
             'super_admin_id' => Auth::id(),
             'type'      => 'custom',
-            'data_type' => $type,   // masuk / keluar
+            'data_type' => $type,
             'format'    => $format,
-            'file_path' => "exports/{$fileName}.{$format}",
-            'period' => $period,
+            'file_path' => "role/super_admin/exports/{$fileName}.{$format}",
+            'period'    => $period,
         ]);
 
         if ($format === 'excel') {
@@ -200,10 +199,25 @@ class ExportController extends Controller
                 : Excel::download(new BarangKeluarExport($items), $fileName.'.xlsx');
         } else {
             $pdf = $type === 'masuk'
-                ? Pdf::loadView('exports.barang_masuk_pdf', compact('items','startDate','endDate', 'period'))
-                : Pdf::loadView('exports.barang_keluar_pdf', compact('items','startDate','endDate', 'period'));
+                ? Pdf::loadView('role.super_admin.exports.barang_masuk_pdf', compact('items','startDate','endDate','period'))
+                : Pdf::loadView('role.super_admin.exports.barang_keluar_pdf', compact('items','startDate','endDate','period'));
 
             return $pdf->setPaper('a4', 'landscape')->download($fileName.'.pdf');
         }
     }
+
+    public function clearLogs()
+    {
+        try {
+            // hapus semua data log export
+            ExportLog::query()->delete();
+
+            return redirect()->route('super_admin.export.index')
+                ->with('success', 'Riwayat export berhasil dibersihkan.');
+        } catch (\Exception $e) {
+            return redirect()->route('super_admin.export.index')
+                ->with('error', 'Gagal menghapus riwayat export: ' . $e->getMessage());
+        }
+    }
+
 }

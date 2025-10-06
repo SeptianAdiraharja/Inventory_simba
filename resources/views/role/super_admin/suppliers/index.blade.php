@@ -13,7 +13,7 @@
         <tr>
           <th>Nama Supplier</th>
           <th>Kontak</th>
-          <th>Actions</th>
+          <th>Aksi</th>
         </tr>
       </thead>
       @forelse($suppliers as $supplier)

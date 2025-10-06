@@ -2,17 +2,71 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Barcode {{ $item->name }}</title>
+    <title>Barcode - {{ $item->code }}</title>
     <style>
-        body { font-family: sans-serif; text-align: center; }
-        .barcode { margin-top: 20px; }
+        @page {
+            size: A4;
+            margin: 5mm;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 7pt;
+            margin: 0;
+            padding: 0;
+        }
+
+        .sheet {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: 2mm;
+        }
+
+        .label {
+            width: 33mm;
+            height: 15mm;
+            text-align: center;
+            box-sizing: border-box;
+            padding: 1mm;
+            border: 0.1mm solid transparent; /* biar rapih tapi gak ganggu scan */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* High quality barcode */
+        .label img {
+            width: 100%;
+            height: auto;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            transform: scale(1.05); /* sedikit zoom biar garis barcode jelas */
+            filter: contrast(120%) brightness(105%);
+        }
+
+        .label p {
+            font-size: 6pt;
+            margin: 1mm 0 0 0;
+            letter-spacing: 0.3pt;
+        }
     </style>
 </head>
 <body>
-    <h3>{{ $item->name }}</h3>
-    <p>Kode: {{ $item->code }}</p>
-    <div class="barcode">
-        <img src="data:image/png;base64,{{ (new \Milon\Barcode\DNS1D)->getBarcodePNG($item->code, 'C128', 2, 60) }}" alt="barcode">
+    <div class="sheet">
+        @for ($i = 0; $i < $jumlah; $i++)
+            <div class="label">
+                @if($item->barcode_png_base64)
+                    {{-- Gunakan data URI dengan resolusi tinggi --}}
+                    <img 
+                        src="data:image/png;base64,{{ base64_encode(base64_decode(str_replace('data:image/png;base64,', '', $item->barcode_png_base64))) }}" 
+                        alt="barcode"
+                    >
+                    <p>{{ $item->code }}</p>
+                @endif
+            </div>
+        @endfor
     </div>
 </body>
 </html>

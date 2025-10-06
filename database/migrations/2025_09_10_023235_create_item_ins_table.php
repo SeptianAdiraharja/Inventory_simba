@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('item_id')->constrained('items')->onDelete('cascade');
             $table->integer('quantity');
             $table->unsignedBigInteger('supplier_id')->nullable();
-            $table->date('expired_at');
+            $table->date('expired_at')->nullable();
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
