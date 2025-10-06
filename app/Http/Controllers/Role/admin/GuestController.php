@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Role\admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Guest;
+use App\Models\Guest_carts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,7 +15,7 @@ class GuestController extends Controller
     {
         $query = $request->input('q');
 
-        $guests = \App\Models\Guest::with('creator')
+        $guests = Guest::with('creator')
             ->when($query, function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
                 ->orWhere('phone', 'like', "%{$query}%")
@@ -35,11 +36,17 @@ class GuestController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        Guest::create([
+        $guest = Guest::create([
             'name'        => $request->name,
             'phone'       => $request->phone,
             'description' => $request->description,
             'created_by'  => Auth::id(), // pastikan ada kolom created_by di tabel
+        ]);
+
+        // langsung buat guest_cart kosong
+        Guest_carts::create([
+            'guest_id' => $guest->id,
+            'session_id' => session()->getId(),
         ]);
 
         return redirect()->route('admin.guests.index')

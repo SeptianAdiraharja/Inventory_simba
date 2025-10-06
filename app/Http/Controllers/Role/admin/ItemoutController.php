@@ -1,51 +1,54 @@
 <?php
-
+// ... Kode Controller PHP tidak berubah karena sudah memuat data $guestItemOuts
 namespace App\Http\Controllers\Role\admin;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
-use App\Models\Guest_carts;
 use App\Models\CartItem;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\DB;
 use App\Models\Item_out;
 use App\Models\Item;
+use App\Models\Guest;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
 
 class ItemoutController extends Controller
 {
+
     /**
-     * Display a listing of the resource.
+     * Tampilkan daftar item keluar (pegawai & tamu)
      */
     public function index()
     {
-        // Ambil cart milik user dengan pagination
+        /**
+         * 🔹 1. Barang keluar dari PEGAWAI (Cart)
+         */
         $approvedItems = Cart::with(['cartItems.item', 'user'])
             ->where('status', 'approved')
             ->latest()
-            ->paginate(10) // 🔑 tampil 10 data per halaman
+            ->paginate(10)
             ->through(function ($cart) {
                 $cart->all_scanned = $cart->cartItems->every(fn($i) => $i->scanned_at);
                 return $cart;
             });
 
-        // Guest requests (kalau juga mau dipaginasi, sama caranya)
-        $guestRequests = Item_out::select('item_outs.*', 'guests.name as guest_name')
-            ->leftJoin('guests', 'item_outs.guest_id', '=', 'guests.id')
-            ->with('item')
-            ->whereNull('item_outs.cart_id')
-            ->latest()
+        /**
+         * 🔹 2. Barang keluar dari TAMU
+         * Mengambil data dari guest_carts → guest_cart_items → items
+         */
+        $guestItemOuts = Guest::with(['guestCart.guestCartItems.item'])
+            ->whereHas('guestCart.guestCartItems') // hanya tamu yang punya item
+            ->orderByDesc('created_at')
             ->paginate(10);
 
-        return view('role.admin.itemout', compact('approvedItems', 'guestRequests'));
+        return view('role.admin.itemout', compact('approvedItems', 'guestItemOuts'));
     }
 
-
-
-   // Scan item berdasarkan barcode
+    /**
+     * Scan item berdasarkan barcode.
+     */
     public function scan(Request $request, $cartId)
     {
         $request->validate([
@@ -53,37 +56,48 @@ class ItemoutController extends Controller
         ]);
 
         $cart = Cart::with('cartItems.item')->findOrFail($cartId);
-        $barcode = $request->barcode;
+        $barcode = trim($request->barcode);
 
-        // cari cartItem dengan kode barcode (lebih aman menggunakan callback)
-        $cartItem = $cart->cartItems->first(function ($ci) use ($barcode) {
-            return optional($ci->item)->code === $barcode;
-        });
+        // Cari berdasarkan kode barang
+        $cartItem = $cart->cartItems->first(fn($ci) => optional($ci->item)->code === $barcode);
 
         if (!$cartItem) {
             return response()->json([
                 'success' => false,
-                'message' => '❌ Barcode tidak ditemukan pada cart ini.',
-            ], 404);
+                'status'  => 'invalid',
+                'message' => '❌ Kode / QR tidak sesuai dengan barang dalam permintaan ini.',
+            ], 422);
         }
 
-        // update scanned_at
+        // Jika sudah discan sebelumnya
+        if ($cartItem->scanned_at) {
+            return response()->json([
+                'success' => false,
+                'status'  => 'duplicate',
+                'message' => '⚠️ Barang ini sudah pernah dipindai.',
+            ], 409);
+        }
+
+        // Update jika valid
         $cartItem->update(['scanned_at' => now()]);
 
         return response()->json([
             'success' => true,
+            'status'  => 'valid',
             'message' => '✅ Barang berhasil discan.',
             'item' => [
-                'id' => $cartItem->item->id,
-                'name' => $cartItem->item->name,
-                'code' => $cartItem->item->code,
-                'quantity' => $cartItem->quantity,
-                'scanned_at' => $cartItem->scanned_at,
+                'id'        => $cartItem->item->id,
+                'name'      => $cartItem->item->name,
+                'code'      => $cartItem->item->code,
+                'quantity'  => $cartItem->quantity,
+                'scanned_at'=> $cartItem->scanned_at,
             ],
         ]);
     }
 
-    // Release barang keluar
+    /**
+     * Release barang keluar.
+     */
     public function release(Request $request, $cartId)
     {
         $request->validate([
@@ -96,15 +110,14 @@ class ItemoutController extends Controller
         $items = $request->input('items', []);
 
         DB::beginTransaction();
+
         try {
             foreach ($items as $scannedItem) {
-                // lock record agar stok konsisten
                 $item = Item::where('id', $scannedItem['id'])->lockForUpdate()->first();
                 if (!$item) continue;
 
                 $qty = (int) $scannedItem['quantity'];
 
-                // cek stok
                 if ($item->stock < $qty) {
                     DB::rollBack();
                     return response()->json([
@@ -113,7 +126,6 @@ class ItemoutController extends Controller
                     ], 422);
                 }
 
-                // buat record keluaran barang (hindari mass assignment issue dengan assign lalu save)
                 $itemOut = new Item_out();
                 $itemOut->cart_id = $cart->id;
                 $itemOut->item_id = $item->id;
@@ -122,10 +134,8 @@ class ItemoutController extends Controller
                 $itemOut->approved_by = Auth::id();
                 $itemOut->save();
 
-                // kurangi stok
                 $item->decrement('stock', $qty);
 
-                // set scanned_at pada cart_items
                 $cartItem = CartItem::where('cart_id', $cart->id)
                     ->where('item_id', $item->id)
                     ->first();
@@ -135,138 +145,67 @@ class ItemoutController extends Controller
                 }
             }
 
-            // set picked_up_at
             $cart->update(['picked_up_at' => now()]);
 
             DB::commit();
 
-            return response()->json(['success' => true, 'message' => '✅ Semua barang berhasil dikeluarkan.']);
+            return response()->json([
+                'success' => true,
+                'message' => '✅ Semua barang berhasil dikeluarkan.'
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Release error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan saat memproses release.'], 500);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memproses release.'
+            ], 500);
         }
     }
 
+    /**
+     * Cek apakah semua item sudah discan.
+     */
     public function checkAllScanned($cartId)
     {
         $cart = Cart::with('cartItems')->findOrFail($cartId);
         $allScanned = $cart->cartItems->every(fn($i) => $i->scanned_at);
+
         return response()->json(['all_scanned' => $allScanned]);
     }
 
-    // struk
+    /**
+     * Tampilkan struk langsung di browser.
+     */
     public function struk($id)
     {
-        // Ambil data cart berdasarkan ID
         $cart = Cart::with(['user', 'cartItems.item'])->findOrFail($id);
-
-        // Ambil data item_out yang terkait dengan cart ini
         $itemOut = Item_out::where('cart_id', $cart->id)->get();
 
-        // Load view untuk struk PDF
-        $pdf = Pdf::loadView('role.admin.export.struk', [
-            'cart'    => $cart,
-            'itemOut' => $itemOut
-        ]);
+        $pdf = Pdf::loadView('role.admin.export.struk', compact('cart', 'itemOut'));
 
-        // Output langsung sebagai file PDF
         return $pdf->stream('struk-pemesanan-' . $cart->id . '.pdf');
     }
 
-    // generate Struk
+    /**
+     * Download struk dalam bentuk PDF.
+     */
     public function generateStruk($cartId)
     {
-        $cart = Cart::with(['cartItems.item', 'user', 'guest'])->findOrFail($cartId);
-
-        // Ambil data item_out sesuai cart
+        $cart = Cart::with(['cartItems.item', 'user'])->findOrFail($cartId);
         $itemOut = Item_out::where('cart_id', $cartId)->get();
 
-        $pdf = Pdf::loadView('role.admin.export.struk', [
-            'cart' => $cart,
-            'itemOut' => $itemOut
-        ]);
+        $pdf = Pdf::loadView('role.admin.export.struk', compact('cart', 'itemOut'));
 
-        return $pdf->download('struk_cart_'.$cart->id.'.pdf');
+        return $pdf->download('struk_cart_' . $cart->id . '.pdf');
     }
 
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'item_id'  => 'required|exists:items,id',
-            'guest_id' => 'required|exists:guests,id',
-            'barcode'  => 'required|string',
-        ]);
-
-        $item = Item::findOrFail($request->item_id);
-
-        if ($item->stock < 1) {
-            return back()->with('error', 'Stok tidak mencukupi.');
-        }
-
-        $guestCart = Guest_carts::firstOrCreate(
-            [
-                'session_id' => session()->getId(),
-                'guest_id'   => $request->guest_id,
-            ]
-        );
-
-
-        Item_out::create([
-            'item_id'    => $item->id,
-            'guest_id'   => $request->guest_id,
-            'quantity'   => 1,
-            'released_at'=> now(),
-            'approved_by'=> Auth::id(),
-        ]);
-
-        $item->decrement('stock', 1);
-
-        return back()->with('success', 'Barang berhasil dikeluarkan.');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
+    // Placeholder method bawaan resource controller
+    public function create() {}
+    public function store(Request $request) {}
+    public function show(string $id) {}
+    public function edit(string $id) {}
+    public function update(Request $request, string $id) {}
+    public function destroy(string $id) {}
 }

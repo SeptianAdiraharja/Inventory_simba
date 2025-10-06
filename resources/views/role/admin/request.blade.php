@@ -31,7 +31,6 @@
                 <th>Role</th>
                 <th>Status</th>
                 <th>Quantity</th>
-                <th>Tanggal</th>
                 <th>Aksi</th>
             </tr>
         </thead>
@@ -53,7 +52,6 @@
                         </span>
                     </td>
                     <td class="text-center">{{ $req->total_quantity }}</td>
-                    <td>{{ $req->created_at->format('d-m-Y H:i') }}</td>
                     <td>
                         @if($req->status == 'pending')
                             <!-- Tombol approve -->

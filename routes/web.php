@@ -20,7 +20,7 @@ use App\Http\Controllers\Role\admin\ItemoutController;
 use App\Http\Controllers\Role\admin\RequestController;
 use App\Http\Controllers\Role\admin\GuestController;
 use App\Http\Controllers\Role\admin\ProdukController;
-use App\Http\Controllers\Role\admin\GuestCartController;
+use App\Http\Controllers\Role\admin\ItemoutGuestController;
 use App\Http\Controllers\SearchController;
 
 /*
@@ -99,41 +99,82 @@ Route::middleware(['auth', 'role:super_admin'])
 |--------------------------------------------------------------------------
 | Admin Routes
 |--------------------------------------------------------------------------
+|
+| Semua route untuk role:admin ditempatkan di sini.
+| Prefix   : /admin
+| Namespace: App\Http\Controllers\Role\admin
+| Name     : admin.*
+|
 */
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->as('admin.')
     ->group(function () {
-        Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
-        Route::get('/dashboard/data', [AdminController::class, 'getChartData']);
 
-        Route::get('/dashboard/modal/{type}', [AdminController::class, 'loadModalData'])
-            ->name('dashboard.modal.data');
+        /*
+        |----------------------------------------------------------------------
+        | Dashboard
+        |----------------------------------------------------------------------
+        */
+        Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard/data', [AdminController::class, 'getChartData']); // data untuk chart
+        Route::get('/dashboard/modal/{type}', [AdminController::class, 'loadModalData'])->name('dashboard.modal.data');
         Route::get('/dashboard/modal/barang_keluar', [AdminController::class, 'barangKeluarModal'])
             ->name('dashboard.modal.barang_keluar');
 
-        // Item Out
+        /*
+        |----------------------------------------------------------------------
+        | Item Out (Barang Keluar untuk pegawai)
+        |----------------------------------------------------------------------
+        */
         Route::resource('itemout', ItemoutController::class);
         Route::get('/itemout/{cart}/struk', [ItemoutController::class, 'struk'])->name('itemout.struk');
         Route::post('/itemout/scan/{cart}', [ItemoutController::class, 'scan'])->name('itemout.scan');
         Route::get('/itemout/check-all-scanned/{cart}', [ItemoutController::class, 'checkAllScanned'])->name('itemout.checkAllScanned');
         Route::post('/itemout/release/{cart}', [ItemoutController::class, 'release'])->name('itemout.release');
 
-        // Request
+        /*
+        |----------------------------------------------------------------------
+        | Item Out Guest (Barang Keluar untuk tamu/guest)
+        |----------------------------------------------------------------------
+        */
+        Route::resource('itemoutguest', ItemoutGuestController::class);
+
+        /*
+        |----------------------------------------------------------------------
+        | Requests & Carts
+        |----------------------------------------------------------------------
+        | - RequestController digunakan untuk mengelola permintaan (approval/reject)
+        | - carts resource diarahkan juga ke RequestController
+        */
         Route::get('/request', [RequestController::class, 'index'])->name('request');
         Route::resource('carts', RequestController::class);
 
-        // Guests
+        /*
+        |----------------------------------------------------------------------
+        | Guests (Tamu)
+        |----------------------------------------------------------------------
+        */
         Route::resource('guests', GuestController::class);
 
-        // Produk guest
-        Route::get('/produk/guest/{id}', [ProdukController::class, 'showByGuest'])
-            ->name('produk.byGuest');
+        // 🔎 Search guest (digunakan untuk navbar search)
+        Route::get('/guests/search', [SearchController::class, 'searchGuests'])->name('guests.search');
 
-        // ✅ Search Guests (untuk search bar di navbar)
-        Route::get('/guests/search', [SearchController::class, 'searchGuests'])
-            ->name('guests.search');
+        /*
+        |----------------------------------------------------------------------
+        | Produk Guest
+        |----------------------------------------------------------------------
+        | - Menampilkan produk yang dapat dipilih oleh tamu (guest)
+        | - Scan barang masuk ke guest_carts
+        | - Release barang dari guest_carts ke item_out_guests
+        */
+        Route::get('/produk/guest/{id}', [ProdukController::class, 'showByGuest'])->name('produk.byGuest');
+        Route::post('/produk/guest/{id}/scan', [ProdukController::class, 'scan'])->name('produk.scan');
+        Route::get('/produk/guest/{id}/cart', [ProdukController::class, 'showCart'])->name('produk.cart'); // <- AJAX modal
+        Route::post('/produk/guest/{id}/release', [ProdukController::class, 'release'])->name('produk.release');
+
     });
+
 
 /*
 |--------------------------------------------------------------------------

@@ -12,8 +12,7 @@ class Guest_carts extends Model
     protected $table = 'guest_carts';
     protected $fillable = ['session_id', 'guest_id'];
 
-
-    // relasi belongsToMany ke Item lewat pivot guest_cart_items
+    // 🔹 Cart punya banyak item (via pivot guest_cart_items)
     public function items()
     {
         return $this->belongsToMany(Item::class, 'guest_cart_items', 'guest_cart_id', 'item_id')
@@ -21,15 +20,15 @@ class Guest_carts extends Model
                     ->withTimestamps();
     }
 
+    // 🔹 Cart dimiliki oleh 1 Guest
     public function guest()
     {
         return $this->belongsTo(Guest::class, 'guest_id', 'id');
     }
 
-    // relasi ke tabel pivot langsung
+    // 🔹 Cart juga bisa diakses langsung ke pivot
     public function guestCartItems()
     {
         return $this->hasMany(Guest_carts_item::class, 'guest_cart_id', 'id');
     }
-
 }

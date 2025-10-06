@@ -1,5 +1,5 @@
 @auth
-  @if(Auth::user()->role === "pegawai")
+   @if(Auth::user()->role === "pegawai" || Auth::user()->role === "guest")
     @php
       $cartsitems = \App\Models\Cart::where('user_id', Auth::id())
           ->where('status', 'active')
