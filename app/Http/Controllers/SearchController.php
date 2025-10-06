@@ -14,19 +14,26 @@ class SearchController extends Controller
     public function index(Request $request)
     {
         $query = $request->input('q');
+        $kategori = $request->input('kategori');
 
         $items = Item::with('category')
             ->when($query, function ($q) use ($query) {
-                $q->where('name', 'LIKE', "%{$query}%")
-                  ->orWhereHas('category', function ($cat) use ($query) {
-                      $cat->where('name', 'LIKE', "%{$query}%");
-                  });
+                $q->where(function ($sub) use ($query) {
+                    $sub->where('name', 'LIKE', "%{$query}%")
+                        ->orWhereHas('category', function ($cat) use ($query) {
+                            $cat->where('name', 'LIKE', "%{$query}%");
+                        });
+                });
+            })
+            ->when($kategori && $kategori !== 'none', function ($q) use ($kategori) {
+                $q->whereHas('category', function ($cat) use ($kategori) {
+                    $cat->where('name', $kategori);
+                });
             })
             ->latest()
             ->paginate(12);
 
         $categories = Category::all();
-
         return view('role.pegawai.produk', compact('items', 'categories'))
             ->with('search', $query);
     }

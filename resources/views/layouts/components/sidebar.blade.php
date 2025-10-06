@@ -38,7 +38,7 @@
                 <span>Dashboard</span>
             </a>
         </li>
-        <li class="menu-item {{ Route::is('pegawai.produk') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('pegawai.produk') ? 'active' : '' }} {{ Route::is('pegawai.produk.search') ? 'active' : '' }}">
             <a href="{{ route('pegawai.produk') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-shopping-cart-line me-2"></i>
                 <span>Produk</span>
