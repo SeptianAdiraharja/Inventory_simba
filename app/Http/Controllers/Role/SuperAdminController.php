@@ -92,6 +92,13 @@ class SuperAdminController extends Controller
             $growth = (($thisMonth - $lastMonth) / $lastMonth) * 100;
         }
 
+        $lastUpdateItemIn = Item_in::latest('updated_at')->value('updated_at');
+
+        $lastUpdateExpired = Item_in::whereNotNull('expired_at')
+            ->whereBetween('expired_at', [Carbon::now(), Carbon::now()->addDays(30)])
+            ->latest('updated_at')
+            ->value('updated_at');
+
         return view('role.super_admin.dashboard', [
             'categories' => Category::count(),
             'item' => Item::count(),
@@ -118,6 +125,10 @@ class SuperAdminController extends Controller
 
             // growth data
             'growth' => $growth,
+
+            //Lastupdate
+            'lastUpdateItemIn' => $lastUpdateItemIn,
+            'lastUpdateExpired' => $lastUpdateExpired,
         ]);
     }
 }

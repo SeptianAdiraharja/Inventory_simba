@@ -6,7 +6,7 @@
     <div class="card">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Tambah Satuan Barang</h5>
-        <small class="text-body-secondary">Form input satuan barang baru</small>
+        <small class="text-body-secondary">tambah satuan barang baru</small>
       </div>
       <div class="card-body">
         <form action="{{ route('super_admin.units.store') }}" method="POST">

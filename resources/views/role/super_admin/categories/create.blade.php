@@ -6,7 +6,7 @@
     <div class="card">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Tambah Kategori</h5>
-        <small class="text-body-secondary">Form input kategori baru</small>
+        <small class="text-body-secondary">Tambah kategori baru</small>
       </div>
       <div class="card-body">
         <form action="{{ route('super_admin.categories.store') }}" method="POST">

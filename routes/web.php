@@ -89,9 +89,7 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('/export/download', [ExportController::class, 'download'])
             ->name('export.download');
 
-
-
-
+        Route::delete('/export/clear', [ExportController::class, 'clearLogs'])->name('export.clear');
 
     });
 
@@ -151,7 +149,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::resource('guests', GuestController::class);
 
         // 🔎 Search guest (digunakan untuk navbar search)
-        Route::get('/guests/search', [SearchController::class, 'searchGuests'])->name('guests.search');
+        Route::get('/guests/search', [SearchController::class, 'searchGuests'])
+            ->name('guests.search');
 
         /*
         |----------------------------------------------------------------------
@@ -165,8 +164,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/produk/guest/{id}/scan', [ProdukController::class, 'scan'])->name('produk.scan');
         Route::get('/produk/guest/{id}/cart', [ProdukController::class, 'showCart'])->name('produk.cart'); // <- AJAX modal
         Route::post('/produk/guest/{id}/release', [ProdukController::class, 'release'])->name('produk.release');
-
-    });
+});
 
 
 /*
@@ -184,7 +182,6 @@ Route::middleware(['auth', 'role:pegawai'])
         // Produk & Permintaan
         Route::get('/produk', [PermintaanController::class, 'index'])->name('produk');
 
-        // ✅ Search Produk (pakai SearchController@index)
         Route::get('/produk/search', [SearchController::class, 'index'])
             ->name('produk.search');
 

@@ -13,13 +13,27 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class ItemController extends Controller
 {
-
-    public function index()
+    public function index(Request $request)
     {
-        $items = Item::with(['category', 'unit', 'supplier'])->latest()->get();
+        $query = Item::with(['category', 'unit', 'supplier']);
+
+        // Filter berdasarkan tanggal (created_at)
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        // Sorting stok
+        if ($request->sort_stock) {
+            $query->orderBy('stock', $request->sort_stock);
+        } else {
+            $query->latest();
+        }
+
+        $items = $query->get();
+
         return view('role.super_admin.items.index', compact('items'));
     }
-
+    
     public function create()
     {
         $categories = Category::all();
@@ -27,26 +41,32 @@ class ItemController extends Controller
         $suppliers = Supplier::all();
         return view('role.super_admin.items.create', compact('categories', 'units', 'suppliers'));
     }
-
+    
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
+            'code'        => 'nullable|string|max:255|unique:items,code', // opsional
             'category_id' => 'required|exists:categories,id',
             'unit_id'     => 'required|exists:units,id',
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'price'       => 'required|numeric|min:0',
             'image'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
+        // kalau code kosong → generate otomatis
+        if (empty($validated['code'])) {
+            $validated['code'] = 'BRG-' . now()->format('YmdHis') . '-' . rand(1000, 9999);
+        }
+
         // isi created_by dari user login
         $validated['created_by'] = Auth::id();
+        $validated['stock'] = 0;
 
         // Simpan gambar jika ada
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('images/items', 'public');
         }
-
-        $validated['stock'] = 0;
 
         Item::create($validated);
 
@@ -89,13 +109,14 @@ class ItemController extends Controller
     {
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
+            'code'        => 'required|string|max:255|unique:items,code,' . $item->id, // tetap unik
             'category_id' => 'required|exists:categories,id',
             'unit_id'     => 'required|exists:units,id',
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'price'       => 'required|numeric|min:0',
             'image'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // Update gambar jika ada
         if ($request->hasFile('image')) {
             if ($item->image && Storage::disk('public')->exists($item->image)) {
                 Storage::disk('public')->delete($item->image);
@@ -118,9 +139,16 @@ class ItemController extends Controller
         return redirect()->route('super_admin.items.index')->with('success', 'Item berhasil dihapus.');
     }
 
-    public function printBarcode(Item $item)
+    public function printBarcode(Request $request, Item $item)
     {
-        $pdf = Pdf::loadView('role.super_admin.items.barcode-pdf', compact('item'));
+        $jumlah = $request->get('jumlah', 1);
+        $ukuran = $request->get('ukuran', 'A4');
+
+        $pdf = Pdf::loadView('role.super_admin.items.barcode-pdf', compact('item', 'jumlah', 'ukuran'))
+            ->setPaper('A4', 'portrait');
+
         return $pdf->download('barcode-' . $item->code . '.pdf');
     }
+
+
 }

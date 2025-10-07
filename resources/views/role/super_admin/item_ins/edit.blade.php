@@ -6,7 +6,7 @@
     <div class="card">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Edit Item Masuk</h5>
-        <small class="text-body-secondary">Form Ubah Barang masuk</small>
+        <small class="text-body-secondary">Ubah Barang masuk</small>
       </div>
       <div class="card-body">
         <form action="{{ route('super_admin.item_ins.update', $item_in->id) }}" method="POST"
@@ -15,7 +15,7 @@
           @method('PUT')
 
           <div class="row mb-4">
-            <label class="col-sm-2 col-form-label">Item</label>
+            <label class="col-sm-2 col-form-label">Barang</label>
             <div class="col-sm-10">
               <select name="item_id" class="form-control" required>
                 @foreach($items as $item)
@@ -56,20 +56,18 @@
                   Tanggal Kedaluwarsa
               </label>
               <div class="col-sm-10">
-                  <!-- Input hanya muncul jika toggle ON -->
+                  <!-- Input muncul jika toggle ON -->
                   <div x-show="useExpired" x-transition>
                       <input
-                          type="date"
-                          name="expired_at"
-                          id="expired_at"
-                          min="{{ \Carbon\Carbon::today()->toDateString() }}"
-                          value="{{ old('expired_at', $item_in->expired_at ? \Carbon\Carbon::parse($item_in->expired_at)->format('Y-m-d') : '') }}"
-                          class="form-control @error('expired_at') is-invalid @enderror"
-                          x-bind:required="useExpired"
-                      >
-                      @error('expired_at')
-                          <div class="text-danger small mt-1">{{ $message }}</div>
-                      @enderror
+                        type="date"
+                        name="expired_at"
+                        id="expired_at"
+                        min="{{ \Carbon\Carbon::today()->toDateString() }}"
+                        value="{{ old('expired_at', $item_in->expired_at ? $item_in->expired_at->format('Y-m-d') : '') }}"
+                        class="form-control @error('expired_at') is-invalid @enderror"
+                        x-bind:required="useExpired"
+                        x-bind:disabled="!useExpired"
+                    />
                   </div>
 
                   <!-- Switch ON/OFF -->
@@ -82,9 +80,9 @@
               </div>
           </div>
 
-          <div class="row justify-content-end">
+          <div class="row justify-content-end">x`
             <div class="col-sm-10">
-              <button type="submit" class="btn btn-primary btn-sm">Update</button>
+              <button type="submit" class="btn btn-primary btn-sm">Perbarui</button>
               <a href="{{ route('super_admin.item_ins.index') }}" class="btn btn-secondary btn-sm">Kembali</a>
             </div>
           </div>

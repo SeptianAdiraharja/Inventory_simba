@@ -12,10 +12,10 @@
       <table class="table table-sm">
         <thead>
           <tr>
-            <th class="text-truncate">User</th>
+            <th class="text-truncate">Akun</th>
             <th class="text-truncate">Email</th>
-            <th class="text-truncate">Role</th>
-            <th class="text-truncate">Actions</th>
+            <th class="text-truncate">Peran</th>
+            <th class="text-truncate">Aksi</th>
           </tr>
         </thead>
         <tbody>

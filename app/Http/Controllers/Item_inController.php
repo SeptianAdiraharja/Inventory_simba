@@ -37,7 +37,7 @@ class Item_inController extends Controller
             'item_id'     => $request->item_id,
             'quantity'    => $request->quantity,
             'supplier_id' => $request->supplier_id,
-            'expired_at'  => $request->expired_at,
+            'expired_at'  => $request->expired_at ?? null,
             'created_by'  => Auth::id(),
         ]);
 
@@ -68,34 +68,36 @@ class Item_inController extends Controller
         $oldItemId = $item_in->item_id;
         $oldQty    = $item_in->quantity;
 
+        // Update stok
         if ($oldItemId != $request->item_id) {
-            // Update stok item lama
             $oldItem = Item::findOrFail($oldItemId);
             $oldItem->stock -= $oldQty;
             $oldItem->save();
 
-            // Tambah stok ke item baru
             $newItem = Item::findOrFail($request->item_id);
             $newItem->stock += $request->quantity;
             $newItem->save();
         } else {
-            // Item sama, cukup update selisih
             $diff = $request->quantity - $oldQty;
             $item = Item::findOrFail($request->item_id);
             $item->stock += $diff;
             $item->save();
         }
 
+        $expiredAt = $request->has('expired_at') && $request->expired_at ? $request->expired_at : null;
+
         $item_in->update([
             'item_id'     => $request->item_id,
             'quantity'    => $request->quantity,
             'supplier_id' => $request->supplier_id,
-            'expired_at'  => $request->expired_at,
+            'expired_at'  => $expiredAt, 
         ]);
+
 
         return redirect()->route('super_admin.item_ins.index')
             ->with('success', 'Data berhasil diupdate & stok diperbarui');
     }
+
 
     public function destroy(Item_in $item_in)
     {

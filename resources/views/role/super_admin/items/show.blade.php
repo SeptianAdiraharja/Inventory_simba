@@ -55,7 +55,7 @@
                 </tbody>
             </table>
         </div>
-
+        <a href="{{ route('super_admin.items.index') }}" class="btn btn-secondary btn-sm">Kembali</a>
     </div>
 </div>
 

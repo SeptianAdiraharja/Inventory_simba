@@ -162,6 +162,9 @@
                               Lihat Semua
                             </a>
                           </div>
+                          @if($lastUpdateItemIn)
+                            <small class="text-muted d-block mb-2">Last Update: {{ \Carbon\Carbon::parse($lastUpdateItemIn)->format('d M Y H:i') }}</small>
+                          @endif
                           <ul class="list-unstyled mb-0">
                             @forelse($itemIns as $item)
                               <li class="d-flex mb-3 align-items-center pb-2 border-bottom">
@@ -224,6 +227,9 @@
                               <i class="ri-alarm-warning-line text-warning me-1"></i> Barang Hampir Kedaluwarsa
                             </h5>
                           </div>
+                          @if($lastUpdateExpired)
+                            <small class="text-muted d-block mb-2">Last Update: {{ \Carbon\Carbon::parse($lastUpdateExpired)->format('d M Y H:i') }}</small>
+                          @endif
                           <ul class="list-unstyled mb-0">
                             @forelse($expiredSoon as $item)
                               <li class="d-flex mb-3 align-items-center pb-2 border-bottom">

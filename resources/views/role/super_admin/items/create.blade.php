@@ -6,7 +6,7 @@
     <div class="card">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Tambah Item</h5>
-        <small class="text-body-secondary">Form input item baru</small>
+        <small class="text-body-secondary">tambah input item baru</small>
       </div>
       <div class="card-body">
         <form action="{{ route('super_admin.items.store') }}" method="POST" enctype="multipart/form-data">
@@ -18,6 +18,28 @@
             <div class="col-sm-10">
               <input type="text" name="name" class="form-control" placeholder="Isi Nama Item" required>
               @error('name') <small class="text-danger">{{ $message }}</small> @enderror
+            </div>
+          </div>
+
+          {{-- Toggle + Input Barcode --}}
+          <div class="row mb-4 align-items-center">
+            <label class="col-sm-2 col-form-label">Barcode / Kode</label>
+            <div class="col-sm-10">
+              <div class="card border shadow-sm">
+                <div class="card-body py-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-semibold">Punya barcode bawaan?</span>
+                    <div class="form-check form-switch m-0">
+                      <input class="form-check-input" type="checkbox" id="toggleBarcode">
+                      <label class="form-check-label" for="toggleBarcode">Isi manual</label>
+                    </div>
+                  </div>
+                  <input type="text" name="code" class="form-control"
+                        placeholder="Scan / isi barcode barang"
+                        value="{{ old('code') }}" id="barcodeInput" style="display:none;">
+                  @error('code') <small class="text-danger">{{ $message }}</small> @enderror
+                </div>
+              </div>
             </div>
           </div>
 
@@ -46,6 +68,20 @@
                 @endforeach
               </select>
               @error('unit_id') <small class="text-danger">{{ $message }}</small> @enderror
+            </div>
+          </div>
+
+          {{-- Supplier --}}
+          <div class="row mb-4">
+            <label class="col-sm-2 col-form-label">Supplier</label>
+            <div class="col-sm-10">
+              <select name="supplier_id" class="form-control">
+                <option value="">-- Pilih Supplier (opsional) --</option>
+                @foreach($suppliers as $sup)
+                  <option value="{{ $sup->id }}">{{ $sup->name }}</option>
+                @endforeach
+              </select>
+              @error('supplier_id') <small class="text-danger">{{ $message }}</small> @enderror
             </div>
           </div>
 
@@ -81,4 +117,15 @@
     </div>
   </div>
 </div>
+
+<script>
+document.getElementById('toggleBarcode').addEventListener('change', function () {
+    const barcodeInput = document.getElementById('barcodeInput');
+    if (this.checked) {
+        barcodeInput.style.display = 'block';
+    } else {
+        barcodeInput.style.display = 'none';
+    }
+});
+</script>
 @endsection
