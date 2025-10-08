@@ -8,7 +8,7 @@
       </div>
       <div class="text-start">
         <div class="fw-semibold" style="font-size: 15px;">{{ $title }}</div>
-        <div style="font-size: 13px;">{{ $value }} {{ Str::plural($title) }}</div>
+        <div style="font-size: 13px;">{{ $value }} {{ $title }}</div>
       </div>
     </div>
   </a>

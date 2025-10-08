@@ -4,20 +4,16 @@ namespace App\Http\Controllers\Role;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\Eloquent\PegawaiRepository;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Notification;
 
 class PegawaiController extends Controller
 {
     protected $pegawaiRepository;
 
-
-    /**
-     * Display a listing of the resource.
-     */
-     public function __construct(PegawaiRepository $pegawaiRepository)
+    public function __construct(PegawaiRepository $pegawaiRepository)
     {
         $this->pegawaiRepository = $pegawaiRepository;
     }
@@ -27,11 +23,25 @@ class PegawaiController extends Controller
         $range = $request->get('range', 'week');
         $history = $this->pegawaiRepository->getUserRequestHistory($range);
 
-        $userId = Auth::id();
+        // Pastikan user sudah login
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
+        }
 
-            // Ambil list request user yg login saja
-            $users = DB::table('users')
-            ->where('users.id', $userId)
+        $user = Auth::user();
+
+        // 🔹 Ambil notif yang belum dibaca
+        $notifications = Notification::where('user_id', $user->id)
+            ->where('status', 'unread')
+            ->latest()
+            ->get();
+
+        // 🔹 Jumlah notifikasi untuk icon bell
+        $notifCount = $notifications->count();
+
+        // 🔹 Ambil list request user yang login
+        $users = DB::table('users')
+            ->where('users.id', $user->id)
             ->leftJoin('carts', 'users.id', '=', 'carts.user_id')
             ->leftJoin('cart_items', 'carts.id', '=', 'cart_items.cart_id')
             ->select(
@@ -44,63 +54,43 @@ class PegawaiController extends Controller
             ->groupBy('users.id', 'users.name', 'users.email', 'users.role')
             ->get();
 
-        // Pastikan $history memiliki format array yang kita pakai di blade
         if (!is_array($history) || !isset($history['labels']) || !isset($history['data'])) {
             $history = ['labels' => [], 'data' => []];
         }
 
-        return view('role.pegawai.dashboard', compact('history', 'range', 'users'));
+        return view('role.pegawai.dashboard', compact(
+            'history',
+            'range',
+            'users',
+            'notifications',
+            'notifCount'
+        ));
+    }
+
+    public function readNotifications()
+    {
+        // Gunakan facade Auth, bukan helper langsung
+        if (!Auth::check()) {
+            return response()->json(['success' => false, 'message' => 'User not authenticated']);
+        }
+
+        Notification::where('user_id', Auth::id())
+            ->where('status', 'unread')
+            ->update(['status' => 'read']);
+
+        return response()->json(['success' => true]);
     }
 
     public function produk()
     {
         return view('role.pegawai.produk');
     }
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
+    // metode CRUD default
+    public function create() {}
+    public function store(Request $request) {}
+    public function show(string $id) {}
+    public function edit(string $id) {}
+    public function update(Request $request, string $id) {}
+    public function destroy(string $id) {}
 }

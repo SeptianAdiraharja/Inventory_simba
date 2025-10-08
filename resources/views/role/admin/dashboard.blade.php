@@ -1,25 +1,20 @@
 @extends('layouts.index')
 @section('content')
 
-<!-- Transaksi -->
+<!-- === STATISTIK TRANSAKSI === -->
 <div class="col-xl-12 mb-5">
-  <div class="card h-100 shadow-sm animate__animated animate__fadeInDown animate__faster">
-    <div class="card-header d-flex align-items-center justify-content-between">
-      <h5 class="card-title m-0 me-2">Transaksi</h5>
-      <div class="dropdown">
-        <button class="btn text-body-secondary p-0" type="button" id="transactionID" data-bs-toggle="dropdown">
-          <i class="ri-more-2-line icon-24px"></i>
-        </button>
-        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="transactionID">
-          <a class="dropdown-item" href="javascript:void(0);">Muat Ulang</a>
-          <a class="dropdown-item" href="javascript:void(0);">Bagikan</a>
-          <a class="dropdown-item" href="javascript:void(0);">Perbarui</a>
-        </div>
-      </div>
+  <div class="card shadow-sm border-0 animate__animated animate__fadeInDown">
+    <div class="card-header d-flex align-items-center justify-content-between bg-light">
+      <h5 class="card-title m-0 text-primary">
+        <i class="ri-bar-chart-grouped-line me-2"></i>Ringkasan Transaksi
+      </h5>
+      <button class="btn btn-sm btn-outline-primary" onclick="location.reload()">
+        <i class="ri-refresh-line me-1"></i> Muat Ulang
+      </button>
     </div>
-    <div class="row g-4 justify-content-center text-center">
+
+    <div class="row g-4 justify-content-center text-center mt-3 px-3">
       <x-dashboard-card
-        class="animate__animated animate__fadeInLeft animate__delay-1s"
         title="Barang Keluar"
         :value="$totalBarangKeluar"
         icon="ri-pie-chart-2-line"
@@ -28,8 +23,7 @@
       />
 
       <x-dashboard-card
-        class="animate__animated animate__fadeInUp animate__delay-2s"
-        title="Tamu"
+        title="Tamu Terdaftar"
         :value="$totalGuest"
         icon="ri-group-line"
         color="warning"
@@ -37,8 +31,7 @@
       />
 
       <x-dashboard-card
-        class="animate__animated animate__fadeInRight animate__delay-3s"
-        title="Permintaan"
+        title="Total Permintaan"
         :value="$totalRequest"
         icon="ri-price-tag-3-line"
         color="danger"
@@ -47,72 +40,96 @@
     </div>
   </div>
 </div>
-<!--/ Transaksi -->
+<!-- /STATISTIK TRANSAKSI -->
 
+
+<!-- === DAFTAR TERBARU === -->
 <div class="col-xl-12 mt-5">
-  <div class="card animate__animated animate__zoomIn">
+  <div class="card border-0 shadow-sm animate__animated animate__fadeInUp">
     <div class="card-body row">
       <!-- Barang Keluar -->
-      <div class="col-md-6 pe-md-4 fade-in-card">
-        <x-dashboard-list-card title="Barang Keluar" :items="$latestBarangKeluar" type="barang_keluar"/>
+      <div class="col-md-6 pe-md-4 border-end">
+        <x-dashboard-list-card
+          title="📦 Barang Keluar Terbaru"
+          :items="$latestBarangKeluar"
+          type="barang_keluar"
+        />
       </div>
 
       <!-- Permintaan -->
-      <div class="col-md-6 ps-md-4 border-start fade-in-card animate__delay-1s">
-        <x-dashboard-list-card title="Permintaan" :items="$latestRequest" type="request"/>
+      <div class="col-md-6 ps-md-4">
+        <x-dashboard-list-card
+          title="🧾 Permintaan Terbaru"
+          :items="$latestRequest"
+          type="request"
+        />
       </div>
     </div>
   </div>
 </div>
+<!-- /DAFTAR TERBARU -->
 
 
-<!-- 5 Permintaan Terbanyak -->
+<!-- === 5 PERMINTAAN TERBANYAK === -->
 <div class="col-12 mt-5">
-  <div class="card overflow-hidden shadow-sm animate__animated animate__fadeInUp animate__slower">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="card-title mb-0">5 Permintaan Terbanyak</h5>
+  <div class="card border-0 shadow-sm animate__animated animate__fadeInUp animate__delay-1s">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <h5 class="card-title mb-0 text-primary">
+        <i class="ri-award-line me-2"></i>Top 5 Pengaju Permintaan Terbanyak
+      </h5>
+      <span class="text-muted small">Data diperbarui otomatis</span>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-sm mb-0 table-hover align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>No</th>
-              <th>Pengguna</th>
-              <th>Email</th>
-              <th>Peran</th>
-              <th>Jumlah</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($topRequesters as $index => $requester)
-              <tr class="animate__animated animate__fadeInUp animate__faster">
-                <td>{{ $index + 1 }}</td>
-                <td>{{ $requester['name'] }}</td>
-                <td>{{ $requester['email'] }}</td>
-                <td>{{ $requester['role'] }}</td>
-                <td><span class="badge bg-primary">{{ $requester['total_requests'] }}</span></td>
-              </tr>
-            @empty
-              <tr>
-                <td colspan="5" class="text-center">Tidak terdapat data permintaan.</td>
-              </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+
+    <div class="card-body">
+      @forelse($topRequesters as $index => $r)
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              @if($r['role'] === 'Guest')
+                <i class="ri-user-smile-line text-warning me-2 fs-5" title="Guest"></i>
+              @else
+                <i class="ri-user-2-fill text-success me-2 fs-5" title="Pegawai"></i>
+              @endif
+              <strong>{{ $index + 1 }}. {{ $r['name'] }}</strong>
+              <span class="text-muted small d-block">{{ $r['email'] }}</span>
+            </div>
+            <span class="badge {{ $r['role'] === 'Guest' ? 'bg-warning text-dark' : 'bg-success' }}">
+              {{ $r['role'] }}
+            </span>
+          </div>
+          <!-- Progress bar -->
+          <div class="progress mt-2" style="height: 8px;">
+            <div
+              class="progress-bar {{ $r['role'] === 'Guest' ? 'bg-warning' : 'bg-success' }}"
+              role="progressbar"
+              style="width: {{ ($r['total_requests'] / max($topRequesters[0]['total_requests'], 1)) * 100 }}%"
+              aria-valuenow="{{ $r['total_requests'] }}"
+              aria-valuemin="0"
+              aria-valuemax="{{ $topRequesters[0]['total_requests'] }}"
+            ></div>
+          </div>
+          <small class="text-muted">{{ $r['total_requests'] }} permintaan</small>
+        </div>
+      @empty
+        <p class="text-center text-muted py-3 mb-0">
+          <i class="ri-information-line me-1"></i> Belum ada data permintaan.
+        </p>
+      @endforelse
     </div>
   </div>
 </div>
-<!--/ 5 Permintaan Terbanyak -->
+<!-- /5 PERMINTAAN TERBANYAK -->
 
-<!-- Ikhtisar Lalu Lintas -->
+
+<!-- === IKHTISAR LALU LINTAS === -->
 <div class="col-xl-12 mt-5">
-  <div class="card h-100 shadow-sm animate__animated animate__fadeInUp animate__slow">
-    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+  <div class="card shadow-sm border-0 animate__animated animate__fadeInUp animate__delay-2s">
+    <div class="card-header bg-light d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
       <div>
-        <h5 class="card-title m-0">Lalu Lintas</h5>
-        <p class="small mb-0">Barang Masuk dan Barang Keluar</p>
+        <h5 class="card-title m-0 text-primary">
+          <i class="ri-line-chart-line me-2"></i>Ikhtisar Lalu Lintas Barang
+        </h5>
+        <p class="small text-muted mb-0">Perbandingan barang masuk dan keluar berdasarkan waktu</p>
       </div>
       <div class="btn-group btn-group-sm">
         <button class="btn btn-outline-primary hover-scale" onclick="updateChart('week')">1 Minggu</button>
@@ -127,32 +144,32 @@
     </div>
   </div>
 </div>
-<!--/ Ikhtisar Lalu Lintas -->
+<!-- /IKHTISAR LALU LINTAS -->
 
 @endsection
 
+
 @section('scripts')
 <style>
-/* Animasi tombol */
 .hover-scale {
   transition: transform 0.3s ease, background 0.3s ease;
 }
 .hover-scale:hover {
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
-.fade-in-card {
-  opacity: 0;
-  transform: translateY(20px);
-  animation: fadeInUpCard 0.8s ease forwards;
+
+.progress-bar {
+  transition: width 0.5s ease;
 }
-@keyframes fadeInUpCard {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+
+.card-title i {
+  vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f8f9fa;
 }
 </style>
 
-<!-- Muat berkas JS dari public/js -->
 <script src="{{ asset('js/dashboard.js') }}"></script>
 @endsection

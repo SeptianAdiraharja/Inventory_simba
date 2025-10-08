@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Item;
 use App\Models\Guest;
 use App\Models\Item_out_guest;
-use App\Models\Guest_carts;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,10 +15,34 @@ class ProdukController extends Controller
     /**
      * Tampilkan semua produk
      */
-    public function index()
+    public function index(Request $request)
     {
-        $items = Item::with('category')->get();
-        return view('role.admin.produk', compact('items'));
+        $query = $request->input('q');
+        $kategori = $request->input('kategori');
+
+        // Query utama
+        $items = Item::with('category')
+            ->when($query, function ($q) use ($query) {
+                $q->where(function ($sub) use ($query) {
+                    $sub->where('name', 'LIKE', "%{$query}%")
+                        ->orWhereHas('category', function ($cat) use ($query) {
+                            $cat->where('name', 'LIKE', "%{$query}%");
+                        });
+                });
+            })
+            ->when($kategori && $kategori !== 'none', function ($q) use ($kategori) {
+                $q->whereHas('category', function ($cat) use ($kategori) {
+                    $cat->where('name', $kategori);
+                });
+            })
+            ->latest()
+            ->paginate(12)
+            ->withQueryString(); // 🔥 menjaga query tetap ada saat pagination
+
+        // Ambil semua kategori untuk dropdown filter
+        $categories = Category::all();
+
+        return view('role.admin.produk', compact('items', 'categories'));
     }
 
     /**

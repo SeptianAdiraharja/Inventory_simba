@@ -144,13 +144,14 @@ Route::middleware(['auth', 'role:admin'])
         /*
         |----------------------------------------------------------------------
         | Guests (Tamu)
+        // 🔎 Search guest (digunakan untuk navbar search)
         |----------------------------------------------------------------------
         */
-        Route::resource('guests', GuestController::class);
-
-        // 🔎 Search guest (digunakan untuk navbar search)
         Route::get('/guests/search', [SearchController::class, 'searchGuests'])
             ->name('guests.search');
+
+        Route::resource('guests', GuestController::class)->except('show');
+
 
         /*
         |----------------------------------------------------------------------
@@ -160,6 +161,8 @@ Route::middleware(['auth', 'role:admin'])
         | - Scan barang masuk ke guest_carts
         | - Release barang dari guest_carts ke item_out_guests
         */
+        // Produk Admin
+        Route::get('/produk', [ProdukController::class, 'index'])->name('produk.index');
         Route::get('/produk/guest/{id}', [ProdukController::class, 'showByGuest'])->name('produk.byGuest');
         Route::post('/produk/guest/{id}/scan', [ProdukController::class, 'scan'])->name('produk.scan');
         Route::get('/produk/guest/{id}/cart', [ProdukController::class, 'showCart'])->name('produk.cart'); // <- AJAX modal
@@ -191,6 +194,10 @@ Route::middleware(['auth', 'role:pegawai'])
 
         Route::post('/permintaan/create', [PermintaanController::class, 'createPermintaan'])->name('permintaan.create');
         Route::post('/permintaan/{id}/submit', [PermintaanController::class, 'submitPermintaan'])->name('permintaan.submit');
+
+        Route::get('/notifications/read', [PegawaiController::class, 'readNotifications'])
+        ->name('notifications.read');
+
     });
 
 /*

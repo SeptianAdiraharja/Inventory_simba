@@ -89,27 +89,44 @@ class PermintaanController extends Controller
     {
         $cart = Cart::where('id', $id)
             ->where('user_id', Auth::id())
-            ->where('status', 'active') // cari cart yang masih aktif
+            ->where('status', 'active')
             ->with('cartItems.item')
             ->firstOrFail();
 
-        // kurangi stok semua item
+        // Validasi stok sebelum ubah status
         foreach ($cart->cartItems as $cartItem) {
             if ($cartItem->quantity > $cartItem->item->stock) {
                 return redirect()->back()->with('error', "Stok {$cartItem->item->name} tidak cukup.");
             }
-            $cartItem->item->decrement('stock', $cartItem->quantity);
         }
 
-        // ubah status jadi pending
-        $cart->status = 'pending';
-        $cart->save();
+        DB::transaction(function () use ($cart) {
+            // Kurangi stok item
+            foreach ($cart->cartItems as $cartItem) {
+                $cartItem->item->decrement('stock', $cartItem->quantity);
+            }
 
-        // buat keranjang baru untuk user
-        Cart::create([
-            'user_id' => Auth::id(),
-            'status'  => 'active',
-        ]);
+            // Ubah status cart jadi pending
+            $cart->status = 'pending';
+            $cart->save();
+
+            // Buat keranjang baru untuk user
+            Cart::create([
+                'user_id' => Auth::id(),
+                'status'  => 'active',
+            ]);
+
+            // 🔔 Buat notifikasi ke admin
+            $admins = \App\Models\User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                \App\Models\Notification::create([
+                    'user_id' => $admin->id,
+                    'title'   => 'Permintaan Baru',
+                    'message' => 'Pegawai ' . Auth::user()->name . ' mengajukan permintaan baru.',
+                    'status'  => 'unread',
+                ]);
+            }
+        });
 
         return redirect()
             ->route('pegawai.permintaan.detail', $cart->id)

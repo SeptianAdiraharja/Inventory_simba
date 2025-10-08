@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Item;
 use App\Models\Category;
+use App\Models\Guest;
 
 class SearchController extends Controller
 {
@@ -39,24 +40,28 @@ class SearchController extends Controller
     }
 
 
-    // searchguest
+     /**
+     * 🔍 Pencarian tamu (untuk admin)
+     */
     public function searchGuests(Request $request)
     {
         $query = $request->input('q');
 
-        $guests = \App\Models\Guest::with('creator')
+        $guests = Guest::with('creator')
             ->when($query, function ($q) use ($query) {
-                $q->where('name', 'LIKE', "%{$query}%")
-                ->orWhere('phone', 'LIKE', "%{$query}%")
-                ->orWhere('description', 'LIKE', "%{$query}%")
-                ->orWhereHas('creator', function ($creator) use ($query) {
-                    $creator->where('name', 'LIKE', "%{$query}%");
+                $q->where(function ($sub) use ($query) {
+                    $sub->where('name', 'LIKE', "%{$query}%")
+                        ->orWhere('phone', 'LIKE', "%{$query}%")
+                        ->orWhere('description', 'LIKE', "%{$query}%")
+                        ->orWhereHas('creator', function ($creator) use ($query) {
+                            $creator->where('name', 'LIKE', "%{$query}%");
+                        });
                 });
             })
             ->latest()
             ->paginate(10);
 
-        return view('role.admin.guests', compact('guests'))
+        return view('role.admin.guest', compact('guests'))
             ->with('search', $query);
     }
 

@@ -30,6 +30,13 @@
         </li>
         @endif
 
+        {{-- Hitung jumlah permintaan pending (notif real) --}}
+        @php
+            use App\Models\Cart;
+            $pendingCount = Cart::where('status', 'pending')->count();
+        @endphp
+
+        <!-- Pegawai -->
         @if (auth()->user()->role === 'pegawai')
         <li class="menu-item {{ Route::is('pegawai.dashboard') ? 'active' : '' }}">
             <a href="{{ route('pegawai.dashboard') }}" class="menu-link d-flex align-items-center text-white">
@@ -54,37 +61,37 @@
         <!-- Super Admin -->
         @if (auth()->user()->role === 'super_admin')
         <li class="menu-header mt-4 text-uppercase small fw-bold text-secondary">Super Admin</li>
-        <li class="menu-item {{ Route::is('super_admin.categories.index') ? 'active' : '' }} {{ Route::is('super_admin.categories.create') ? 'active' : '' }} {{ Route::is('super_admin.categories.edit') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('super_admin.categories.*') ? 'active' : '' }}">
             <a href="{{ route('super_admin.categories.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-stack-line me-2"></i>
                 <span>Kategori</span>
             </a>
         </li>
-        <li class="menu-item {{ Route::is('super_admin.units.index') ? 'active' : '' }} {{ Route::is('super_admin.units.create') ? 'active' : '' }} {{ Route::is('super_admin.units.edit') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('super_admin.units.*') ? 'active' : '' }}">
             <a href="{{ route('super_admin.units.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-price-tag-3-line me-2"></i>
                 <span>Satuan Barang</span>
             </a>
         </li>
-        <li class="menu-item {{ Route::is('super_admin.suppliers.index') ? 'active' : '' }} {{ Route::is('super_admin.suppliers.create') ? 'active' : '' }} {{ Route::is('super_admin.suppliers.edit') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('super_admin.suppliers.*') ? 'active' : '' }}">
             <a href="{{ route('super_admin.suppliers.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-briefcase-3-line me-2"></i>
                 <span>Supplier</span>
             </a>
         </li>
-        <li class="menu-item {{ Route::is('super_admin.items.index') ? 'active' : '' }} {{ Route::is('super_admin.items.create') ? 'active' : '' }} {{ Route::is('super_admin.items.edit') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('super_admin.items.*') ? 'active' : '' }}">
             <a href="{{ route('super_admin.items.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-box-3-line me-2"></i>
                 <span>Barang</span>
             </a>
         </li>
-        <li class="menu-item {{ Route::is('super_admin.item_ins.index') ? 'active' : '' }} {{ Route::is('super_admin.item_ins.create') ? 'active' : '' }} {{ Route::is('super_admin.item_ins.edit') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('super_admin.item_ins.*') ? 'active' : '' }}">
             <a href="{{ route('super_admin.item_ins.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-inbox-archive-line me-2"></i>
                 <span>Barang Masuk</span>
             </a>
         </li>
-        <li class="menu-item {{ Route::is('super_admin.users.index') ? 'active' : '' }} {{ Route::is('super_admin.users.create') ? 'active' : '' }} {{ Route::is('super_admin.users.edit') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('super_admin.users.*') ? 'active' : '' }}">
             <a href="{{ route('super_admin.users.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-group-line me-2"></i>
                 <span>List Pegawai</span>
@@ -101,18 +108,28 @@
         <!-- Admin -->
         @if (auth()->user()->role === 'admin')
         <li class="menu-header mt-4 text-uppercase small fw-bold text-secondary">Admin</li>
+
         <li class="menu-item {{ Route::is('admin.itemout.*') ? 'active' : '' }}">
             <a href="{{ route('admin.itemout.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-qr-scan-2-line me-2"></i>
                 <span>ScanQr</span>
             </a>
         </li>
+
         <li class="menu-item {{ Route::is('admin.request') ? 'active' : '' }}">
-            <a href="{{ route('admin.request') }}" class="menu-link d-flex align-items-center text-white">
+            <a href="{{ route('admin.request') }}" class="menu-link d-flex align-items-center text-white position-relative">
                 <i class="ri ri-file-list-3-line me-2"></i>
                 <span>Request</span>
+
+                {{-- Badge notif (jumlah request pending) --}}
+                @if($pendingCount > 0)
+                    <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger">
+                        {{ $pendingCount }}
+                    </span>
+                @endif
             </a>
         </li>
+
         <li class="menu-item {{ Route::is('admin.guests.index') ? 'active' : '' }}">
             <a href="{{ route('admin.guests.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-user-line me-2"></i>

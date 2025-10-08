@@ -80,7 +80,7 @@
                                 <!-- Tombol Detail -->
                                 <a href="{{ route('admin.produk.byGuest', $guest->id) }}"
                                 class="btn btn-sm btn-info">
-                                    Detail
+                                    Pilih Produk
                                 </a>
 
                             </td>

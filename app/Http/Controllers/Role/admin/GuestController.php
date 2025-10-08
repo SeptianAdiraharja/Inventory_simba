@@ -17,13 +17,18 @@ class GuestController extends Controller
 
         $guests = Guest::with('creator')
             ->when($query, function ($q) use ($query) {
-                $q->where('name', 'like', "%{$query}%")
-                ->orWhere('phone', 'like', "%{$query}%")
-                ->orWhere('description', 'like', "%{$query}%");
+                $keywords = explode(' ', $query); // pisah tiap kata, agar makin fleksibel
+
+                $q->where(function ($sub) use ($keywords) {
+                    foreach ($keywords as $word) {
+                        $sub->orWhere('name', 'LIKE', "%{$word}%")
+                            ->orWhere('phone', 'LIKE', "%{$word}%");
+                    }
+                });
             })
             ->latest()
             ->paginate(10)
-            ->withQueryString(); // supaya query ?q= tetap terbawa saat pagination
+            ->withQueryString();  // supaya query ?q= tetap terbawa saat pagination
 
         return view('role.admin.guest', compact('guests', 'query'));
     }

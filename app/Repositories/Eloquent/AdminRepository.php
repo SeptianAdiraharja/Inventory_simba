@@ -4,12 +4,12 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Cart;
 use App\Models\Guest;
-use App\Models\Item_in;
 use App\Models\Item_out;
 use App\Models\User;
-use App\Repositories\Contracts\AdminRepositoryInterface;
+use App\Models\Notification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Repositories\Contracts\AdminRepositoryInterface;
 
 class AdminRepository implements AdminRepositoryInterface
 {
@@ -28,26 +28,28 @@ class AdminRepository implements AdminRepositoryInterface
         return Guest::count();
     }
 
-
     public function getLatestBarangKeluar($limit = 5)
     {
-        return Item_out::with('item')
-            ->latest()
-            ->paginate($limit);
+        return Item_out::with('item')->latest()->take($limit)->get();
     }
 
     public function getLatestRequest($limit = 5)
     {
-        return Cart::with(['user', 'items'])
-            ->latest()
-            ->paginate($limit);
+        return Cart::with(['user', 'items'])->latest()->take($limit)->get();
     }
 
+    /**
+     * 🔹 Mengambil 5 user/guest dengan total permintaan terbanyak
+     */
     public function getTopRequesters($limit = 5)
     {
+        // --- Pegawai ---
         $userRequests = DB::table('carts')
             ->join('cart_items', 'carts.id', '=', 'cart_items.cart_id')
-            ->select('carts.user_id as requester_id', DB::raw('SUM(cart_items.quantity) as total_quantity'))
+            ->select(
+                'carts.user_id as requester_id',
+                DB::raw('SUM(cart_items.quantity) as total_quantity')
+            )
             ->groupBy('carts.user_id')
             ->get()
             ->map(function ($item) {
@@ -55,7 +57,8 @@ class AdminRepository implements AdminRepositoryInterface
                 return $item;
             });
 
-            $guestRequests = DB::table('guest_cart_items')
+        // --- Guest ---
+        $guestRequests = DB::table('guest_cart_items')
             ->join('guest_carts', 'guest_cart_items.guest_cart_id', '=', 'guest_carts.id')
             ->join('sessions', 'guest_carts.session_id', '=', 'sessions.id')
             ->leftJoin('guests', 'guests.created_by', '=', 'sessions.user_id')
@@ -71,124 +74,68 @@ class AdminRepository implements AdminRepositoryInterface
                 return $item;
             });
 
-        $combinedRequests = $userRequests->concat($guestRequests)
+        // --- Gabungkan dan urutkan ---
+        $combined = $userRequests->concat($guestRequests)
             ->sortByDesc('total_quantity')
             ->take($limit);
 
-        $topRequesters = [];
-        foreach ($combinedRequests as $requester) {
-            if ($requester->type === 'user') {
-                $user = User::find($requester->requester_id);
-                if ($user) {
-                    $topRequesters[] = [
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'role' => ucfirst($user->role),
-                        'total_requests' => $requester->total_quantity,
-                    ];
-                }
-            } else {
-                $topRequesters[] = [
-                    'name' => $requester->name ?? 'Guest Unknown',
-                    'email' => 'N/A',
-                    'role' => 'Guest',
-                    'total_requests' => $requester->total_quantity,
+        // --- Format output ---
+        return $combined->map(function ($r) {
+            if ($r->type === 'user') {
+                $user = User::find($r->requester_id);
+                return [
+                    'name' => $user->name ?? 'Unknown User',
+                    'email' => $user->email ?? '-',
+                    'role' => ucfirst($user->role ?? 'Pegawai'),
+                    'total_requests' => $r->total_quantity,
                 ];
             }
-        }
-
-        return collect($topRequesters);
+            return [
+                'name' => $r->name ?? 'Guest',
+                'email' => 'N/A',
+                'role' => 'Guest',
+                'total_requests' => $r->total_quantity,
+            ];
+        });
     }
+    
 
+    /**
+     * 🔹 Ambil data chart mingguan/bulanan/tahunan
+     */
     public function getChartDataByRange(string $range)
     {
+        $now = Carbon::now();
+
         if ($range === 'week') {
-            // ambil 7 hari terakhir
-            $start = Carbon::now()->subDays(6)->startOfDay();
-            $dates = collect();
-            for ($i = 0; $i < 7; $i++) {
-                $dates->push(Carbon::now()->subDays(6 - $i)->format('Y-m-d'));
-            }
-
-            $barangKeluar = Item_out::select(
-                    DB::raw("DATE(created_at) as tgl"),
-                    DB::raw('SUM(quantity) as total')
-                )
-                ->where('created_at', '>=', $start)
-                ->groupBy('tgl')
-                ->pluck('total', 'tgl');
-
-            $labels = $dates->map(fn($d) => Carbon::parse($d)->translatedFormat('d M')); // ex: 20 Sep
-            $keluar = $dates->map(fn($d) => $barangKeluar[$d] ?? 0);
-
+            $start = $now->copy()->subDays(6);
+            $period = collect(range(0, 6))->map(fn($i) => $now->copy()->subDays(6 - $i)->format('Y-m-d'));
         } elseif ($range === 'month') {
-            // ambil 30 hari terakhir
-            $start = Carbon::now()->subDays(29)->startOfDay();
-            $dates = collect();
-            for ($i = 0; $i < 30; $i++) {
-                $dates->push(Carbon::now()->subDays(29 - $i)->format('Y-m-d'));
-            }
-
-            $barangKeluar = Item_out::select(
-                    DB::raw("DATE(created_at) as tgl"),
-                    DB::raw('SUM(quantity) as total')
-                )
-                ->where('created_at', '>=', $start)
-                ->groupBy('tgl')
-                ->pluck('total', 'tgl');
-
-            $labels = $dates->map(fn($d) => Carbon::parse($d)->translatedFormat('d M'));
-            $keluar = $dates->map(fn($d) => $barangKeluar[$d] ?? 0);
-
+            $start = $now->copy()->subDays(29);
+            $period = collect(range(0, 29))->map(fn($i) => $now->copy()->subDays(29 - $i)->format('Y-m-d'));
         } else {
-            // year → ambil 12 bulan terakhir
-            $start = Carbon::now()->subMonths(11)->startOfMonth();
-            $months = collect();
-            for ($i = 0; $i < 12; $i++) {
-                $months->push(Carbon::now()->subMonths(11 - $i)->format('Y-m'));
-            }
-
-            $barangKeluar = Item_out::select(
-                    DB::raw("DATE_FORMAT(created_at, '%Y-%m') as bulan"),
-                    DB::raw('SUM(quantity) as total')
-                )
-                ->where('created_at', '>=', $start)
-                ->groupBy('bulan')
-                ->pluck('total', 'bulan');
-
-            $labels = $months->map(fn($m) => Carbon::parse($m . '-01')->translatedFormat('M Y')); // Jan 2025
-            $keluar = $months->map(fn($m) => $barangKeluar[$m] ?? 0);
+            $start = $now->copy()->subMonths(11);
+            $period = collect(range(0, 11))->map(fn($i) => $now->copy()->subMonths(11 - $i)->format('Y-m'));
         }
 
-        return [
-            'labels' => $labels,
-            'keluar' => $keluar,
-        ];
-    }
-
-    public function getChartDataYear()
-    {
-        $oneYearAgo = Carbon::now()->subYear()->startOfMonth();
-        $now = Carbon::now()->endOfMonth();
-
-        $barangMasuk = Item_in::select(
-                DB::raw('MONTH(created_at) as bulan'),
-                DB::raw('SUM(quantity) as total')
-            )
-            ->whereBetween('created_at', [$oneYearAgo, $now])
-            ->groupBy('bulan')
-            ->orderBy('bulan')
-            ->pluck('total', 'bulan');
-
         $barangKeluar = Item_out::select(
-                DB::raw('MONTH(created_at) as bulan'),
+                DB::raw($range === 'year'
+                    ? "DATE_FORMAT(created_at, '%Y-%m') as periode"
+                    : "DATE(created_at) as periode"
+                ),
                 DB::raw('SUM(quantity) as total')
             )
-            ->whereBetween('created_at', [$oneYearAgo, $now])
-            ->groupBy('bulan')
-            ->orderBy('bulan')
-            ->pluck('total', 'bulan');
+            ->where('created_at', '>=', $start)
+            ->groupBy('periode')
+            ->pluck('total', 'periode');
 
-        return [$barangMasuk, $barangKeluar];
+        return [
+            'labels' => $period->map(fn($p) =>
+                $range === 'year'
+                    ? Carbon::parse($p . '-01')->translatedFormat('M Y')
+                    : Carbon::parse($p)->translatedFormat('d M')
+            ),
+            'keluar' => $period->map(fn($p) => $barangKeluar[$p] ?? 0),
+        ];
     }
 }
