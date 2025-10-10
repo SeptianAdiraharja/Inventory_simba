@@ -9,12 +9,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Exports\BarangKeluarExport;
 use App\Exports\BarangMasukExport;
+use App\Exports\BarangKeluarExport;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class ExportController extends Controller
 {
-    /** Filter by range tanggal */
+    /** 🔹 Filter berdasarkan rentang tanggal */
     private function filterByDateRange($query, $startDate, $endDate)
     {
         if ($startDate && $endDate) {
@@ -26,7 +30,7 @@ class ExportController extends Controller
         return $query;
     }
 
-    /** Filter by period (weekly, monthly, yearly) */
+    /** 🔹 Filter berdasarkan periode (weekly, monthly, yearly) */
     private function filterByPeriod($query, $period)
     {
         if ($period === 'weekly') {
@@ -43,7 +47,7 @@ class ExportController extends Controller
         return $query;
     }
 
-    /** Index export log */
+    /** 🔹 Halaman utama export log */
     public function index(Request $request)
     {
         $items = [];
@@ -51,18 +55,17 @@ class ExportController extends Controller
 
         $startDate = $request->query('start_date');
         $endDate   = $request->query('end_date');
-        $period    = $request->query('period'); 
-        $format    = $request->query('format', 'excel'); 
+        $period    = $request->query('period');
+        $format    = $request->query('format', 'excel');
 
         if ($request->filled(['start_date','end_date'])) {
             $type = $request->query('type', 'masuk');
-            $queryItem = $type === 'masuk' ? Item_in::with('item') : Item_out::with('item');
-            $items = $this->filterByDateRange($queryItem, $startDate, $endDate)->get();
+            $queryItem = $type === 'masuk'
+                ? Item_in::with('item.unit','supplier')
+                : Item_out::with('item.unit','supplier');
 
-            $items->map(function ($row) {
-                $row->total_price = $row->item->price * $row->quantity;
-                return $row;
-            });
+            $items = $this->filterByDateRange($queryItem, $startDate, $endDate)->get();
+            $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
         }
 
         if ($request->has('filter_format') && in_array($request->filter_format, ['excel','pdf'])) {
@@ -74,144 +77,110 @@ class ExportController extends Controller
         return view('role.super_admin.exports.index', compact('items','logs','period','startDate','endDate','format'));
     }
 
-    /** Export Barang Masuk Excel */
-    public function exportBarangMasukExcel(Request $request)
-    {
-        $period   = $request->query('period', 'weekly');
-        $fileName = "barang_masuk_{$period}_" . now()->format('Ymd_His') . '.xlsx';
-
-        $query = Item_in::with('item');
-        $items = $this->filterByPeriod($query, $period)->get();
-        $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
-
-        ExportLog::create([
-            'super_admin_id' => Auth::id(),
-            'type'      => $period,
-            'data_type' => 'masuk',
-            'format'    => 'excel',
-            'file_path' => "role/super_admin/exports/{$fileName}",
-            'period'    => $period,
-        ]);
-
-        return Excel::download(new BarangMasukExport($items), $fileName);
-    }
-
-    /** Export Barang Masuk PDF */
+    /** 🔹 Barang Masuk PDF */
     public function exportBarangMasukPdf(Request $request)
     {
         $period   = $request->query('period', 'weekly');
         $fileName = "barang_masuk_{$period}_" . now()->format('Ymd_His') . '.pdf';
 
-        $query = Item_in::with('item');
+        $query = Item_in::with('item.unit','supplier');
         $items = $this->filterByPeriod($query, $period)->get();
-        $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
+        $items->map(fn($r) => $r->total_price = $r->item->price * $r->quantity);
 
-        $pdf = Pdf::loadView('role.super_admin.exports.barang_masuk_pdf', compact('items', 'period'))
+        $totalJumlah = $items->sum('quantity');
+        $grandTotal  = $items->sum('total_price');
+
+        $pdf = Pdf::loadView('role.super_admin.exports.barang_masuk_pdf', compact('items','period','totalJumlah','grandTotal'))
                   ->setPaper('a4', 'landscape');
 
         ExportLog::create([
             'super_admin_id' => Auth::id(),
-            'type'      => $period,
+            'type' => $period,
             'data_type' => 'masuk',
-            'format'    => 'pdf',
+            'format' => 'pdf',
             'file_path' => "role/super_admin/exports/{$fileName}",
-            'period'    => $period,
+            'period' => $period,
         ]);
 
         return $pdf->download($fileName);
     }
 
-    /** Export Barang Keluar Excel */
-    public function exportBarangKeluarExcel(Request $request)
-    {
-        $period   = $request->query('period', 'weekly');
-        $fileName = "barang_keluar_{$period}_" . now()->format('Ymd_His') . '.xlsx';
-
-        $query = Item_out::with('item');
-        $items = $this->filterByPeriod($query, $period)->get();
-        $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
-
-        ExportLog::create([
-            'super_admin_id' => Auth::id(),
-            'type'      => $period,
-            'data_type' => 'keluar',
-            'format'    => 'excel',
-            'file_path' => "role/super_admin/exports/{$fileName}",
-            'period'    => $period,
-        ]);
-
-        return Excel::download(new BarangKeluarExport($items), $fileName);
-    }
-
-    /** Export Barang Keluar PDF */
+    /** 🔹 Barang Keluar PDF */
     public function exportBarangKeluarPdf(Request $request)
     {
         $period   = $request->query('period', 'weekly');
         $fileName = "barang_keluar_{$period}_" . now()->format('Ymd_His') . '.pdf';
 
-        $query = Item_out::with('item');
+        $query = Item_out::with('item.unit','supplier');
         $items = $this->filterByPeriod($query, $period)->get();
-        $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
+        $items->map(fn($r) => $r->total_price = $r->item->price * $r->quantity);
 
-        $pdf = Pdf::loadView('role.super_admin.exports.barang_keluar_pdf', compact('items', 'period'))
+        $totalJumlah = $items->sum('quantity');
+        $grandTotal  = $items->sum('total_price');
+
+        $pdf = Pdf::loadView('role.super_admin.exports.barang_keluar_pdf', compact('items','period','totalJumlah','grandTotal'))
                   ->setPaper('a4', 'landscape');
 
         ExportLog::create([
             'super_admin_id' => Auth::id(),
-            'type'      => $period,
+            'type' => $period,
             'data_type' => 'keluar',
-            'format'    => 'pdf',
+            'format' => 'pdf',
             'file_path' => "role/super_admin/exports/{$fileName}",
-            'period'    => $period,
+            'period' => $period,
         ]);
 
         return $pdf->download($fileName);
     }
 
-    /** Custom Download by Date Range */
+    /** 🔹 Custom Download (range tanggal & format dinamis) */
     public function download(Request $request)
     {
         $startDate = $request->query('start_date');
         $endDate   = $request->query('end_date');
         $type      = $request->query('type', 'masuk');
         $format    = $request->query('format', 'excel');
+        $period    = $startDate . " s/d " . $endDate;
 
-        $period = $startDate . " s/d " . $endDate;
+        $query = $type === 'masuk'
+            ? Item_in::with('item.unit','supplier')
+            : Item_out::with('item.unit','supplier');
 
-        $query = $type === 'masuk' ? Item_in::with('item') : Item_out::with('item');
         $items = $this->filterByDateRange($query, $startDate, $endDate)->get();
-        $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
+        $items->map(fn($r) => $r->total_price = $r->item->price * $r->quantity);
+
+        $totalJumlah = $items->sum('quantity');
+        $grandTotal  = $items->sum('total_price');
 
         $fileName = "barang_{$type}_{$startDate}_to_{$endDate}_" . now()->format('Ymd_His');
 
         ExportLog::create([
             'super_admin_id' => Auth::id(),
-            'type'      => 'custom',
+            'type' => 'custom',
             'data_type' => $type,
-            'format'    => $format,
+            'format' => $format,
             'file_path' => "role/super_admin/exports/{$fileName}.{$format}",
-            'period'    => $period,
+            'period' => $period,
         ]);
 
         if ($format === 'excel') {
             return $type === 'masuk'
-                ? Excel::download(new BarangMasukExport($items), $fileName.'.xlsx')
-                : Excel::download(new BarangKeluarExport($items), $fileName.'.xlsx');
-        } else {
-            $pdf = $type === 'masuk'
-                ? Pdf::loadView('role.super_admin.exports.barang_masuk_pdf', compact('items','startDate','endDate','period'))
-                : Pdf::loadView('role.super_admin.exports.barang_keluar_pdf', compact('items','startDate','endDate','period'));
-
-            return $pdf->setPaper('a4', 'landscape')->download($fileName.'.pdf');
+                ? Excel::download(new BarangMasukExport($items, $totalJumlah, $grandTotal), $fileName.'.xlsx')
+                : Excel::download(new BarangKeluarExport($items, $totalJumlah, $grandTotal), $fileName.'.xlsx');
         }
+
+        $pdf = $type === 'masuk'
+            ? Pdf::loadView('role.super_admin.exports.barang_masuk_pdf', compact('items','startDate','endDate','period','totalJumlah','grandTotal'))
+            : Pdf::loadView('role.super_admin.exports.barang_keluar_pdf', compact('items','startDate','endDate','period','totalJumlah','grandTotal'));
+
+        return $pdf->setPaper('a4', 'landscape')->download($fileName.'.pdf');
     }
 
+    /** 🔹 Hapus semua riwayat export */
     public function clearLogs()
     {
         try {
-            // hapus semua data log export
             ExportLog::query()->delete();
-
             return redirect()->route('super_admin.export.index')
                 ->with('success', 'Riwayat export berhasil dibersihkan.');
         } catch (\Exception $e) {
@@ -220,4 +189,103 @@ class ExportController extends Controller
         }
     }
 
+    /** 🔹 Barang Masuk Excel (Improved mirip Blade tanpa kop & footer) */
+    public function exportBarangMasukExcelImproved(Request $request)
+    {
+        $period = $request->query('period', 'weekly');
+        $fileName = "barang_masuk_tanpa_kop_{$period}_" . now()->format('Ymd_His') . '.xlsx';
+
+        $query = Item_in::with('item.unit','supplier');
+        $items = $this->filterByPeriod($query, $period)->get();
+        $items->map(fn($r) => $r->total_price = $r->item->price * $r->quantity);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $sheet->setCellValue('A1', 'Data Barang Masuk');
+        $sheet->mergeCells('A1:F1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $headers = ['ID', 'Nama Barang', 'Satuan', 'Supplier', 'Jumlah', 'Total Harga (Rp)'];
+        $sheet->fromArray($headers, null, 'A3');
+        $sheet->getStyle('A3:F3')->getFont()->setBold(true);
+        $sheet->getStyle('A3:F3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $row = 4;
+        foreach ($items as $item) {
+            $sheet->setCellValue('A'.$row, $item->id);
+            $sheet->setCellValue('B'.$row, $item->item->name);
+            $sheet->setCellValue('C'.$row, optional($item->item->unit)->name);
+            $sheet->setCellValue('D'.$row, optional($item->supplier)->name);
+            $sheet->setCellValue('E'.$row, $item->quantity);
+            $sheet->setCellValue('F'.$row, $item->total_price);
+            $row++;
+        }
+
+        $sheet->setCellValue('E'.$row, 'Total');
+        $sheet->setCellValue('F'.$row, $items->sum('total_price'));
+        $sheet->getStyle('E'.$row.':F'.$row)->getFont()->setBold(true);
+
+        foreach (range('A','F') as $col)
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+
+        $sheet->getStyle('A3:F'.$row)->applyFromArray([
+            'borders'=>['allBorders'=>['borderStyle'=>Border::BORDER_THIN]]
+        ]);
+
+        $temp = storage_path("app/public/{$fileName}");
+        (new Xlsx($spreadsheet))->save($temp);
+        return response()->download($temp)->deleteFileAfterSend(true);
+    }
+
+    /** 🔹 Barang Keluar Excel (Improved mirip Blade tanpa kop & footer) */
+    public function exportBarangKeluarExcelImproved(Request $request)
+    {
+        $period = $request->query('period', 'weekly');
+        $fileName = "barang_keluar_tanpa_kop_{$period}_" . now()->format('Ymd_His') . '.xlsx';
+
+        $query = Item_out::with('item.unit','supplier');
+        $items = $this->filterByPeriod($query, $period)->get();
+        $items->map(fn($r) => $r->total_price = $r->item->price * $r->quantity);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $sheet->setCellValue('A1', 'Data Barang Keluar');
+        $sheet->mergeCells('A1:F1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $headers = ['ID', 'Nama Barang', 'Satuan', 'Supplier', 'Jumlah', 'Total Harga (Rp)'];
+        $sheet->fromArray($headers, null, 'A3');
+        $sheet->getStyle('A3:F3')->getFont()->setBold(true);
+        $sheet->getStyle('A3:F3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $row = 4;
+        foreach ($items as $item) {
+            $sheet->setCellValue('A'.$row, $item->id);
+            $sheet->setCellValue('B'.$row, $item->item->name);
+            $sheet->setCellValue('C'.$row, optional($item->item->unit)->name);
+            $sheet->setCellValue('D'.$row, optional($item->supplier)->name);
+            $sheet->setCellValue('E'.$row, $item->quantity);
+            $sheet->setCellValue('F'.$row, $item->total_price);
+            $row++;
+        }
+
+        $sheet->setCellValue('E'.$row, 'Total');
+        $sheet->setCellValue('F'.$row, $items->sum('total_price'));
+        $sheet->getStyle('E'.$row.':F'.$row)->getFont()->setBold(true);
+
+        foreach (range('A','F') as $col)
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+
+        $sheet->getStyle('A3:F'.$row)->applyFromArray([
+            'borders'=>['allBorders'=>['borderStyle'=>Border::BORDER_THIN]]
+        ]);
+
+        $temp = storage_path("app/public/{$fileName}");
+        (new Xlsx($spreadsheet))->save($temp);
+        return response()->download($temp)->deleteFileAfterSend(true);
+    }
 }
