@@ -77,6 +77,7 @@
 
         @auth
             @if(Auth::user()->role === 'pegawai' || Auth::user()->role === 'admin')
+             @if(request()->is('pegawai/produk*') || request()->is('admin/produk/guest*'))
                 <!-- Search Bar -->
                 <div class="navbar-nav align-items-center">
                     <div class="nav-item d-flex align-items-center">
@@ -85,7 +86,7 @@
                                 ? route('admin.guests.index')
                                 : (request()->is('admin/produk*')
                                     ? route('admin.produk.index')
-                                    : (request()->is('pegawai/*')
+                                    : (request()->is('pegawai/produk*')
                                         ? route('pegawai.produk.search')
                                         : route('pegawai.produk.search'))) }}"
                             method="GET"
@@ -114,12 +115,12 @@
                         </form>
                     </div>
                 </div>
+                @endif
             @endif
         @endauth
 
         <!-- Right Side Navbar -->
         <ul class="navbar-nav flex-row align-items-center ms-auto">
-
             @auth
                 @if(Auth::user()->role === 'pegawai')
                     <!-- Cart Icon -->

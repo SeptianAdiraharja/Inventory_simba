@@ -16,7 +16,7 @@
         <li class="menu-item {{ Route::is('super_admin.dashboard') ? 'active' : '' }}">
             <a href="{{ route('super_admin.dashboard') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-dashboard-line me-2"></i>
-                <span>Dashboard</span>
+                <span>Dashboard</span>  
             </a>
         </li>
         @endif

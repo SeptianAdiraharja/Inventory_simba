@@ -42,7 +42,7 @@
         <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
             <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-semibold text-secondary">
-                    <i class="bx bx-user me-2"></i> Daftar Pengguna & Aktivitas Permintaan
+                    <i class="bx bx-user me-2"></i>Aktivitas Permintaan
                 </h5>
             </div>
 
