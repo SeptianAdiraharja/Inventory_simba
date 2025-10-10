@@ -29,29 +29,31 @@ class PermintaanController extends Controller
         try {
             DB::transaction(function () use ($request) {
                 $cart = Cart::firstOrCreate(
-                    ['user_id' => Auth::id(), 'status' => 'active'], // harus active
+                    ['user_id' => Auth::id(), 'status' => 'active'],
                     ['user_id' => Auth::id(), 'status' => 'active']
                 );
 
                 foreach ($request->items as $itemData) {
-                    $item = Item::findOrFail($itemData['item_id']);
+                    $item = Item::lockForUpdate()->findOrFail($itemData['item_id']); // 🔒 kunci baris supaya stok aman di transaksi paralel
 
-                    if ($itemData['quantity'] > $item->stock) {
-                        throw new \Exception("Stok {$item->name} hanya {$item->stock}.");
+                    if ($item->stock <= 0) {
+                        throw new \Exception("Stok {$item->name} sudah habis.");
                     }
 
+                    if ($itemData['quantity'] > $item->stock) {
+                        throw new \Exception("Jumlah melebihi stok {$item->name} (tersisa {$item->stock}).");
+                    }
+
+                    // Kurangi stok dulu baru lanjut
+                    $item->decrement('stock', $itemData['quantity']);
+
+                    // Tambahkan item ke keranjang
                     $cartItem = CartItem::firstOrNew([
                         'cart_id' => $cart->id,
                         'item_id' => $item->id,
                     ]);
 
                     $cartItem->quantity = ($cartItem->quantity ?? 0) + $itemData['quantity'];
-
-                    if ($cartItem->quantity > $item->stock) {
-                        throw new \Exception("Jumlah melebihi stok {$item->name}.");
-                    }
-
-                    $item->decrement('stock', $itemData['quantity']);
                     $cartItem->save();
                 }
             });
@@ -66,6 +68,7 @@ class PermintaanController extends Controller
                 ->with('error', 'Error: ' . $e->getMessage());
         }
     }
+
 
     public function getActiveCart()
     {

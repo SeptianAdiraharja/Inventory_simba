@@ -27,6 +27,10 @@
 
 {{-- 🛒 Grid Produk --}}
 <div class="row gy-4">
+    @php
+        // Urutkan produk berdasarkan ketersediaan stok (stok > 0 di atas)
+    $items = $items->sortByDesc(fn($i) => $i->stock > 0)->sortByDesc(fn($i) => $i->stock);
+    @endphp
     @forelse ($items as $item)
         <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
             <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden hover-card position-relative">
