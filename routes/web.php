@@ -20,7 +20,7 @@ use App\Http\Controllers\Role\admin\ItemoutController;
 use App\Http\Controllers\Role\admin\RequestController;
 use App\Http\Controllers\Role\admin\GuestController;
 use App\Http\Controllers\Role\admin\ProdukController;
-use App\Http\Controllers\Role\admin\ItemoutGuestController;
+use App\Http\Controllers\ReportTemplateController;
 use App\Http\Controllers\SearchController;
 
 /*
@@ -90,8 +90,7 @@ Route::middleware(['auth', 'role:super_admin'])
             ->name('export.download');
 
         Route::delete('/export/clear', [ExportController::class, 'clearLogs'])->name('export.clear');
-
-    });
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -198,7 +197,7 @@ Route::middleware(['auth', 'role:pegawai'])
         Route::get('/notifications/read', [PegawaiController::class, 'readNotifications'])
         ->name('notifications.read');
 
-    });
+});
 
 /*
 |--------------------------------------------------------------------------

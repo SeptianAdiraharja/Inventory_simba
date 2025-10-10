@@ -33,7 +33,7 @@ class ItemController extends Controller
 
         return view('role.super_admin.items.index', compact('items'));
     }
-    
+
     public function create()
     {
         $categories = Category::all();
@@ -41,7 +41,7 @@ class ItemController extends Controller
         $suppliers = Supplier::all();
         return view('role.super_admin.items.create', compact('categories', 'units', 'suppliers'));
     }
-    
+
     public function store(Request $request)
     {
         $validated = $request->validate([

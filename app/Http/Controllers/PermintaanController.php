@@ -15,7 +15,10 @@ class PermintaanController extends Controller
     public function index()
     {
         $categories = Category::all();
-        $items = Item::latest()->get();
+        $items = Item::with('category')
+            ->latest()
+            ->paginate(12);
+
         return view('role.pegawai.produk', compact('categories', 'items'));
     }
 
@@ -29,7 +32,7 @@ class PermintaanController extends Controller
         try {
             DB::transaction(function () use ($request) {
                 $cart = Cart::firstOrCreate(
-                    ['user_id' => Auth::id(), 'status' => 'active'], // harus active
+                    ['user_id' => Auth::id(), 'status' => 'active'],
                     ['user_id' => Auth::id(), 'status' => 'active']
                 );
 
@@ -51,6 +54,7 @@ class PermintaanController extends Controller
                         throw new \Exception("Jumlah melebihi stok {$item->name}.");
                     }
 
+                    // Kurangi stok sementara (akan dikunci sampai permintaan diproses)
                     $item->decrement('stock', $itemData['quantity']);
                     $cartItem->save();
                 }
@@ -80,11 +84,15 @@ class PermintaanController extends Controller
         $carts = Cart::with(['cartItems.item'])
             ->where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10);
 
         return view('permintaan.index', compact('carts'));
     }
 
+    /**
+     * Saat tombol "Ajukan Permintaan" ditekan.
+     * Mengubah status keranjang dari active → pending.
+     */
     public function submitPermintaan($id)
     {
         $cart = Cart::where('id', $id)
@@ -93,39 +101,10 @@ class PermintaanController extends Controller
             ->with('cartItems.item')
             ->firstOrFail();
 
-        // Validasi stok sebelum ubah status
-        foreach ($cart->cartItems as $cartItem) {
-            if ($cartItem->quantity > $cartItem->item->stock) {
-                return redirect()->back()->with('error', "Stok {$cartItem->item->name} tidak cukup.");
-            }
-        }
-
         DB::transaction(function () use ($cart) {
-            // Kurangi stok item
-            foreach ($cart->cartItems as $cartItem) {
-                $cartItem->item->decrement('stock', $cartItem->quantity);
-            }
-
-            // Ubah status cart jadi pending
+            // Ubah status menjadi pending
             $cart->status = 'pending';
             $cart->save();
-
-            // Buat keranjang baru untuk user
-            Cart::create([
-                'user_id' => Auth::id(),
-                'status'  => 'active',
-            ]);
-
-            // 🔔 Buat notifikasi ke admin
-            $admins = \App\Models\User::where('role', 'admin')->get();
-            foreach ($admins as $admin) {
-                \App\Models\Notification::create([
-                    'user_id' => $admin->id,
-                    'title'   => 'Permintaan Baru',
-                    'message' => 'Pegawai ' . Auth::user()->name . ' mengajukan permintaan baru.',
-                    'status'  => 'unread',
-                ]);
-            }
         });
 
         return redirect()
@@ -138,7 +117,7 @@ class PermintaanController extends Controller
         $carts = Cart::withCount('cartItems')
             ->where('user_id', Auth::id())
             ->where('status', 'pending')
-            ->get();
+            ->paginate(10);
 
         return view('role.pegawai.pending', compact('carts'));
     }
@@ -178,14 +157,9 @@ class PermintaanController extends Controller
                     throw new \Exception("Maaf, stok tidak cukup untuk {$item->name}.");
                 }
 
-                // restore stok lama dulu
                 $item->increment('stock', $cartItem->quantity);
-
-                // set jumlah baru
                 $cartItem->quantity = $request->quantity;
                 $cartItem->save();
-
-                // kurangi stok baru
                 $item->decrement('stock', $request->quantity);
             });
 

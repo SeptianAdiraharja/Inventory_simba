@@ -75,7 +75,7 @@
   <div class="card border-0 shadow-sm animate__animated animate__fadeInUp animate__delay-1s">
     <div class="card-header bg-light d-flex justify-content-between align-items-center">
       <h5 class="card-title mb-0 text-primary">
-        <i class="ri-award-line me-2"></i>Top 5 Pengaju Permintaan Terbanyak
+        <i class="ri-award-line me-2"></i> 5 User dan Guest dengan Permintaan Terbanyak
       </h5>
       <span class="text-muted small">Data diperbarui otomatis</span>
     </div>

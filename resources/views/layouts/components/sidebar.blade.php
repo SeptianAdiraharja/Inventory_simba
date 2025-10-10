@@ -103,18 +103,17 @@
                 <span>Ekspor Data</span>
             </a>
         </li>
+        {{-- <li class="menu-item {{ Route::is('super_admin.export.form') ? 'active' : '' }}">
+            <a href="{{ route('super_admin.export.form') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-download-2-line me-2"></i>
+                <span>Template PDF</span>
+            </a>
+        </li> --}}
         @endif
 
         <!-- Admin -->
         @if (auth()->user()->role === 'admin')
         <li class="menu-header mt-4 text-uppercase small fw-bold text-secondary">Admin</li>
-
-        <li class="menu-item {{ Route::is('admin.itemout.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.itemout.index') }}" class="menu-link d-flex align-items-center text-white">
-                <i class="ri ri-qr-scan-2-line me-2"></i>
-                <span>ScanQr</span>
-            </a>
-        </li>
 
         <li class="menu-item {{ Route::is('admin.request') ? 'active' : '' }}">
             <a href="{{ route('admin.request') }}" class="menu-link d-flex align-items-center text-white position-relative">
@@ -127,6 +126,13 @@
                         {{ $pendingCount }}
                     </span>
                 @endif
+            </a>
+        </li>
+        
+        <li class="menu-item {{ Route::is('admin.itemout.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.itemout.index') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-qr-scan-2-line me-2"></i>
+                <span>ScanQr</span>
             </a>
         </li>
 

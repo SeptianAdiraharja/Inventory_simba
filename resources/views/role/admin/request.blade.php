@@ -6,7 +6,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
         <div>
             <h3 class="fw-bold mb-1 text-primary">
-                <i class="bi bi-list-check me-2"></i> Daftar Permintaan Pegawai & Guest
+                <i class="bi bi-list-check me-2"></i> Daftar Permintaan Pegawai
             </h3>
         </div>
 
