@@ -83,7 +83,36 @@ class CartController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validated = $request->validate([
+            'quantity' => 'required|integer|min:1'
+        ]);
+
+        $cartItem = CartItem::findOrFail($id);
+        // logic misal cart yang dituju beda sm akun yg di login
+        if ($cartItem->cart->user_id !== auth()->id()) {
+            abort(403, 'No Permission');
+        }
+        $newQty = $validated['quantity'];
+        $oldQty = $cartItem->quantity;
+        $item = $cartItem->item;
+
+        // Hitung selisih
+        $diff = $newQty - $oldQty;
+
+        if ($diff > 0) {
+            // User nambah jumlah barang → kurangi stok
+            if ($item->stock < $diff) {
+                return back()->with('error', "Stok tidak mencukupi! Sisa stok: {$item->stock}");
+            }
+            $item->stock -= $diff;
+        } elseif ($diff < 0) {
+            // User ngurangin jumlah barang → tambahin stok
+            $item->stock += abs($diff);
+        }
+        $cartItem->quantity = $validated['quantity'];
+        $cartItem->save();
+        $item->save();
+        return redirect()->back()->with('success', 'Jumlah barang berhasil diubah!');
     }
 
     /**

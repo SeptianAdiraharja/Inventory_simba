@@ -76,7 +76,6 @@
                                     class="form-control text-center"
                                     value="1"
                                     min="1"
-                                    max="{{ $item->stock }}"
                                     {{ $item->stock == 0 ? 'disabled' : '' }}>
                             </div>
 
