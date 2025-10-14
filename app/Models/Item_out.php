@@ -41,9 +41,4 @@ class Item_out extends Model
         return $this->belongsTo(Unit::class, 'unit_id');
     }
 
-    public function guest()
-    {
-        return $this->belongsTo(Guest::class, 'guest_id');
-    }
-
 }

@@ -20,7 +20,7 @@ use App\Http\Controllers\Role\admin\ItemoutController;
 use App\Http\Controllers\Role\admin\RequestController;
 use App\Http\Controllers\Role\admin\GuestController;
 use App\Http\Controllers\Role\admin\ProdukController;
-use App\Http\Controllers\Role\admin\ItemoutGuestController;
+use App\Http\Controllers\ReportTemplateController;
 use App\Http\Controllers\SearchController;
 
 /*
@@ -90,8 +90,7 @@ Route::middleware(['auth', 'role:super_admin'])
             ->name('export.download');
 
         Route::delete('/export/clear', [ExportController::class, 'clearLogs'])->name('export.clear');
-
-    });
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -190,7 +189,10 @@ Route::middleware(['auth', 'role:pegawai'])
 
         Route::get('/permintaan', [PermintaanController::class, 'permintaan'])->name('permintaan.index');
         Route::get('/permintaan/pending', [PermintaanController::class, 'pendingPermintaan'])->name('permintaan.pending');
+        Route::get('/permintaan/history', [PermintaanController::class, 'historyPermintaan'])->name('permintaan.history');
+        Route::put('/permintaan/update/{id}/quantity', [PermintaanController::class, 'updateQuantity'])->name('permintaan.update');
         Route::get('/permintaan/{id}', [PermintaanController::class, 'detailPermintaan'])->name('permintaan.detail');
+        Route::post('/permintaan/refund/{id}', [PermintaanController::class, 'refundItem'])->name('permintaan.refund');
 
         Route::post('/permintaan/create', [PermintaanController::class, 'createPermintaan'])->name('permintaan.create');
         Route::post('/permintaan/{id}/submit', [PermintaanController::class, 'submitPermintaan'])->name('permintaan.submit');
@@ -198,7 +200,7 @@ Route::middleware(['auth', 'role:pegawai'])
         Route::get('/notifications/read', [PegawaiController::class, 'readNotifications'])
         ->name('notifications.read');
 
-    });
+});
 
 /*
 |--------------------------------------------------------------------------

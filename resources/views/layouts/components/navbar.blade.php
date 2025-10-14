@@ -7,7 +7,9 @@
                 ->first();
 
             $categories = \App\Models\Category::all();
-
+            $cartexceptactive = \App\Models\Cart::withCount('cartItems')
+                ->where('user_id', Auth::id())
+                ->where('status', '!=', 'active');
             $notifications = \App\Models\Notification::where('user_id', Auth::id())
                 ->where('status', 'unread')
                 ->latest()
@@ -16,6 +18,42 @@
 
             $notifCount = $notifications->count();
         @endphp
+        <style>
+            /* Override default offcanvas supaya lebih seperti floating panel */
+            /* Styling offcanvas biar tampil floating */
+            #offcanvasCart {
+                position: fixed !important;
+                right: 25px;
+                bottom: 100px; /* biar ada jarak dari tombol cart */
+                width: 400px;
+                top: 200px;
+                max-height: 85vh;
+                border-radius: 20px;
+                background-color: #fff;
+                border: 1px solid #ddd;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+                overflow: hidden;
+                transition: all 0.25s ease-in-out;
+                z-index: 1055; /* pastikan di atas navbar */
+                backdrop-filter: blur(6px);
+            }
+
+            /* Hilangkan backdrop biar gak gelapin layar */
+            .offcanvas-backdrop.show {
+                display: none !important;
+            }
+
+            /* Animasi halus */
+            .offcanvas-end {
+                transform: translateX(100%) !important;
+                opacity: 0;
+            }
+            .offcanvas-end.show {
+                transform: translateX(0) !important;
+                opacity: 1;
+            }
+
+        </style>
 
         <!-- ========== Offcanvas Cart ========== -->
         <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCart" aria-labelledby="offcanvasCartLabel">
@@ -25,6 +63,54 @@
             </div>
 
             <div class="offcanvas-body">
+                @php
+                    // cek user login dulu
+                    $countThisWeek = 0;
+                    if (\Illuminate\Support\Facades\Auth::check()) {
+                        $now = \Carbon\Carbon::now('Asia/Jakarta');
+
+                        // awal minggu = Senin
+                        $daysToSubtract = ($now->dayOfWeek === \Carbon\Carbon::SUNDAY) ? 6 : $now->dayOfWeek - 1;
+                        $startOfWeek = $now->copy()->subDays($daysToSubtract)->startOfDay();
+                        $endOfWeek   = $startOfWeek->copy()->addDays(6)->endOfDay();
+
+                        $countThisWeek = \App\Models\Cart::where('user_id', \Illuminate\Support\Facades\Auth::id())
+                            ->whereIn('status', ['pending', 'approved'])
+                            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                            ->count();
+                    }
+
+                    $maxLimit = 5;
+                    $progress = ($maxLimit > 0) ? ($countThisWeek / $maxLimit) * 100 : 0;
+                    $isLimitReached = $countThisWeek >= $maxLimit;
+                @endphp
+
+                <div class="p-3 border rounded-3 mb-3 bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 fw-semibold text-primary">
+                            <i class="ri-calendar-line me-2"></i>Pengajuan Minggu Ini
+                        </h6>
+                        <span class="fw-bold text-primary">{{ $countThisWeek }}/5 kali</span>
+                    </div>
+
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar {{ $isLimitReached ? 'bg-danger' : 'bg-primary' }}"
+                            role="progressbar"
+                            style="width: {{ $progress }}%;"
+                            aria-valuenow="{{ $progress }}"
+                            aria-valuemin="0"
+                            aria-valuemax="100">
+                        </div>
+                    </div>
+
+                    @if($isLimitReached)
+                        <div class="alert alert-danger alert-dismissible fade show mt-3 py-2 px-3" role="alert">
+                            <i class="ri-error-warning-line me-2"></i>
+                            Anda telah mencapai batas maksimal 5 pengajuan minggu ini.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+                </div>
                 <h4 class="d-flex justify-content-between align-items-center mb-3">
                     <span class="text-primary">Keranjang</span>
                     <span class="badge bg-primary rounded-pill">
@@ -35,10 +121,44 @@
                 <ul class="list-group mb-3">
                     @if($cartsitems && $cartsitems->cartItems->count() > 0)
                         @foreach($cartsitems->cartItems as $item)
-                            <li class="list-group-item d-flex justify-content-between lh-sm">
-                                <div>
-                                    <h6 class="my-0">{{ $item->item->name }}</h6>
-                                    <small class="text-body-secondary">{{ $item->quantity }}x</small>
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ $item->item->name }}</h6>
+                                        <small class="text-muted">Kategori: {{ $item->item->category->name ?? '-' }}</small>
+                                    </div>
+
+                                    {{-- Edit Quantity --}}
+                                    <form action="{{ route('pegawai.permintaan.update', $item->id) }}" 
+                                        method="POST"
+                                        class="d-flex align-items-center ms-2 qty-form" style="gap: 6px;">
+                                        @csrf
+                                        @method('PUT')
+                                        <input 
+                                            type="number" 
+                                            name="quantity" 
+                                            value="{{ $item->quantity }}"
+                                            data-original="{{ $item->quantity }}"
+                                            min="1" 
+                                            class="form-control form-control-sm text-center qty-input"
+                                            style="width: 80px;" required
+                                        >
+                                        <button type="submit" class="btn btn-sm btn-outline-success btn-qty-check" style="display:none;">
+                                            <i class="ri-check-line"></i>
+                                        </button>
+                                    </form>
+
+
+
+                                    {{-- Hapus Item --}}
+                                    <form action="{{ route('pegawai.cart.destroy', $item->id) }}" method="POST" class="ms-2">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Hapus item ini dari keranjang?')">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </li>
                         @endforeach
@@ -50,9 +170,18 @@
                 </ul>
 
                 @if($cartsitems && $cartsitems->cartItems->count() > 0)
-                    <a href="{{ route('pegawai.cart.index') }}" class="w-100 btn btn-primary btn-lg">
-                        Lihat Detail Pesanan
-                    </a>
+                    @if($isLimitReached)
+                        <button type="button" class="btn btn-secondary" disabled>
+                            <i class="ri-error-warning-line me-1"></i> Batas Pengajuan Tercapai
+                        </button>
+                    @else
+                        <form action="{{ route('pegawai.permintaan.submit', $cartsitems->id ?? 0) }}" method="POST" class=" confirm-form">
+                            @csrf
+                            <button type="submit" class="w-100 btn btn-primary btn-lg">
+                                Ajukan Permintaan
+                            </button>
+                        </form>
+                    @endif
                 @else
                     <a href="{{ route('pegawai.produk') }}" class="w-100 btn btn-outline-primary btn-lg">
                         Lanjutkan Belanja
@@ -79,9 +208,9 @@
             @if(Auth::user()->role === 'pegawai' || Auth::user()->role === 'admin')
              @if(request()->is('pegawai/produk*') || request()->is('admin/produk/guest*'))
                 <!-- Search Bar -->
-                <div class="navbar-nav align-items-center">
+                <div class="navbar-nav align-items-center mt-2">
                     <div class="nav-item d-flex align-items-center">
-                       <form
+                        <form
                             action="{{ request()->is('admin/guests*')
                                 ? route('admin.guests.index')
                                 : (request()->is('admin/produk*')
@@ -90,9 +219,12 @@
                                         ? route('pegawai.produk.search')
                                         : route('pegawai.produk.search'))) }}"
                             method="GET"
-                            class="d-flex align-items-center">
+                            class="d-flex align-items-center px-3 py-1 border border-secondary-subtle bg-white bg-opacity-75 rounded-pill shadow-sm"
+                            style="transition: all 0.2s ease;">
+                            
+                            {{-- Dropdown kategori --}}
                             <select name="kategori"
-                                    class="form-select border-0 bg-transparent text-secondary"
+                                    class="form-select border-0 bg-transparent text-secondary fw-medium"
                                     style="width: 150px; font-size: 14px; outline: none; box-shadow: none;"
                                     onchange="this.form.submit()">
                                 <option value="none">Pilih Kategori</option>
@@ -103,19 +235,25 @@
                                 @endforeach
                             </select>
 
-                            <i class="ri ri-search-line icon-lg lh-0 me-2 text-secondary"></i>
+                            {{-- Icon search --}}
+                            <i class="ri ri-search-line icon-lg lh-0 me-2 text-secondary opacity-75"></i>
 
+                            {{-- Input pencarian --}}
                             <input type="text"
-                                   name="q"
-                                   class="form-control border-0 bg-transparent shadow-none"
-                                   placeholder="Search..."
-                                   aria-label="Search..."
-                                   style="font-size: 14px; width: 180px;"
-                                   value="{{ request('q') }}" />
+                                name="q"
+                                class="form-control border-0 bg-transparent shadow-none text-secondary"
+                                placeholder="Search..."
+                                aria-label="Search..."
+                                style="font-size: 14px; width: 400px;"
+                                value="{{ request('q') }}" />
                         </form>
                     </div>
                 </div>
+<<<<<<< HEAD
                 @endif
+=======
+
+>>>>>>> 010396a9d5c8baa6b6aa71e1dc1122afda1a3702
             @endif
         @endauth
 
@@ -125,11 +263,11 @@
                 @if(Auth::user()->role === 'pegawai')
                     <!-- Cart Icon -->
                     <li class="nav-item me-3">
-                        <a class="nav-link position-relative" data-bs-toggle="offcanvas" href="#offcanvasCart" role="button">
-                            <i class="ri ri-shopping-cart-2-line icon-lg"></i>
-                            @if($cartsitems && $cartsitems->cartItems->count() > 0)
+                        <a class="nav-link position-relative" href="{{ route('pegawai.permintaan.history')}}" role="button">
+                            <i class="ri ri-history-line icon-lg"></i>
+                            @if($cartexceptactive && $cartexceptactive->count() > 0)
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    {{ $cartsitems->cartItems->count() }}
+                                    {{ $cartexceptactive->count() }}
                                 </span>
                             @endif
                         </a>
@@ -225,3 +363,126 @@
         <!-- /Right Side Navbar -->
     </div>
 </nav>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.qty-input').forEach(input => {
+        const form = input.closest('form');
+        const btn = form.querySelector('.btn-qty-check');
+        const original = input.dataset.original;
+
+        input.addEventListener('input', () => {
+            if (input.value !== original) {
+                // animasi masuk
+                if (!btn.classList.contains('fade-up')) {
+                    btn.style.display = 'inline-block';
+                    btn.classList.remove('fade-down');
+                    void btn.offsetWidth; // reset animasi
+                    btn.classList.add('fade-up');
+                }
+            } else {
+                // animasi keluar
+                btn.classList.remove('fade-up');
+                btn.classList.add('fade-down');
+                btn.addEventListener('animationend', function hideAfter() {
+                    if (btn.classList.contains('fade-down')) {
+                        btn.style.display = 'none';
+                    }
+                    btn.removeEventListener('animationend', hideAfter);
+                });
+            }
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            Swal.fire({
+                title: 'Konfirmasi',
+                text: `Ubah qty jadi ${input.value}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, yakin!',
+                cancelButtonText: 'Batal',
+                customClass: {
+                    popup: 'swal2-overflow-fix'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                } else {
+                    input.value = original;
+                    btn.classList.remove('fade-up');
+                    btn.classList.add('fade-down');
+                    btn.addEventListener('animationend', function hideAfter() {
+                        btn.style.display = 'none';
+                        btn.removeEventListener('animationend', hideAfter);
+                    });
+                }
+            });
+        });
+    });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const forms = document.querySelectorAll('.confirm-form');
+
+    forms.forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault(); // cegah submit langsung
+
+            Swal.fire({
+                title: 'Konfirmasi',
+                text: 'Yakin ingin mengajukan permintaan ini?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, yakin!',
+                cancelButtonText: 'Batal',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit(); // submit form kalau user setuju
+                }
+            });
+        });
+    });
+});
+</script>
+<style>
+.swal2-container {
+  z-index: 999999 !important;
+}
+.swal2-overflow-fix {
+  overflow: visible !important;
+}
+
+.fade-up {
+  animation: fadeUp 0.3s ease forwards;
+}
+
+.fade-down {
+  animation: fadeDown 0.3s ease forwards;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+</style>
+@endpush

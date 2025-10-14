@@ -56,6 +56,12 @@
                 <span>Permintaan Pending</span>
             </a>
         </li>
+        <li class="menu-item {{ Route::is('pegawai.permintaan.history') ? 'active' : '' }}">
+            <a href="{{ route('pegawai.permintaan.history') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-time-line me-2"></i>
+                <span>Riwayat Pengajuan</span>
+            </a>
+        </li>
         @endif
 
         <!-- Super Admin -->
@@ -103,18 +109,17 @@
                 <span>Ekspor Data</span>
             </a>
         </li>
+        {{-- <li class="menu-item {{ Route::is('super_admin.export.form') ? 'active' : '' }}">
+            <a href="{{ route('super_admin.export.form') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-download-2-line me-2"></i>
+                <span>Template PDF</span>
+            </a>
+        </li> --}}
         @endif
 
         <!-- Admin -->
         @if (auth()->user()->role === 'admin')
         <li class="menu-header mt-4 text-uppercase small fw-bold text-secondary">Admin</li>
-
-        <li class="menu-item {{ Route::is('admin.itemout.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.itemout.index') }}" class="menu-link d-flex align-items-center text-white">
-                <i class="ri ri-qr-scan-2-line me-2"></i>
-                <span>ScanQr</span>
-            </a>
-        </li>
 
         <li class="menu-item {{ Route::is('admin.request') ? 'active' : '' }}">
             <a href="{{ route('admin.request') }}" class="menu-link d-flex align-items-center text-white position-relative">
@@ -127,6 +132,13 @@
                         {{ $pendingCount }}
                     </span>
                 @endif
+            </a>
+        </li>
+        
+        <li class="menu-item {{ Route::is('admin.itemout.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.itemout.index') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-qr-scan-2-line me-2"></i>
+                <span>ScanQr</span>
             </a>
         </li>
 
