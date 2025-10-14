@@ -3,14 +3,14 @@
 <div class="col-12">
   <div class="card overflow-hidden">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">Daftar Akun</h5>
+      <h4 class="fw-bold text-primary mb-0">Daftar Akun</h4>
       <a href="{{ route('super_admin.users.create') }}" class="btn btn-sm btn-primary">
         <i class="ri ri-add-line me-1"></i> Tambah
       </a>
     </div>
     <div class="table-responsive">
-      <table class="table table-sm">
-        <thead>
+      <table class="table table-hover align-middle">
+        <thead class="table-light text-center">
           <tr>
             <th class="text-truncate">Akun</th>
             <th class="text-truncate">Email</th>

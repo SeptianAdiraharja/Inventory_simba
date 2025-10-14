@@ -21,4 +21,9 @@ class Item_out_guest extends Model
     {
         return $this->belongsTo(Guest::class);
     }
+
+    public function item() 
+    {
+        return $this->belongsTo(Item::class);
+    }
 }

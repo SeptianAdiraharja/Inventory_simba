@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container mt-4">
-    <h4 class="mb-4">
+    <h4 class="fw-bold text-primary mb-0">
         <i class="bi bi-box-seam"></i> Export Data Barang
     </h4>
 
@@ -139,7 +139,6 @@
                     <tr class="text-center">
                         <th>No</th>
                         <th>Format</th>
-                        <th>Nama File</th>
                         <th>Tanggal Export</th>
                     </tr>
                 </thead>
@@ -152,7 +151,6 @@
                                     {{ strtoupper($log->format) }}
                                 </span>
                             </td>
-                            <td>{{ $log->file_path }}</td>
                             <td>{{ $log->created_at->format('d-m-Y H:i') }}</td>
                         </tr>
                     @empty
