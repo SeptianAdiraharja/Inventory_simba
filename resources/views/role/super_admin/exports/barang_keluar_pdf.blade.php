@@ -4,55 +4,14 @@
     <meta charset="utf-8">
     <title>Laporan Barang Keluar</title>
     <style>
-        body { 
-            font-family: DejaVu Sans, sans-serif; 
-            font-size: 12px; 
-            margin: 0;
-            padding: 0;
-            position: relative;
-            min-height: 100vh;
-        }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 15px; 
-        }
-        th, td { 
-            border: 1px solid #000; 
-            padding: 6px; 
-            text-align: center; 
-        }
-        th { 
-            background: #f2f2f2; 
-        }
-        .title { 
-            text-align: center; 
-            margin-top: 10px; 
-            margin-bottom: 5px;
-        }
-        .footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            font-size: 11px;
-            line-height: 1.4;
-            padding: 8px 0;
-        }
-        .page-number:after {
-            content: counter(page);
-        }
-        .badge {
-            display: inline-block;
-            padding: 3px 6px;
-            border-radius: 3px;
-            font-size: 10px;
-            color: #fff;
-        }
-        .bg-primary { background-color: #0d6efd; }
-        .bg-warning { background-color: #ffc107; color: #000; }
-        .bg-secondary { background-color: #6c757d; }
+        body { font-family: sans-serif; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #000; padding: 6px; text-align: center; }
+        th { background: #f2f2f2; }
+        .title { text-align: center; margin-top: 10px; }
+        .footer { margin-top: 30px; font-size: 11px; text-align: right; }
+        .page-number:after { content: counter(page); }
+
     </style>
 </head>
 <body>
@@ -62,7 +21,8 @@
         $type = pathinfo($path, PATHINFO_EXTENSION);
         $data = file_get_contents($path);
         $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
-        $grandTotal = $items->sum(fn($row) => ($row->item->price ?? 0) * ($row->quantity ?? 0));
+        $grandTotal = 0;
+        $totalQuantity = 0;
     @endphp
 
     <!-- Kop Surat -->
@@ -80,44 +40,45 @@
             <tr>
                 <th>No</th>
                 <th>Nama Barang</th>
+                <th>Penerima</th>
+                <th>Tanggal Keluar</th>
                 <th>Jumlah</th>
+                <th>Satuan</th>
                 <th>Harga Satuan</th>
-                <th>Total</th>
-                <th>Tanggal</th>
-                <th>Dikeluarkan Oleh</th>
-                <th>Tipe</th>
+                <th>Total Harga</th>
             </tr>
         </thead>
         <tbody>
             @forelse($items as $i => $row)
-            <tr>
-                <td>{{ $i + 1 }}</td>
-                <td>{{ $row->item->name ?? '-' }}</td>
-                <td>{{ $row->quantity ?? 0 }}</td>
-                <td>Rp {{ number_format($row->item->price ?? 0, 0, ',', '.') }}</td>
-                <td>Rp {{ number_format(($row->item->price ?? 0) * ($row->quantity ?? 0), 0, ',', '.') }}</td>
-                <td>{{ $row->created_at ? $row->created_at->format('d-m-Y H:i') : '-' }}</td>
-                <td>{{ $row->user->name ?? $row->guest->name ?? '-' }}</td>
-                <td>
-                    @if(isset($row->user))
-                        <span class="badge bg-primary">User</span>
-                    @elseif(isset($row->guest))
-                        <span class="badge bg-warning">Guest</span>
-                    @else
-                        <span class="badge bg-secondary">-</span>
-                    @endif
-                </td>
-            </tr>
+                @php 
+                    $grandTotal += $row->total_price;
+                    $totalQuantity += $row->quantity;
+                @endphp
+                <tr>
+                    <td>{{ $i+1 }}</td>
+                    <td>{{ $row->item->name }}</td>
+                    <td>{{ $row->supplier->name ?? '-' }}</td>
+                    <td>{{ $row->created_at->format('d-m-Y') }}</td>
+                    <td>{{ $row->quantity }}</td>
+                    <td>{{ $row->item->unit->name ?? '-' }}</td>
+                    <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
+                    <td>Rp {{ number_format($row->total_price,0,',','.') }}</td>
+                </tr>
             @empty
-            <tr>
-                <td colspan="8" class="text-center" style="font-style:italic;">Tidak ada data barang keluar</td>
-            </tr>
+                <tr>
+                    <td colspan="8">Tidak ada data</td>
+                </tr>
             @endforelse
         </tbody>
         <tfoot>
             <tr>
-                <th colspan="4">Grand Total</th>
-                <th colspan="4">Rp {{ number_format($grandTotal, 0, ',', '.') }}</th>
+                <th colspan="4" style="text-align:right;">Total Jumlah</th>
+                <th>{{ number_format($totalQuantity,0,',','.') }}</th>
+                <th colspan="3"></th>
+            </tr>
+            <tr>
+                <th colspan="4" style="text-align:right;">Grand Total Harga</th>
+                <th colspan="4">Rp {{ number_format($grandTotal,0,',','.') }}</th>
             </tr>
         </tfoot>
     </table>

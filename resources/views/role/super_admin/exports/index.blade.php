@@ -77,38 +77,51 @@
                     </a>
                 </div>
             </div>
+
+            {{-- Tabel Data --}}
             <div class="card-body table-responsive">
                 <table class="table table-bordered table-hover table-sm align-middle">
                     <thead class="table-secondary">
                         <tr class="text-center">
                             <th>No</th>
                             <th>Nama Barang</th>
-                            <th>Jumlah</th>
-                            <th>Harga Satuan</th>
-                            <th>Total</th>
-                            <th>Tanggal</th>
                             @if(request('type') == 'masuk')
                                 <th>Supplier</th>
+                                <th>Tanggal Masuk</th>
                             @else
                                 <th>Dikeluarkan Oleh</th>
+                                <th>Tanggal Keluar</th>
                             @endif
+                            <th>Jumlah</th>
+                            <th>Satuan Barang</th>
+                            <th>Harga Satuan</th>
+                            <th>Total Harga</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($items as $i => $row)
-                        <tr>
-                            <td class="text-center">{{ $i+1 }}</td>
-                            <td>{{ $row->item->name }}</td>
-                            <td class="text-center">{{ $row->quantity }}</td>
-                            <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
-                            <td>Rp {{ number_format($row->total_price,0,',','.') }}</td>
-                            <td>{{ $row->created_at->format('d-m-Y H:i') }}</td>
-                            @if(request('type') == 'masuk')
-                                <td>{{ $row->supplier->name ?? '-' }}</td>
-                            @else
-                                <td>{{ $row->user->name ?? '-' }}</td>
-                            @endif
-                        </tr>
+                            <tr>
+                                <td class="text-center">{{ $i+1 }}</td>
+                                <td>{{ $row->item->name }}</td>
+                                
+                                {{-- Supplier atau User --}}
+                                @if(request('type') == 'masuk')
+                                    <td>{{ $row->supplier->name ?? '-' }}</td>
+                                @else
+                                    <td>{{ $row->user->name ?? '-' }}</td>
+                                @endif
+
+                                {{-- Tanggal --}}
+                                <td>{{ $row->created_at->format('d-m-Y H:i') }}</td>
+
+                                {{-- Jumlah & Satuan --}}
+                                <td class="text-center">{{ $row->quantity }}</td>
+                                <td class="text-center">{{ $row->item->unit->name ?? '-' }}</td>
+
+                                {{-- Harga --}}
+                                <td>Rp {{ number_format($row->item->price, 0, ',', '.') }}</td>
+                                <td>Rp {{ number_format($row->total_price, 0, ',', '.') }}</td>
+                            </tr>
                         @endforeach
                     </tbody>
                 </table>
