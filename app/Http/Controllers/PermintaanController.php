@@ -59,16 +59,6 @@ class PermintaanController extends Controller
                     ]);
 
                     $cartItem->quantity = ($cartItem->quantity ?? 0) + $itemData['quantity'];
-<<<<<<< HEAD
-=======
-
-                    if ($cartItem->quantity > $item->stock) {
-                        throw new \Exception("Jumlah melebihi stok {$item->name}.");
-                    }
-
-                    // Kurangi stok sementara (akan dikunci sampai permintaan diproses)
-                    $item->decrement('stock', $itemData['quantity']);
->>>>>>> 010396a9d5c8baa6b6aa71e1dc1122afda1a3702
                     $cartItem->save();
                 }
             });
