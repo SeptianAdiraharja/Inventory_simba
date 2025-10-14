@@ -105,3 +105,34 @@
   text-align: center;
   margin-top: 1.25rem;
 }
+
+.floating-cart {
+  position: fixed;
+  bottom: 25px; /* jarak dari bawah */
+  right: 25px;  /* jarak dari kanan */
+  color: white;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  z-index: 9999;
+}
+.floating-cart:hover {
+  transform: scale(1.1);
+  background-color: #e64a19;
+}
+.cart-badge {
+  position: absolute;
+  top: -6px; /* naikin dikit ke luar lingkaran */
+  right: -6px; /* geser keluar dari buletan */
+  background-color: #ff4d4d;
+  color: white;
+  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}

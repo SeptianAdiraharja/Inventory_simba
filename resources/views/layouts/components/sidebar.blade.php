@@ -16,7 +16,7 @@
         <li class="menu-item {{ Route::is('super_admin.dashboard') ? 'active' : '' }}">
             <a href="{{ route('super_admin.dashboard') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-dashboard-line me-2"></i>
-                <span>Dashboard</span>  
+                <span>Dashboard</span>
             </a>
         </li>
         @endif
@@ -54,6 +54,12 @@
             <a href="{{ route('pegawai.permintaan.pending') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-time-line me-2"></i>
                 <span>Permintaan Pending</span>
+            </a>
+        </li>
+        <li class="menu-item {{ Route::is('pegawai.permintaan.history') ? 'active' : '' }}">
+            <a href="{{ route('pegawai.permintaan.history') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-time-line me-2"></i>
+                <span>Riwayat Pengajuan</span>
             </a>
         </li>
         @endif
@@ -128,7 +134,7 @@
                 @endif
             </a>
         </li>
-        
+
         <li class="menu-item {{ Route::is('admin.itemout.*') ? 'active' : '' }}">
             <a href="{{ route('admin.itemout.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-qr-scan-2-line me-2"></i>

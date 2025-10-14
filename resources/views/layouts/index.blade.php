@@ -74,6 +74,7 @@
     <script src="{{ asset('js/modal-pagination.js') }}"></script>
     <script src="{{ asset('js/dashboard-modal.js') }}"></script>
     <script src="{{ asset('js/itemout.js') }}"></script>
+
   </head>
 
   <body>
@@ -115,7 +116,18 @@
       <div class="layout-overlay layout-menu-toggle"></div>
     </div>
     <!-- / Layout wrapper -->
-
+    <!-- floating cart -->
+    @php
+      $cartsitems = \App\Models\Cart::where('user_id', Auth::id())->where('status', 'active')->with('cartItems.item')->first();
+    @endphp
+    @if(Auth::user()->role === 'pegawai')
+    <a href="#offcanvasCart" class="floating-cart bg-dark" data-bs-toggle="offcanvas" role="button">
+      <i class="ri ri-shopping-cart-2-line fs-3"></i>
+      @if($cartsitems && $cartsitems->cartItems->count() > 0)
+        <span class="badge bg-danger cart-badge">{{ $cartsitems->cartItems->count() }}</span>
+      @endif
+    </a>
+    @endif
     <!-- Core JS -->
 
    <script src="{{asset('assets/vendor/libs/jquery/jquery.js')}}"></script>
@@ -143,6 +155,16 @@
 
     <!-- Place this tag before closing body tag for github widget button. -->
     <script async="async" defer="defer" src="https://buttons.github.io/buttons.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @if(session('swal'))
+    <script>
+    Swal.fire({
+        icon: "{{ session('swal.icon') }}",
+        title: "{{ session('swal.title') }}",
+        text: "{{ session('swal.text') }}"
+    });
+    </script>
+    @endif
   </body>
   <script src="{{ asset('js/dashboard-modal.js') }}"></script>
 </html>

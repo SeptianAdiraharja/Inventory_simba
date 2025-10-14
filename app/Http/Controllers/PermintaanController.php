@@ -16,7 +16,10 @@ class PermintaanController extends Controller
     {
         $categories = Category::all();
         $items = Item::with('category')
-            ->latest()
+            ->withSum('cartItems as total_dibeli', 'quantity')
+            ->orderByRaw('CASE WHEN stock > 0 THEN 0 ELSE 1 END') // logic stock 0/ habis
+            ->orderByDesc('total_dibeli')
+            ->orderByDesc('created_at') // misal kalau sama ambil yang baru dibuat
             ->paginate(12);
 
         return view('role.pegawai.produk', compact('categories', 'items'));
@@ -28,7 +31,6 @@ class PermintaanController extends Controller
             'items.*.item_id' => 'required|exists:items,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
-
         try {
             DB::transaction(function () use ($request) {
                 $cart = Cart::firstOrCreate(
@@ -65,10 +67,21 @@ class PermintaanController extends Controller
             $qty = $request->items[0]['quantity'];
 
             return redirect()->route('pegawai.produk')
-                ->with('success', "$qty x $itemName berhasil ditambahkan ke keranjang!");
+                ->with([
+                'swal' => [
+                    'icon' => 'success',
+                    'title' => 'Sukses!',
+                    'text' => "$qty x $itemName berhasil ditambahkan ke keranjang!",
+                ]
+                ]);
         } catch (\Exception $e) {
-            return redirect()->route('pegawai.produk')
-                ->with('error', 'Error: ' . $e->getMessage());
+            return redirect()->back()->with([
+                'swal' => [
+                    'icon' => 'error',
+                    'title' => 'Gagal',
+                    'text' => $e->getMessage(),
+                ]
+            ]);
         }
     }
 
@@ -110,8 +123,34 @@ class PermintaanController extends Controller
         });
 
         return redirect()
-            ->route('pegawai.permintaan.detail', $cart->id)
-            ->with('success', 'Permintaan berhasil diajukan, menunggu persetujuan admin.');
+            ->back()
+            ->with([
+                'swal' => [
+                    'icon' => 'success',
+                    'title' => 'Sukses!',
+                    'text' => "Permintaan berhasil diajukan, menunggu persetujuan admin."
+                ]
+            ]);
+    }
+
+    public function historyPermintaan()
+    {
+        $carts = Cart::withCount('cartItems')
+            ->where('user_id', Auth::id())
+            ->where('status', '!=', 'active')
+            ->when(request('status') && request('status') != 'all', function ($query) {
+                $query->where('status', request('status'));
+            })
+            ->paginate(10);
+
+        $statusCounts = [
+            'all' => Cart::where('user_id', Auth::id())->where('status', '!=', 'active')->count(),
+            'pending' => Cart::where('user_id', Auth::id())->where('status', 'pending')->count(),
+            'approved' => Cart::where('user_id', Auth::id())->where('status', 'approved')->count(),
+            'rejected' => Cart::where('user_id', Auth::id())->where('status', 'rejected')->count(),
+        ];
+
+        return view('role.pegawai.history', compact('carts', 'statusCounts'));
     }
 
     public function pendingPermintaan()
@@ -133,43 +172,66 @@ class PermintaanController extends Controller
         return view('role.pegawai.permintaan_detail', compact('cart'));
     }
 
-    public function updateQuantity(Request $request)
+    public function updateQuantity(Request $request, string $id)
     {
-        $request->validate([
-            'cart_item_id' => 'required|exists:cart_items,id',
+        $validated = $request->validate([
             'quantity' => 'required|integer|min:1',
         ]);
 
         try {
-            DB::transaction(function () use ($request) {
-                $cartItem = CartItem::findOrFail($request->cart_item_id);
-                $cart = Cart::findOrFail($cartItem->cart_id);
+            DB::transaction(function () use ($validated, $id) {
+                $cartItem = CartItem::findOrFail($id);
+                $cart = $cartItem->cart;
 
+                // Cek kepemilikan keranjang
                 if ($cart->user_id !== Auth::id()) {
                     throw new \Exception('Akses tidak sah untuk keranjang ini.');
                 }
 
+                // Hanya boleh ubah keranjang aktif
                 if ($cart->status !== 'active') {
-                    throw new \Exception('Hanya bisa ubah keranjang aktif.');
+                    throw new \Exception('Hanya bisa mengubah keranjang yang masih aktif.');
                 }
 
-                $item = Item::findOrFail($cartItem->item_id);
+                $item = $cartItem->item;
+                $oldQty = $cartItem->quantity;
+                $newQty = $validated['quantity'];
+                $diff = $newQty - $oldQty;
 
-                if ($request->quantity > $item->stock + $cartItem->quantity) {
-                    throw new \Exception("Maaf, stok tidak cukup untuk {$item->name}.");
+                // Kalau nambah quantity
+                if ($diff > 0) {
+                    if ($item->stock < $diff) {
+                        throw new \Exception("Stok tidak mencukupi! Sisa stok: {$item->stock}");
+                    }
+                    $item->decrement('stock', $diff);
+                }
+                // Kalau ngurangin quantity
+                elseif ($diff < 0) {
+                    $item->increment('stock', abs($diff));
                 }
 
-                $item->increment('stock', $cartItem->quantity);
-                $cartItem->quantity = $request->quantity;
+                $cartItem->quantity = $newQty;
                 $cartItem->save();
-                $item->decrement('stock', $request->quantity);
             });
 
-            return redirect()->back()->with('success', 'Jumlah produk berhasil diperbarui');
+            return redirect()->back()->with([
+                'swal' => [
+                    'icon' => 'success',
+                    'title' => 'Sukses!',
+                    'text' => 'Jumlah barang berhasil diubah.'
+                ]
+            ]);
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with([
+                'swal' => [
+                    'icon' => 'error',
+                    'title' => 'Gagal!',
+                    'text' => $e->getMessage()
+                ]
+            ]);
         }
     }
+
 
     public function removeItem(Request $request)
     {
@@ -204,5 +266,43 @@ class PermintaanController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('pegawai.produk')->with('error', $e->getMessage());
         }
+    }
+
+    public function refundItem(string $id){
+        {
+            try {
+                DB::transaction(function () use ($id) {
+                    $cart = Cart::with('cartItems.item')->findOrFail($id);
+
+                    if ($cart->user_id !== Auth::id()) {
+                        throw new \Exception('Akses tidak sah untuk keranjang ini.');
+                    }
+
+                    foreach ($cart->cartItems as $cartItem) {
+                        $item = $cartItem->item;
+                        $item->increment('stock', $cartItem->quantity);
+                    }
+
+                    $cart->update(['status' => 'rejected']);
+                });
+
+                return redirect()->back()->with([
+                    'swal' => [
+                        'icon' => 'success',
+                        'title' => 'Berhasil!',
+                        'text' => 'Permintaan berhasil di-refund dan stok dikembalikan.'
+                    ]
+                ]);
+            } catch (\Exception $e) {
+                return redirect()->back()->with([
+                    'swal' => [
+                        'icon' => 'error',
+                        'title' => 'Gagal!',
+                        'text' => $e->getMessage()
+                    ]
+                ]);
+            }
+        }
+
     }
 }
