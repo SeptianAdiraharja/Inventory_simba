@@ -95,11 +95,32 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const forms_cancel = document.querySelectorAll('.cancel-form');
     const buttons = document.querySelectorAll('.btn-detail');
     const modal = new bootstrap.Modal(document.getElementById('detailModal'));
     const detailContent = document.getElementById('detailContent');
     const loadingState = document.getElementById('loadingState');
+    forms_cancel.forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault(); // cegah submit langsung
 
+            Swal.fire({
+                title: 'Konfirmasi',
+                text: 'Yakin ingin cancel permintaan ini?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, cancel!',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit(); // submit form kalau user setuju
+                }
+            });
+        });
+    });
     buttons.forEach(btn => {
         btn.addEventListener('click', function () {
             const id = this.getAttribute('data-id');
