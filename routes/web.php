@@ -20,7 +20,7 @@ use App\Http\Controllers\Role\admin\ItemoutController;
 use App\Http\Controllers\Role\admin\RequestController;
 use App\Http\Controllers\Role\admin\GuestController;
 use App\Http\Controllers\Role\admin\ProdukController;
-use App\Http\Controllers\ReportTemplateController;
+use App\Http\Controllers\Role\admin\RejectController;
 use App\Http\Controllers\SearchController;
 
 /*
@@ -138,6 +138,12 @@ Route::middleware(['auth', 'role:admin'])
         | - carts resource diarahkan juga ke RequestController
         */
         Route::get('/request', [RequestController::class, 'index'])->name('request');
+
+        // BARU: Routes untuk item-level status updates (menggunakan PATCH)
+        Route::patch('/carts/item/{id}/approve', [RequestController::class, 'approveItem'])->name('carts.item.approve');
+        Route::patch('/carts/item/{id}/reject', [RequestController::class, 'rejectItem'])->name('carts.item.reject');
+
+        // Resource route untuk Carts/Requests. 'show' digunakan untuk detail table.
         Route::resource('carts', RequestController::class);
 
         /*
@@ -166,6 +172,32 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/produk/guest/{id}/scan', [ProdukController::class, 'scan'])->name('produk.scan');
         Route::get('/produk/guest/{id}/cart', [ProdukController::class, 'showCart'])->name('produk.cart'); // <- AJAX modal
         Route::post('/produk/guest/{id}/release', [ProdukController::class, 'release'])->name('produk.release');
+
+        /*
+        |----------------------------------------------------------------------
+        | Reject Barang
+        |----------------------------------------------------------------------
+        */
+        Route::get('/rejects/scan', [RejectController::class, 'scanPage'])->name('rejects.scan');
+        Route::post('/rejects/process', [RejectController::class, 'processScan'])->name('rejects.process');
+        Route::get('/rejects/check/{barcode}', [RejectController::class, 'checkBarcode'])->name('admin.rejects.check');
+
+
+         /*
+        |----------------------------------------------------------------------
+        | Export (Barang Keluar)
+        |----------------------------------------------------------------------
+        */
+        Route::get('/out', [ExportController::class, 'exportOut'])->name('export.out');
+        Route::post('/out/clear', [ExportController::class, 'clearOutHistory'])->name('export.out.clear');
+        Route::get('/export/out', [ExportController::class, 'exportOut'])->name('export.out');
+        Route::get('/export/barang-keluar/excel', [ExportController::class, 'exportBarangKeluarExcelAdmin'])
+            ->name('barang_keluar.excel');
+        Route::get('/export/barang-keluar/pdf', [ExportController::class, 'exportBarangKeluarPdfAdmin'])
+            ->name('barang_keluar.pdf');
+
+
+
 });
 
 

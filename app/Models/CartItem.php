@@ -10,6 +10,8 @@ class CartItem extends Model
         'cart_id',
         'item_id',
         'quantity',
+        'status',
+        'rejection_reason',
         'scanned_at'
     ];
 
