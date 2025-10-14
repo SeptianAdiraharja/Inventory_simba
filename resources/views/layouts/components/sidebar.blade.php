@@ -16,7 +16,7 @@
         <li class="menu-item {{ Route::is('super_admin.dashboard') ? 'active' : '' }}">
             <a href="{{ route('super_admin.dashboard') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-dashboard-line me-2"></i>
-                <span>Dashboard</span>  
+                <span>Dashboard</span>
             </a>
         </li>
         @endif
@@ -103,12 +103,6 @@
                 <span>Ekspor Data</span>
             </a>
         </li>
-        {{-- <li class="menu-item {{ Route::is('super_admin.export.form') ? 'active' : '' }}">
-            <a href="{{ route('super_admin.export.form') }}" class="menu-link d-flex align-items-center text-white">
-                <i class="ri ri-download-2-line me-2"></i>
-                <span>Template PDF</span>
-            </a>
-        </li> --}}
         @endif
 
         <!-- Admin -->
@@ -119,8 +113,6 @@
             <a href="{{ route('admin.request') }}" class="menu-link d-flex align-items-center text-white position-relative">
                 <i class="ri ri-file-list-3-line me-2"></i>
                 <span>Request</span>
-
-                {{-- Badge notif (jumlah request pending) --}}
                 @if($pendingCount > 0)
                     <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger">
                         {{ $pendingCount }}
@@ -128,7 +120,7 @@
                 @endif
             </a>
         </li>
-        
+
         <li class="menu-item {{ Route::is('admin.itemout.*') ? 'active' : '' }}">
             <a href="{{ route('admin.itemout.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-qr-scan-2-line me-2"></i>
@@ -140,6 +132,21 @@
             <a href="{{ route('admin.guests.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-user-line me-2"></i>
                 <span>Guest</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ Route::is('admin.rejects.scan') ? 'active' : '' }}">
+            <a href="{{ route('admin.rejects.scan') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-close-circle-line me-2"></i>
+                <span>Barang Rusak / Reject</span>
+            </a>
+        </li>
+
+        {{-- ✅ Menu baru: Export Barang Keluar --}}
+        <li class="menu-item {{ Route::is('admin.export.out') ? 'active' : '' }}">
+            <a href="{{ route('admin.export.out') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-download-2-line me-2"></i>
+                <span>Export Barang Keluar</span>
             </a>
         </li>
         @endif
@@ -165,7 +172,7 @@
     }
 
     .menu-item.active > .menu-link {
-        background-color: #0d6efd !important; /* biru bootstrap */
+        background-color: #0d6efd !important;
         color: #fff !important;
     }
 

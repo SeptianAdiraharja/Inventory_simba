@@ -49,7 +49,7 @@ class ItemoutController extends Controller
     /**
      * Scan item berdasarkan barcode.
      */
-    public function scan(Request $request, $cartId)
+   public function scan(Request $request, $cartId)
     {
         $request->validate([
             'barcode' => 'required|string|max:255',
@@ -58,7 +58,7 @@ class ItemoutController extends Controller
         $cart = Cart::with('cartItems.item')->findOrFail($cartId);
         $barcode = trim($request->barcode);
 
-        // Cari berdasarkan kode barang
+        // Cari item berdasarkan barcode
         $cartItem = $cart->cartItems->first(fn($ci) => optional($ci->item)->code === $barcode);
 
         if (!$cartItem) {
@@ -69,7 +69,6 @@ class ItemoutController extends Controller
             ], 422);
         }
 
-        // Jika sudah discan sebelumnya
         if ($cartItem->scanned_at) {
             return response()->json([
                 'success' => false,
@@ -78,13 +77,44 @@ class ItemoutController extends Controller
             ], 409);
         }
 
-        // Update jika valid
+        // Tandai item sudah discan
         $cartItem->update(['scanned_at' => now()]);
+
+        // ✅ Cek apakah SEMUA item sudah discan
+        $allScanned = $cart->cartItems->every(fn($ci) => $ci->scanned_at !== null);
+
+        // Jika semua sudah discan → langsung proses release otomatis
+        if ($allScanned) {
+            DB::beginTransaction();
+            try {
+                foreach ($cart->cartItems as $ci) {
+                    // Buat entri di item_outs
+                    Item_out::create([
+                        'cart_id'   => $cart->id,
+                        'item_id'   => $ci->item_id,
+                        'quantity'  => $ci->quantity,
+                        'unit_id'   => $ci->item->unit_id,
+                        'released_at' => now(),
+                        'approved_by' => Auth::id(),
+                    ]);
+                    // Kurangi stok item
+                    $ci->item->decrement('stock', $ci->quantity);
+                }
+
+                $cart->update(['picked_up_at' => now()]);
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Auto-release gagal: ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'success' => true,
             'status'  => 'valid',
-            'message' => '✅ Barang berhasil discan.',
+            'message' => '✅ Barang berhasil discan' . ($allScanned ? ' dan semua item sudah dikeluarkan.' : '.'),
+            'all_scanned' => $allScanned,
             'item' => [
                 'id'        => $cartItem->item->id,
                 'name'      => $cartItem->item->name,
@@ -100,6 +130,9 @@ class ItemoutController extends Controller
      */
     public function release(Request $request, $cartId)
     {
+
+        Log::info('DEBUG release payload', $request->all());
+
         $request->validate([
             'items' => 'required|array|min:1',
             'items.*.id' => 'required|integer|exists:items,id',
@@ -125,11 +158,11 @@ class ItemoutController extends Controller
                         'message' => "Stok tidak cukup untuk item {$item->name} (tersisa: {$item->stock})."
                     ], 422);
                 }
-
                 $itemOut = new Item_out();
                 $itemOut->cart_id = $cart->id;
                 $itemOut->item_id = $item->id;
                 $itemOut->quantity = $qty;
+                $itemOut->unit_id = $item->unit_id; 
                 $itemOut->released_at = now();
                 $itemOut->approved_by = Auth::id();
                 $itemOut->save();

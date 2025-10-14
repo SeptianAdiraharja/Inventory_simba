@@ -14,6 +14,7 @@ class Item_out extends Model
         'cart_id',
         'approved_by',
         'released_at',
+        'unit_id',
     ];
 
     public function cart()
