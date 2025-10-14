@@ -249,11 +249,7 @@
                         </form>
                     </div>
                 </div>
-<<<<<<< HEAD
                 @endif
-=======
-
->>>>>>> 010396a9d5c8baa6b6aa71e1dc1122afda1a3702
             @endif
         @endauth
 
