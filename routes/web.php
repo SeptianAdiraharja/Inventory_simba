@@ -109,96 +109,102 @@ Route::middleware(['auth', 'role:admin'])
     ->group(function () {
 
         /*
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         | Dashboard
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         */
-        Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
-        Route::get('/dashboard/data', [AdminController::class, 'getChartData']); // data untuk chart
-        Route::get('/dashboard/modal/{type}', [AdminController::class, 'loadModalData'])->name('dashboard.modal.data');
-        Route::get('/dashboard/modal/barang_keluar', [AdminController::class, 'barangKeluarModal'])
-            ->name('dashboard.modal.barang_keluar');
+        Route::controller(AdminController::class)->group(function () {
+            Route::get('/dashboard', 'index')->name('dashboard');
+            Route::get('/dashboard/data', 'getChartData');
+            Route::get('/dashboard/modal/{type}', 'loadModalData')->name('dashboard.modal.data');
+            Route::get('/dashboard/modal/barang_keluar', 'barangKeluarModal')->name('dashboard.modal.barang_keluar');
+        });
+
 
         /*
-        |----------------------------------------------------------------------
-        | Item Out (Barang Keluar untuk pegawai)
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
+        | Item Out (Barang Keluar)
+        |--------------------------------------------------------------------------
         */
-        Route::resource('itemout', ItemoutController::class);
-        Route::get('/itemout/{cart}/struk', [ItemoutController::class, 'struk'])->name('itemout.struk');
-        Route::post('/itemout/scan/{cart}', [ItemoutController::class, 'scan'])->name('itemout.scan');
-        Route::get('/itemout/check-all-scanned/{cart}', [ItemoutController::class, 'checkAllScanned'])->name('itemout.checkAllScanned');
-        Route::post('/itemout/release/{cart}', [ItemoutController::class, 'release'])->name('itemout.release');
+        Route::controller(ItemoutController::class)->group(function () {
+            Route::resource('itemout', ItemoutController::class);
+            Route::get('/itemout/{cart}/struk', 'struk')->name('itemout.struk');
+            Route::post('/itemout/scan/{cart}', 'scan')->name('itemout.scan');
+            Route::get('/itemout/check-all-scanned/{cart}', 'checkAllScanned')->name('itemout.checkAllScanned');
+            Route::post('/itemout/release/{cart}', 'release')->name('itemout.release');
+        });
+
 
         /*
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         | Requests & Carts
-        |----------------------------------------------------------------------
-        | - RequestController digunakan untuk mengelola permintaan (approval/reject)
-        | - carts resource diarahkan juga ke RequestController
+        |--------------------------------------------------------------------------
+        | Mengelola permintaan pegawai (approval / reject).
         */
-        Route::get('/request', [RequestController::class, 'index'])->name('request');
+        Route::controller(RequestController::class)->group(function () {
+            Route::get('/request', 'index')->name('request');
 
-        // BARU: Routes untuk item-level status updates (menggunakan PATCH)
-        Route::patch('/carts/item/{id}/approve', [RequestController::class, 'approveItem'])->name('carts.item.approve');
-        Route::patch('/carts/item/{id}/reject', [RequestController::class, 'rejectItem'])->name('carts.item.reject');
+            // Update status item
+            Route::patch('/carts/item/{id}/approve', 'approveItem')->name('carts.item.approve');
+            Route::patch('/carts/item/{id}/reject', 'rejectItem')->name('carts.item.reject');
 
-        // Resource route untuk Carts/Requests. 'show' digunakan untuk detail table.
-        Route::resource('carts', RequestController::class);
+            // Resource route (show digunakan untuk detail tabel)
+            Route::resource('carts', RequestController::class);
+        });
+
 
         /*
-        |----------------------------------------------------------------------
-        | Guests (Tamu)
-        // 🔎 Search guest (digunakan untuk navbar search)
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
+        | Guest Management
+        |--------------------------------------------------------------------------
         */
-        Route::get('/guests/search', [SearchController::class, 'searchGuests'])
-            ->name('guests.search');
+        Route::controller(SearchController::class)->group(function () {
+            Route::get('/guests/search', 'searchGuests')->name('guests.search');
+        });
 
         Route::resource('guests', GuestController::class)->except('show');
 
 
         /*
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         | Produk Guest
-        |----------------------------------------------------------------------
-        | - Menampilkan produk yang dapat dipilih oleh tamu (guest)
-        | - Scan barang masuk ke guest_carts
-        | - Release barang dari guest_carts ke item_out_guests
+        |--------------------------------------------------------------------------
         */
-        // Produk Admin
-        Route::get('/produk', [ProdukController::class, 'index'])->name('produk.index');
-        Route::get('/produk/guest/{id}', [ProdukController::class, 'showByGuest'])->name('produk.byGuest');
-        Route::post('/produk/guest/{id}/scan', [ProdukController::class, 'scan'])->name('produk.scan');
-        Route::get('/produk/guest/{id}/cart', [ProdukController::class, 'showCart'])->name('produk.cart'); // <- AJAX modal
-        Route::post('/produk/guest/{id}/release', [ProdukController::class, 'release'])->name('produk.release');
+        Route::controller(ProdukController::class)->group(function () {
+            Route::get('/produk', 'index')->name('produk.index');
+            Route::get('/produk/guest/{id}', 'showByGuest')->name('produk.byGuest');
+            Route::post('/produk/guest/{id}/scan', 'scan')->name('produk.scan');
+            Route::get('/produk/guest/{id}/cart', 'showCart')->name('produk.cart');
+            Route::post('/produk/guest/{id}/release', 'release')->name('produk.release');
+        });
+
 
         /*
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         | Reject Barang
-        |----------------------------------------------------------------------
+        |--------------------------------------------------------------------------
         */
-        Route::get('/rejects/scan', [RejectController::class, 'scanPage'])->name('rejects.scan');
-        Route::post('/rejects/process', [RejectController::class, 'processScan'])->name('rejects.process');
-        Route::get('/rejects/check/{barcode}', [RejectController::class, 'checkBarcode'])->name('admin.rejects.check');
+        Route::controller(RejectController::class)->group(function () {
+            Route::get('/rejects/scan', 'scanPage')->name('rejects.scan');
+            Route::post('/rejects/process', 'processScan')->name('rejects.process');
+            Route::get('/rejects/check/{barcode}', 'checkBarcode')->name('rejects.check');
+        });
 
 
-         /*
-        |----------------------------------------------------------------------
-        | Export (Barang Keluar)
-        |----------------------------------------------------------------------
+        /*
+        |--------------------------------------------------------------------------
+        | Export Barang Keluar
+        |--------------------------------------------------------------------------
         */
-        Route::get('/out', [ExportController::class, 'exportOut'])->name('export.out');
-        Route::post('/out/clear', [ExportController::class, 'clearOutHistory'])->name('export.out.clear');
-        Route::get('/export/out', [ExportController::class, 'exportOut'])->name('export.out');
-        Route::get('/export/barang-keluar/excel', [ExportController::class, 'exportBarangKeluarExcelAdmin'])
-            ->name('barang_keluar.excel');
-        Route::get('/export/barang-keluar/pdf', [ExportController::class, 'exportBarangKeluarPdfAdmin'])
-            ->name('barang_keluar.pdf');
+        Route::controller(ExportController::class)->group(function () {
+            Route::get('/out', 'exportOut')->name('export.out');
+            Route::post('/out/clear', 'clearOutHistory')->name('export.out.clear');
+            Route::get('/export/barang-keluar/excel', 'exportBarangKeluarExcelAdmin')->name('barang_keluar.excel');
+            Route::get('/export/barang-keluar/pdf', 'exportBarangKeluarPdfAdmin')->name('barang_keluar.pdf');
+        });
 
+    });
 
-
-});
 
 
 /*

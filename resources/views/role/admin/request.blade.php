@@ -2,37 +2,42 @@
 
 @section('content')
 <div class="container-fluid py-3 animate_animated animate_fadeIn">
-
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <table class="table table-hover table-bordered align-middle mb-0">
-                <thead class="table-light">
-                    <tr class="text-center align-middle">
+                <thead class="table-light text-center align-middle">
+                    <tr>
                         <th style="width: 50px;">No</th>
                         <th>Nama</th>
                         <th>Email</th>
-                        <th>Role</th>
+                        <th>Peran</th>
                         <th>Status</th>
-                        <th>Jumlah Item</th>
+                        <th>Jumlah Barang</th>
                         <th style="width: 180px;">Aksi</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @forelse($requests as $index => $req)
                         <tr id="cart-row-{{ $req->cart_id }}">
                             <td class="text-center">{{ $requests->firstItem() + $index }}</td>
+
                             <td>
                                 <strong>{{ $req->name }}</strong><br>
                                 <small class="text-muted">
                                     Diajukan: {{ \Carbon\Carbon::parse($req->created_at)->format('d M Y H:i') }}
                                 </small>
                             </td>
+
                             <td>{{ $req->email }}</td>
+
                             <td>
                                 <span class="badge bg-info text-dark">{{ ucfirst($req->role) }}</span>
                             </td>
+
                             <td class="text-center">
-                                <span id="main-status-{{ $req->cart_id }}" class="badge
+                                <span id="main-status-{{ $req->cart_id }}"
+                                    class="badge
                                     @if($req->status == 'pending') bg-warning text-dark
                                     @elseif($req->status == 'rejected') bg-danger
                                     @elseif($req->status == 'approved') bg-success
@@ -41,55 +46,70 @@
                                     {{ ucfirst(str_replace('_', ' ', $req->status)) }}
                                 </span>
                             </td>
+
                             <td class="text-center fw-semibold">{{ $req->total_quantity }}</td>
 
                             <td class="text-center">
                                 <div class="dropdown">
-                                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        AKSI
+                                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Aksi
                                     </button>
                                     <ul class="dropdown-menu shadow">
                                         <li>
-                                            <a class="dropdown-item detail-toggle-btn" href="#detail-row-{{ $req->cart_id }}" data-cart-id="{{ $req->cart_id }}" data-bs-toggle="collapse" data-bs-target="#detail-row-{{ $req->cart_id }}">
-                                                <i class="bi bi-box-seam me-1"></i> Detail (Lihat Item)
+                                            <a class="dropdown-item detail-toggle-btn"
+                                               href="#detail-row-{{ $req->cart_id }}"
+                                               data-cart-id="{{ $req->cart_id }}"
+                                               data-bs-toggle="collapse"
+                                               data-bs-target="#detail-row-{{ $req->cart_id }}">
+                                                <i class="bi bi-box-seam me-1"></i> Detail (Lihat Barang)
                                             </a>
                                         </li>
+
                                         <li><hr class="dropdown-divider"></li>
 
-                                        @if($req->status == 'pending')
-                                        <li>
-                                            <form action="{{ route('admin.carts.update', $req->cart_id) }}" method="POST" class="approve-all-form">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="status" value="approved">
-                                                <button type="submit" class="dropdown-item text-success" data-trigger="approve-all">
-                                                    <i class="bi bi-check-circle me-1"></i> Approve All
-                                                </button>
-                                            </form>
-                                        </li>
-                                        <li>
-                                            <form action="{{ route('admin.carts.update', $req->cart_id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menolak SEMUA item dalam permintaan ini?');">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="status" value="rejected">
-                                                <button type="submit" class="dropdown-item text-danger">
-                                                    <i class="bi bi-x-circle me-1"></i> Reject All
-                                                </button>
-                                            </form>
-                                        </li>
+                                        @if($req->status === 'pending')
+                                            {{-- SETUJUI SEMUA --}}
+                                            <li>
+                                                <form action="{{ route('admin.carts.update', $req->cart_id) }}"
+                                                      method="POST" class="approve-all-form">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <input type="hidden" name="status" value="approved">
+                                                    <button type="submit" class="dropdown-item text-success" data-trigger="approve-all">
+                                                        <i class="bi bi-check-circle me-1"></i> Setujui Semua
+                                                    </button>
+                                                </form>
+                                            </li>
+
+                                            {{-- TOLAK SEMUA --}}
+                                            <li>
+                                                <form action="{{ route('admin.carts.update', $req->cart_id) }}"
+                                                      method="POST"
+                                                      onsubmit="return confirm('Anda yakin ingin menolak SEMUA barang dalam permintaan ini?');">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <input type="hidden" name="status" value="rejected">
+                                                    <button type="submit" class="dropdown-item text-danger">
+                                                        <i class="bi bi-x-circle me-1"></i> Tolak Semua
+                                                    </button>
+                                                </form>
+                                            </li>
                                         @else
-                                        <li>
-                                            <span class="dropdown-item text-muted">Status: {{ ucfirst(str_replace('_', ' ', $req->status)) }}</span>
-                                        </li>
+                                            <li>
+                                                <span class="dropdown-item text-muted">
+                                                    Status: {{ ucfirst(str_replace('_', ' ', $req->status)) }}
+                                                </span>
+                                            </li>
                                         @endif
                                     </ul>
                                 </div>
                             </td>
                         </tr>
 
+                        {{-- BARIS DETAIL --}}
                         <tr class="collapse" id="detail-row-{{ $req->cart_id }}">
                             <td colspan="7" class="p-0">
-                                <div class="p-3 bg-light" id="detail-content-{{ $req->cart_id }}">
+                                <div id="detail-content-{{ $req->cart_id }}" class="p-3 bg-light">
                                     <p class="text-center text-muted m-0">Memuat detail...</p>
                                 </div>
                             </td>
@@ -115,36 +135,45 @@
     </div>
 </div>
 
-<!-- Modal: Reject Item -->
+{{-- =======================
+     BAGIAN MODAL
+======================= --}}
+
+{{-- Modal: Tolak Barang --}}
 <div class="modal fade" id="rejectModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i> Alasan Penolakan Item</h5>
+                <h5 class="modal-title">
+                    <i class="bi bi-x-circle me-2"></i> Alasan Penolakan Barang
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form id="rejectItemForm" action="" method="POST">
+
+            <form id="rejectItemForm" method="POST">
                 @csrf
                 <input type="hidden" name="_method" value="PATCH">
                 <div class="modal-body">
-                    <textarea name="reason" class="form-control" rows="3" placeholder="Tulis alasan penolakan item ini (Wajib)..." required></textarea>
+                    <textarea name="reason" class="form-control" rows="3"
+                              placeholder="Tulis alasan penolakan barang ini (Wajib)..." required></textarea>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-danger">Tolak Item</button>
+                    <button type="submit" class="btn btn-danger">Tolak Barang</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Modal: Semua Barang Sudah Diproses (Fully Approved) -->
+{{-- Modal: Semua Barang Disetujui --}}
 <div class="modal fade" id="cartProcessedModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title">
-                    <i class="bi bi-check2-circle me-2"></i> Semua Barang Sudah Diproses
+                    <i class="bi bi-check2-circle me-2"></i> Semua Barang Telah Disetujui
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -165,7 +194,7 @@
     </div>
 </div>
 
-<!-- Modal Baru: Barang Disetujui Sebagian -->
+{{-- Modal: Barang Disetujui Sebagian --}}
 <div class="modal fade" id="cartPartiallyApprovedModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
@@ -193,11 +222,13 @@
     </div>
 </div>
 
+{{-- =======================
+     BAGIAN SCRIPT
+======================= --}}
 @push('scripts')
 <script src="{{ asset('js/admin-request.js') }}"></script>
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        // Jika halaman kembali dengan flash success dari approve all
         @if(session('showCartProcessedModal'))
             const modal = new bootstrap.Modal(document.getElementById("cartProcessedModal"));
             modal.show();

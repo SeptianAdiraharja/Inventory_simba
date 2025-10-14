@@ -57,24 +57,26 @@
                         {{-- ✅ Aksi Item --}}
                         <td class="item-action-cell">
                             @if($item->status == 'pending')
-                                <button
-                                    type="button"
-                                    class="btn btn-success btn-sm d-inline-flex align-items-center item-approve-btn"
-                                    data-item-id="{{ $item->id }}"
-                                    onclick="updateItemStatus({{ $item->id }}, 'approved', this.closest('tr'), this)"
-                                    title="Setujui Item"
-                                >
-                                    <i class="bi bi-check-lg me-1"></i> Approve
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-outline-danger btn-sm d-inline-flex align-items-center item-reject-btn"
-                                    data-item-id="{{ $item->id }}"
-                                    onclick="openRejectModal({{ $item->id }}, this.closest('tr'))"
-                                    title="Tolak Item"
-                                >
-                                    <i class="bi bi-x-lg me-1"></i> Reject
-                                </button>
+                               {{-- Approve --}}
+                            <button
+                                type="button"
+                                class="btn btn-success btn-sm d-inline-flex align-items-center item-approve-btn"
+                                data-item-id="{{ $item->id }}"
+                                title="Setujui Item"
+                            >
+                                <i class="bi bi-check-lg me-1"></i> Approve
+                            </button>
+
+                            {{-- Reject --}}
+                            <button
+                                type="button"
+                                class="btn btn-outline-danger btn-sm d-inline-flex align-items-center item-reject-btn"
+                                data-item-id="{{ $item->id }}"
+                                title="Tolak Item"
+                            >
+                                <i class="bi bi-x-lg me-1"></i> Reject
+                            </button>
+
                             @elseif($item->status == 'approved')
                                 <span class="text-success fw-semibold">
                                     <i class="bi bi-check-circle me-1"></i> Approved

@@ -206,6 +206,7 @@
 
         @auth
             @if(Auth::user()->role === 'pegawai' || Auth::user()->role === 'admin')
+            @if (request()->is('pegawai/produk*') || request()->is('admin/produk/guest*'))
                 <!-- Search Bar -->
                 <div class="navbar-nav align-items-center mt-2">
                     <div class="nav-item d-flex align-items-center">
@@ -227,6 +228,7 @@
                                     style="width: 150px; font-size: 14px; outline: none; box-shadow: none;"
                                     onchange="this.form.submit()">
                                 <option value="none">Pilih Kategori</option>
+                                <option value="none">Semua</option>
                                 @foreach($categories as $category)
                                     <option value="{{ $category->name }}" {{ request('kategori') == $category->name ? 'selected' : '' }}>
                                         {{ $category->name }}
@@ -248,7 +250,7 @@
                         </form>
                     </div>
                 </div>
-
+                @endif
             @endif
         @endauth
 
