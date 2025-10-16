@@ -249,11 +249,7 @@
                         </form>
                     </div>
                 </div>
-<<<<<<< HEAD
                 @endif
-=======
-
->>>>>>> 010396a9d5c8baa6b6aa71e1dc1122afda1a3702
             @endif
         @endauth
 
@@ -261,18 +257,7 @@
         <ul class="navbar-nav flex-row align-items-center ms-auto">
             @auth
                 @if(Auth::user()->role === 'pegawai')
-                    <!-- Cart Icon -->
-                    <li class="nav-item me-3">
-                        <a class="nav-link position-relative" href="{{ route('pegawai.permintaan.history')}}" role="button">
-                            <i class="ri ri-history-line icon-lg"></i>
-                            @if($cartexceptactive && $cartexceptactive->count() > 0)
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    {{ $cartexceptactive->count() }}
-                                </span>
-                            @endif
-                        </a>
-                    </li>
-
+                   
                     <!-- Notification Icon -->
                     <li class="nav-item dropdown me-3">
                         <a class="nav-link position-relative" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
