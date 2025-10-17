@@ -43,9 +43,9 @@
                 <small class="text-muted d-block">
                   <i class="bi bi-calendar-event me-1"></i>{{ $cart->created_at->format('d M Y H:i') }}
                 </small>
-                <p class="text-primary fw-semibold">
-                  <i class="bi bi-box-seam me-1"></i>{{ $cart->cartItems->count() }} Barang
-                </p>
+               <p class="text-primary fw-semibold">
+                <i class="bi bi-box-seam me-1"></i>{{ $cart->cartItems->count() }} Barang Belum Dipindai
+              </p>
               </td>
               <td class="text-center">
                 @if($cart->all_scanned)

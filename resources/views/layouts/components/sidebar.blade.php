@@ -141,10 +141,10 @@
             </a>
         </li>
 
-        <li class="menu-item {{ Route::is('admin.rejects.scan') ? 'active' : '' }}">
-            <a href="{{ route('admin.rejects.scan') }}" class="menu-link d-flex align-items-center text-white">
-                <i class="ri ri-close-circle-line me-2"></i>
-                <span>Barang Rusak / Reject</span>
+         <li class="menu-item {{ Route::is('admin.pegawai.index') ? 'active' : '' }}">
+            <a href="{{ route('admin.pegawai.index') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-user-line me-2"></i>
+                <span>Pegawai</span>
             </a>
         </li>
 
@@ -153,6 +153,21 @@
             <a href="{{ route('admin.export.out') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-download-2-line me-2"></i>
                 <span>Export Barang Keluar</span>
+            </a>
+        </li>
+
+        {{-- ✅ Menu baru: Transaksi Keluar --}}
+        <li class="menu-item {{ Route::is('admin.transaksi.out') ? 'active' : '' }}">
+            <a href="{{ route('admin.transaksi.out') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="bi-pencil-square me-2"></i>
+                <span>Data Transaksi</span>
+            </a>
+        </li>
+
+        <li class="menu-item {{ Route::is('admin.rejects.scan') ? 'active' : '' }}">
+            <a href="{{ route('admin.rejects.scan') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-close-circle-line me-2"></i>
+                <span>Barang Rusak / Reject</span>
             </a>
         </li>
         @endif

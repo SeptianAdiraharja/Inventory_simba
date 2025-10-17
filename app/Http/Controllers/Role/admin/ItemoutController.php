@@ -1,5 +1,4 @@
 <?php
-// ... Kode Controller PHP tidak berubah karena sudah memuat data $guestItemOuts
 namespace App\Http\Controllers\Role\admin;
 
 use Illuminate\Http\Request;
@@ -13,6 +12,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class ItemoutController extends Controller
 {
@@ -22,28 +23,34 @@ class ItemoutController extends Controller
      */
     public function index()
     {
-        /**
-         * 🔹 1. Barang keluar dari PEGAWAI (Cart)
-         */
-        $approvedItems = Cart::with(['cartItems.item', 'user'])
-            ->where('status', 'approved')
+        // 🔹 1. Barang keluar dari PEGAWAI (Cart)
+        $approvedItems = Cart::with(['cartItems' => function($q) {
+                $q->where('status', 'approved');
+            }, 'cartItems.item', 'user'])
+            ->whereIn('status', ['approved', 'approved_partially'])
             ->latest()
-            ->paginate(10)
-            ->through(function ($cart) {
-                $cart->all_scanned = $cart->cartItems->every(fn($i) => $i->scanned_at);
-                return $cart;
+            ->get()
+            ->filter(function ($cart) {
+                // hanya tampilkan yang BELUM semua discan
+                return !$cart->cartItems->every(fn($i) => $i->scanned_at);
             });
 
-        /**
-         * 🔹 2. Barang keluar dari TAMU
-         * Mengambil data dari guest_carts → guest_cart_items → items
-         */
+        // 🔹 2. Barang keluar dari TAMU
         $guestItemOuts = Guest::with(['guestCart.guestCartItems.item'])
-            ->whereHas('guestCart.guestCartItems') // hanya tamu yang punya item
+            ->whereHas('guestCart.guestCartItems')
             ->orderByDesc('created_at')
             ->paginate(10);
 
-        return view('role.admin.itemout', compact('approvedItems', 'guestItemOuts'));
+       return view('role.admin.itemout', [
+            'approvedItems' => new LengthAwarePaginator(
+                $approvedItems->forPage(request('page', 1), 10), // ambil 10 data per halaman
+                $approvedItems->count(),                        // total item
+                10,                                             // per halaman
+                request('page', 1),                             // halaman saat ini
+                ['path' => request()->url()]                    // agar link pagination tetap benar
+            ),
+            'guestItemOuts' => $guestItemOuts,
+        ]);
     }
 
     /**
@@ -162,7 +169,7 @@ class ItemoutController extends Controller
                 $itemOut->cart_id = $cart->id;
                 $itemOut->item_id = $item->id;
                 $itemOut->quantity = $qty;
-                $itemOut->unit_id = $item->unit_id; 
+                $itemOut->unit_id = $item->unit_id;
                 $itemOut->released_at = now();
                 $itemOut->approved_by = Auth::id();
                 $itemOut->save();

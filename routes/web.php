@@ -21,6 +21,8 @@ use App\Http\Controllers\Role\admin\RequestController;
 use App\Http\Controllers\Role\admin\GuestController;
 use App\Http\Controllers\Role\admin\ProdukController;
 use App\Http\Controllers\Role\admin\RejectController;
+use App\Http\Controllers\Role\admin\TransaksiItemOutController;
+use App\Http\Controllers\Role\admin\AdminPegawaiController;
 use App\Http\Controllers\SearchController;
 
 /*
@@ -155,6 +157,28 @@ Route::middleware(['auth', 'role:admin'])
         Route::resource('guests', GuestController::class)->except('show');
 
 
+         /*
+        |--------------------------------------------------------------------------
+        | Pegawai Management
+        |--------------------------------------------------------------------------
+        */
+        Route::controller(SearchController::class)->group(function () {
+            Route::get('/guests/search', 'searchGuests')->name('guests.search');
+        });
+
+        Route::controller(AdminPegawaiController::class)->group(function () {
+            Route::resource('pegawai', AdminPegawaiController::class);
+            Route::get('/pegawai/{id}/produk', 'showProduk')->name('pegawai.produk');
+            Route::post('/pegawai/{id}/scan', [AdminPegawaiController::class, 'scan'])->name('pegawai.scan');
+            Route::get('/pegawai/{id}/cart', [AdminPegawaiController::class, 'showCart'])->name('pegawai.cart');
+            Route::delete('/pegawai/{pegawai}/cart/item/{id}', [AdminPegawaiController::class, 'destroyCartItem'])->name('admin.pegawai.cart.item.destroy');
+            Route::post('/pegawai/{id}/cart/save', [AdminPegawaiController::class, 'saveCartToItemOut'])->name('pegawai.cart.save');
+
+
+        });
+
+
+
         /*
         |--------------------------------------------------------------------------
         | Produk Guest
@@ -171,18 +195,6 @@ Route::middleware(['auth', 'role:admin'])
 
         /*
         |--------------------------------------------------------------------------
-        | Reject Barang
-        |--------------------------------------------------------------------------
-        */
-        Route::controller(RejectController::class)->group(function () {
-            Route::get('/rejects/scan', 'scanPage')->name('rejects.scan');
-            Route::post('/rejects/process', 'processScan')->name('rejects.process');
-            Route::get('/rejects/check/{barcode}', 'checkBarcode')->name('rejects.check');
-        });
-
-
-        /*
-        |--------------------------------------------------------------------------
         | Export Barang Keluar
         |--------------------------------------------------------------------------
         */
@@ -193,7 +205,31 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/export/barang-keluar/pdf', 'exportBarangKeluarPdfAdmin')->name('barang_keluar.pdf');
         });
 
-    });
+        /*
+        |--------------------------------------------------------------------------
+        | Data Transaksi & refund
+        |--------------------------------------------------------------------------
+        */
+        Route::controller(TransaksiItemOutController::class)->group(function () {
+            Route::get('/Transaksi', 'index')->name('transaksi.out');
+            Route::post('/admin/refund', 'refundBarang')->name('pegawai.refund');
+            Route::post('/admin/edit-item', 'updateItem')->name('pegawai.updateItem');
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Reject Barang
+        |--------------------------------------------------------------------------
+        */
+        Route::controller(RejectController::class)->group(function () {
+            Route::get('/rejects/scan', 'scanPage')->name('rejects.scan');
+            Route::post('/rejects/process', 'processScan')->name('rejects.process');
+            Route::get('/rejects/check/{barcode}', 'checkBarcode')->name('rejects.check');
+        });
+
+
+
+});
 
 
 
