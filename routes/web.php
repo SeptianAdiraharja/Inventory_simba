@@ -90,17 +90,7 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::delete('/export/clear', [ExportController::class, 'clearLogs'])->name('export.clear');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Admin Routes
-|--------------------------------------------------------------------------
-|
-| Semua route untuk role:admin ditempatkan di sini.
-| Prefix   : /admin
-| Namespace: App\Http\Controllers\Role\admin
-| Name     : admin.*
-|
-*/
+
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->as('admin.')

@@ -71,20 +71,6 @@
             </div>
           </div>
 
-          {{-- Supplier --}}
-          <div class="row mb-4">
-            <label class="col-sm-2 col-form-label">Supplier</label>
-            <div class="col-sm-10">
-              <select name="supplier_id" class="form-control">
-                <option value="">-- Pilih Supplier (opsional) --</option>
-                @foreach($suppliers as $sup)
-                  <option value="{{ $sup->id }}">{{ $sup->name }}</option>
-                @endforeach
-              </select>
-              @error('supplier_id') <small class="text-danger">{{ $message }}</small> @enderror
-            </div>
-          </div>
-
           {{-- Harga --}}
           <div class="mb-4 row">
             <label for="price" class="col-sm-2 col-form-label">Harga</label>

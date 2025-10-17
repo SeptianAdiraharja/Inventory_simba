@@ -15,50 +15,43 @@
         {{-- 🔍 Filter, Range, & Search --}}
         <form id="filterForm" method="GET" action="{{ route('super_admin.items.index') }}" class="row g-2 align-items-center">
 
-        {{--  Tanggal Mulai --}}
-        <div class="col-md-3 col-sm-6">
-            <input type="date" name="date_from" class="form-control form-control-sm"
-                value="{{ request('date_from') }}">
-        </div>
-
-        {{--  Tanggal Selesai --}}
-        <div class="col-md-3 col-sm-6">
-            <input type="date" name="date_to" class="form-control form-control-sm"
-                value="{{ request('date_to') }}">
-        </div>
-
-        {{--  Urutkan stok --}}
-        <div class="col-md-3 col-sm-6">
-            <select name="sort_stock" class="form-select form-select-sm">
-                <option value="">Urutkan Stok</option>
-                <option value="desc" {{ request('sort_stock') == 'desc' ? 'selected' : '' }}>Paling Banyak</option>
-                <option value="asc" {{ request('sort_stock') == 'asc' ? 'selected' : '' }}>Paling Sedikit</option>
-            </select>
-        </div>
-
-        {{--  Pencarian --}}
-        <div class="col-md-2 col-sm-6">
-            <input type="text" name="search" class="form-control form-control-sm"
-                placeholder="Cari nama barang / kategori..."
-                value="{{ request('search') }}">
-        </div>
-
-        {{--  Tombol Cari --}}
-        <div class="col-md-1 text-md-end">
-            <button type="submit" class="btn btn-sm btn-secondary w-100">
-                <i class="ri-search-line"></i>
-            </button>
-        </div>
-
-        {{--  Reset --}}
-        @if(request('date_from') || request('date_to') || request('sort_stock') || request('search'))
-            <div class="col-12 text-end mt-2">
-                <a href="{{ route('super_admin.items.index') }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="ri-refresh-line me-1"></i> Reset
-                </a>
+            {{--  Tanggal Mulai --}}
+            <div class="col-md-3 col-sm-6">
+                <input type="date" name="date_from" id="dateFrom" class="form-control form-control-sm"
+                    value="{{ request('date_from') }}">
             </div>
-        @endif
-    </form>
+
+            {{--  Tanggal Selesai --}}
+            <div class="col-md-3 col-sm-6">
+                <input type="date" name="date_to" id="dateTo" class="form-control form-control-sm"
+                    value="{{ request('date_to') }}">
+            </div>
+
+            {{--  Urutkan stok --}}
+            <div class="col-md-3 col-sm-6">
+                <select name="sort_stock" id="sortStock" class="form-select form-select-sm">
+                    <option value="">Urutkan Stok</option>
+                    <option value="desc" {{ request('sort_stock') == 'desc' ? 'selected' : '' }}>Paling Banyak</option>
+                    <option value="asc" {{ request('sort_stock') == 'asc' ? 'selected' : '' }}>Paling Sedikit</option>
+                </select>
+            </div>
+
+            {{--  Pencarian --}}
+            <div class="col-md-2 col-sm-6">
+                <input type="text" name="search" id="autoSearchInput" class="form-control form-control-sm"
+                    placeholder="Cari nama barang / kategori..."
+                    value="{{ request('search') }}">
+            </div>
+
+            {{--  Tombol Reset di kanan --}}
+            <div class="col-md-1 text-md-end">
+                @if(request('date_from') || request('date_to') || request('sort_stock') || request('search'))
+                    <a href="{{ route('super_admin.items.index') }}" class="btn btn-sm btn-outline-secondary w-100">
+                        <i class="ri-refresh-line me-1"></i> Reset
+                    </a>
+                @endif
+            </div>
+        </form>
     </div>
 
     {{--  Tabel Data --}}
@@ -198,4 +191,32 @@
         </div>
     </div>
 </div>
+
+{{-- 🔹 Script Auto Filter --}}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('filterForm');
+    const searchInput = document.getElementById('autoSearchInput');
+    const dateFrom = document.getElementById('dateFrom');
+    const dateTo = document.getElementById('dateTo');
+    const sortStock = document.getElementById('sortStock');
+    let timer = null;
+
+    function autoSubmit() {
+        const from = dateFrom.value;
+        const to = dateTo.value;
+
+        // hanya kirim kalau dua tanggal kosong atau dua-duanya keisi
+        if ((from && to) || (!from && !to)) {
+            clearTimeout(timer);
+            timer = setTimeout(() => form.submit(), 500);
+        }
+    }
+
+    searchInput.addEventListener('input', autoSubmit);
+    dateFrom.addEventListener('change', autoSubmit);
+    dateTo.addEventListener('change', autoSubmit);
+    sortStock.addEventListener('change', autoSubmit);
+});
+</script>
 @endsection

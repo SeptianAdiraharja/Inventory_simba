@@ -26,20 +26,32 @@ class BarangKeluarExport implements FromCollection, WithHeadings, WithStyles, Wi
         $rows = collect();
 
         foreach ($this->items as $i => $item) {
+            // 🔹 Deteksi apakah data berasal dari Pegawai atau Guest
+            $tipe = isset($item->approver) && $item->approver ? 'Pegawai' : 'Guest';
+
+            // 🔹 Ambil nama penerima
+            $penerima = $item->approver->name
+                ?? $item->guest->name
+                ?? '-';
+
             $rows->push([
                 $i + 1,
-                $item->item->name,
-                $item->user->name ?? '-',
-                $item->created_at->format('d-m-Y H:i'),
-                $item->quantity,
+                $item->item->name ?? '-',
+                $tipe,
+                $penerima,
+                optional($item->created_at)->format('d-m-Y H:i') ?? '-',
+                $item->quantity ?? 0,
                 $item->item->unit->name ?? '-',
-                $item->item->price,
-                $item->total_price,
+                $item->item->price ?? 0,
+                $item->total_price ?? 0,
             ]);
         }
 
-        // Tambahkan total di akhir tabel
-        $rows->push(['', '', '', 'TOTAL JUMLAH', $this->totalJumlah, '', 'TOTAL SEMUA HARGA', $this->grandTotal]);
+        // 🔹 Tambahkan total di bawah tabel
+        $rows->push([
+            '', '', '', 'TOTAL JUMLAH', $this->totalJumlah, '', 
+            'TOTAL SEMUA HARGA (Rp)', $this->grandTotal, ''
+        ]);
 
         return $rows;
     }
@@ -49,12 +61,13 @@ class BarangKeluarExport implements FromCollection, WithHeadings, WithStyles, Wi
         return [
             'No',
             'Nama Barang',
-            'Dikeluarkan Oleh',
+            'role',
+            'Penerima',
             'Tanggal Keluar',
             'Jumlah',
             'Satuan Barang',
             'Harga Satuan (Rp)',
-            'Total Harga (Rp)'
+            'Total Harga (Rp)',
         ];
     }
 
@@ -62,25 +75,32 @@ class BarangKeluarExport implements FromCollection, WithHeadings, WithStyles, Wi
     {
         $rowCount = count($this->items) + 2;
 
-        // Header style
-        $sheet->getStyle('A1:H1')->applyFromArray([
+        // 🔹 Style Header
+        $sheet->getStyle('A1:I1')->applyFromArray([
             'font' => ['bold' => true],
-            'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
-            'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]],
+            'alignment' => [
+                'horizontal' => 'center',
+                'vertical'   => 'center'
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]
+            ],
         ]);
 
-        // Semua border tabel
-        $sheet->getStyle("A1:H{$rowCount}")->applyFromArray([
-            'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]],
+        // 🔹 Border seluruh isi tabel
+        $sheet->getStyle("A1:I{$rowCount}")->applyFromArray([
+            'borders' => [
+                'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]
+            ],
         ]);
 
-        // Bold total
-        $sheet->getStyle("D{$rowCount}:H{$rowCount}")->applyFromArray([
-            'font' => ['bold' => true]
+        // 🔹 Bold untuk baris total
+        $sheet->getStyle("D{$rowCount}:I{$rowCount}")->applyFromArray([
+            'font' => ['bold' => true],
         ]);
 
-        // Auto-size
-        foreach (range('A', 'H') as $col) {
+        // 🔹 Auto-size setiap kolom
+        foreach (range('A', 'I') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 

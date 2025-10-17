@@ -14,42 +14,35 @@
         </div>
 
         {{--  Filter & Pencarian --}}
-        <form method="GET" action="{{ route('super_admin.item_ins.index') }}" class="row g-2 align-items-center">
+        <form method="GET" action="{{ route('super_admin.item_ins.index') }}" class="row g-2 align-items-center" id="filterForm">
 
-        {{--  Range tanggal --}}
-        <div class="col-md-3 col-sm-6">
-            <input type="date" name="start_date" class="form-control form-control-sm"
-                value="{{ request('start_date') }}">
-        </div>
-
-        <div class="col-md-3 col-sm-6">
-            <input type="date" name="end_date" class="form-control form-control-sm"
-                value="{{ request('end_date') }}">
-        </div>
-
-        {{--  Search --}}
-        <div class="col-md-4 col-sm-8">
-            <input type="text" name="search" class="form-control form-control-sm"
-                placeholder="Cari nama barang / supplier..."
-                value="{{ request('search') }}">
-        </div>
-
-        {{--  Tombol --}}
-        <div class="col-md-2 col-sm-4">
-            <button type="submit" class="btn btn-sm btn-secondary w-100">
-                <i class="ri-search-line me-1"></i> Cari
-            </button>
-        </div>
-
-        {{--  Reset --}}
-        @if(request('start_date') || request('end_date') || request('search'))
-            <div class="col-12 text-end mt-2">
-                <a href="{{ route('super_admin.item_ins.index') }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="ri-refresh-line me-1"></i> Reset
-                </a>
+            {{--  Range tanggal --}}
+            <div class="col-md-3 col-sm-6">
+                <input type="date" name="start_date" id="startDate" class="form-control form-control-sm"
+                    value="{{ request('start_date') }}">
             </div>
-        @endif
-    </form>
+
+            <div class="col-md-3 col-sm-6">
+                <input type="date" name="end_date" id="endDate" class="form-control form-control-sm"
+                    value="{{ request('end_date') }}">
+            </div>
+
+            {{--  Search --}}
+            <div class="col-md-4 col-sm-8">
+                <input type="text" name="search" id="autoSearchInput" class="form-control form-control-sm"
+                    placeholder="Cari nama barang / supplier..."
+                    value="{{ request('search') }}">
+            </div>
+
+            {{--  Tombol Reset di kanan --}}
+            <div class="col-md-2 col-sm-4 text-end">
+                @if(request('start_date') || request('end_date') || request('search'))
+                    <a href="{{ route('super_admin.item_ins.index') }}" class="btn btn-sm btn-outline-secondary w-100">
+                        <i class="ri-refresh-line me-1"></i> Reset
+                    </a>
+                @endif
+            </div>
+        </form>
     </div>
 
     {{--  Tabel Data --}}
@@ -120,4 +113,30 @@
         </div>
     </div>
 </div>
+
+{{-- 🔹 Script Auto Filter --}}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('filterForm');
+    const searchInput = document.getElementById('autoSearchInput');
+    const startDate = document.getElementById('startDate');
+    const endDate = document.getElementById('endDate');
+    let timer = null;
+
+    function autoSubmit() {
+        // cuma jalan kalau dua tanggal keisi lengkap
+        const start = startDate.value;
+        const end = endDate.value;
+        if ((start && end) || (!start && !end)) {
+            clearTimeout(timer);
+            timer = setTimeout(() => form.submit(), 500);
+        }
+    }
+
+    // Event listener
+    searchInput.addEventListener('input', autoSubmit);
+    startDate.addEventListener('change', autoSubmit);
+    endDate.addEventListener('change', autoSubmit);
+});
+</script>
 @endsection

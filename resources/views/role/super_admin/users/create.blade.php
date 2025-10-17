@@ -49,7 +49,6 @@
               <select name="role" class="form-select" required>
                 <option value="pegawai">Pegawai</option>
                 <option value="admin">Admin</option>
-                <option value="super_admin">Super Admin</option>
               </select>
               @error('role') <small class="text-danger">{{ $message }}</small> @enderror
             </div>

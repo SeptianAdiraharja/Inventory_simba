@@ -80,7 +80,7 @@
               </div>
           </div>
 
-          <div class="row justify-content-end">x`
+          <div class="row justify-content-end">
             <div class="col-sm-10">
               <button type="submit" class="btn btn-primary btn-sm">Perbarui</button>
               <a href="{{ route('super_admin.item_ins.index') }}" class="btn btn-secondary btn-sm">Kembali</a>

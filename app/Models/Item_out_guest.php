@@ -17,13 +17,21 @@ class Item_out_guest extends Model
         'printed_at' => 'datetime',
     ];
 
+    // Relasi ke Guest
     public function guest()
     {
-        return $this->belongsTo(Guest::class);
+        return $this->belongsTo(Guest::class, 'guest_id', 'id');
     }
 
-    public function item() 
+    // Ambil semua item dari JSON dengan detail
+    public function getParsedItemsAttribute()
     {
-        return $this->belongsTo(Item::class);
+        return collect($this->items)->map(function ($item) {
+            return [
+                'id' => $item['item_id'] ?? null,
+                'name' => $item['name'] ?? null,
+                'quantity' => $item['quantity'] ?? 0,
+            ];
+        });
     }
 }

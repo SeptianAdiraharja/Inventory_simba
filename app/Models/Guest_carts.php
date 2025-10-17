@@ -26,9 +26,15 @@ class Guest_carts extends Model
         return $this->belongsTo(Guest::class, 'guest_id', 'id');
     }
 
-    // 🔹 Cart juga bisa diakses langsung ke pivot
+    // 🔹 Cart punya banyak detail item
     public function guestCartItems()
     {
         return $this->hasMany(Guest_carts_item::class, 'guest_cart_id', 'id');
+    }
+
+    // 🔹 Cart juga bisa punya banyak data keluar
+    public function itemOutGuests()
+    {
+        return $this->hasMany(Item_out_guest::class, 'guest_id', 'guest_id');
     }
 }

@@ -170,23 +170,56 @@
                               <i class="ri-logout-box-line text-danger me-1"></i> Barang Keluar
                             </h5>
                           </div>
+
                           <ul class="list-unstyled mb-0">
-                            @forelse($itemOuts as $item)
-                              <li class="d-flex mb-3 align-items-center pb-2 border-bottom">
-                                <div class="flex-grow-1">
-                                  <h6 class="mb-1 fw-semibold">{{ $item->item->name }}</h6>
-                                  <small class="text-muted">
-                                    Jumlah: {{ $item->quantity }} <br>
-                                    Tanggal: {{ $item->created_at->format('d M Y') }}
-                                  </small>
-                                </div>
-                                <span class="badge bg-danger-subtle text-danger">
-                                  -{{ $item->quantity }}
-                                </span>
-                              </li>
-                            @empty
+                           @forelse($itemOuts as $item)
+                              @if($item->source === 'user')
+                                  <li class="d-flex mb-3 align-items-center pb-2 border-bottom">
+                                      <div class="flex-grow-1">
+                                          <h6 class="mb-1 fw-semibold">
+                                              {{ $item->item->name ?? 'Barang tidak ditemukan' }}
+                                          </h6>
+                                          <small class="text-muted">
+                                              Jumlah: {{ $item->quantity ?? 0 }} <br>
+                                              Oleh: {{ $item->cart->user->name ?? 'Tidak diketahui' }} <br>
+                                              Tanggal: {{ $item->created_at->format('d M Y') }}
+                                          </small>
+                                      </div>
+                                      <span class="badge bg-danger-subtle text-danger">
+                                          -{{ $item->quantity ?? 0 }}
+                                      </span>
+                                  </li>
+
+                              @elseif($item->source === 'guest')
+                                  @php
+                                      $items = is_array($item->items)
+                                          ? $item->items
+                                          : json_decode($item->items, true);
+                                  @endphp
+
+                                  @if(is_array($items))
+                                      @foreach($items as $barang)
+                                          <li class="d-flex mb-3 align-items-center pb-2 border-bottom">
+                                              <div class="flex-grow-1">
+                                                  <h6 class="mb-1 fw-semibold">
+                                                      {{ $barang['name'] ?? 'Barang tidak ditemukan' }}
+                                                  </h6>
+                                                  <small class="text-muted">
+                                                      Jumlah: {{ $barang['quantity'] ?? 0 }} <br>
+                                                      Oleh: {{ $item->guest->name ?? 'Tidak diketahui' }} <br>
+                                                      Tanggal: {{ $item->created_at->format('d M Y') }}
+                                                  </small>
+                                              </div>
+                                              <span class="badge bg-danger-subtle text-danger">
+                                                  -{{ $barang['quantity'] ?? 0 }}
+                                              </span>
+                                          </li>
+                                      @endforeach
+                                  @endif
+                              @endif
+                          @empty
                               <li class="text-muted fst-italic">Belum terdapat data barang keluar</li>
-                            @endforelse
+                          @endforelse
                           </ul>
                         </div>
                       </div>
@@ -283,49 +316,27 @@
                             <th>Email</th>
                             <th>Peran</th>
                             <th>Total Pengambilan</th>
-                            <th>Status</th>
                           </tr>
                         </thead>
                         <tbody>
-                          @forelse($topUsers as $data)
-                            <tr>
-                              <td>
-                                <div class="d-flex align-items-center">
-                                  <div class="avatar avatar-sm me-3">
-                                    <img src="{{ $data->user->avatar_url ?? asset('assets/img/avatars/default.png') }}"
-                                        alt="Avatar" class="rounded-circle" />
-                                  </div>
-                                  <div>
-                                    <h6 class="mb-0 text-truncate">{{ $data->user->name }}</h6>
-                                    <small class="text-muted">{{ '@' . Str::slug($data->user->name, '') }}</small>
-                                  </div>
+                        @foreach ($topUsers as $data)
+                          <tr>
+                            <td>
+                              <div class="d-flex align-items-center">
+                                <div>
+                                  <h6 class="mb-0">{{ $data->name }}</h6>
                                 </div>
-                              </td>
-                              <td class="text-truncate">{{ $data->user->email }}</td>
-                              <td>
-                                <span class="badge bg-label-info rounded-pill">
-                                  {{ ucfirst($data->user->role) }}
-                                </span>
-                              </td>
-                              <td>
-                                <span class="fw-semibold text-dark">{{ $data->total_out }}</span>
-                              </td>
-                              <td>
-                                @if($data->user->status === 'active')
-                                  <span class="badge bg-label-success rounded-pill">Aktif</span>
-                                @else
-                                  <span class="badge bg-label-secondary rounded-pill">Tidak Aktif</span>
-                                @endif
-                              </td>
-                            </tr>
-                          @empty
-                            <tr>
-                              <td colspan="5" class="text-center text-muted py-4">
-                                <i class="bi bi-exclamation-circle me-2"></i>
-                                Belum terdapat data pengguna yang mengambil barang
-                              </td>
-                            </tr>
-                          @endforelse
+                              </div>
+                            </td>
+                            <td>{{ $data->email ?? '-' }}</td>
+                            <td>
+                              <span class="badge bg-label-info rounded-pill">
+                                {{ ucfirst($data->role ?? 'Guest') }}
+                              </span>
+                            </td>
+                            <td><span class="fw-semibold text-dark">{{ $data->total_out }}</span></td>
+                          </tr>
+                        @endforeach
                         </tbody>
                       </table>
                     </div>

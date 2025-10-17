@@ -50,7 +50,6 @@
               <select name="role" class="form-select" required>
                 <option value="pegawai" {{ $user->role == 'pegawai' ? 'selected' : '' }}>Pegawai</option>
                 <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin</option>
-                <option value="super_admin" {{ $user->role == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
               </select>
               @error('role') <small class="text-danger">{{ $message }}</small> @enderror
             </div>
