@@ -60,15 +60,21 @@ class ProdukController extends Controller
     /**
      * Scan item ke cart guest
      */
-    public function scan(Request $request, $guestId)
+   public function scan(Request $request, $guestId)
     {
         $request->validate([
             'item_id'  => 'required|exists:items,id',
             'barcode'  => 'required|string',
-            'quantity' => 'nullable|integer|min:1'
+            'quantity' => 'required|integer|min:1'
         ]);
 
         $guest = Guest::findOrFail($guestId);
+        $item = Item::findOrFail($request->item_id);
+
+        // 🔍 Cek apakah jumlah melebihi stok
+        if ($request->quantity > $item->stock) {
+            return redirect()->back()->with('error', "Stok untuk {$item->name} tidak mencukupi.");
+        }
 
         // Buat cart jika belum ada
         $cart = $guest->guestCart()->firstOrCreate(
@@ -76,18 +82,18 @@ class ProdukController extends Controller
             ['session_id' => session()->getId()]
         );
 
-        // Tambah / update item ke pivot guest_cart_items
+        // Tambah atau update item di pivot
         if ($cart->items()->where('items.id', $request->item_id)->exists()) {
             $cart->items()->updateExistingPivot($request->item_id, [
-                'quantity' => DB::raw("quantity + " . ($request->quantity ?? 1))
+                'quantity' => DB::raw("quantity + " . $request->quantity)
             ]);
         } else {
             $cart->items()->attach($request->item_id, [
-                'quantity' => $request->quantity ?? 1
+                'quantity' => $request->quantity
             ]);
         }
 
-        return redirect()->back()->with('success', 'Barang berhasil discan ke keranjang guest.');
+        return redirect()->back()->with('success', "Barang '{$item->name}' sebanyak {$request->quantity} berhasil discan ke keranjang guest.");
     }
 
     /**
