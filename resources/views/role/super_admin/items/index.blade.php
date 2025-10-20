@@ -115,7 +115,6 @@
                                         <div class="col-md-6">
                                             <p><strong>Kategori:</strong> {{ $item->category->name ?? '-' }}</p>
                                             <p><strong>Satuan:</strong> {{ $item->unit->name ?? '-' }}</p>
-                                            <p><strong>Supplier:</strong> {{ $item->supplier->name ?? '-' }}</p>
                                         </div>
                                         <div class="col-md-6">
                                             <p><strong>Harga:</strong> Rp {{ number_format($item->price, 0, ',', '.') }}</p>
