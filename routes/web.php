@@ -78,33 +78,27 @@ Route::middleware(['auth', 'role:super_admin'])
             ->name('export.index');
 
         // Export Barang Masuk
-        Route::get('/export/barang-masuk/excel', [ExportController::class, 'exportBarangMasukExcel'])
-            ->name('exports.barang_masuk.excel');
+        Route::get('/export/barang-masuk-improved', [ExportController::class, 'exportBarangMasukExcelImproved'])->name('export.barangMasukImproved');
         Route::get('/export/barang-masuk/pdf', [ExportController::class, 'exportBarangMasukPdf'])
             ->name('exports.barang_masuk.pdf');
 
         // Export Barang Keluar
-        Route::get('/export/barang-keluar/excel', [ExportController::class, 'exportBarangKeluarExcel'])
-            ->name('exports.barang_keluar.excel');
+        Route::get('/export/barang-keluar-improved', [ExportController::class, 'exportBarangKeluarExcelImproved'])->name('export.barangKeluarImproved');
         Route::get('/export/barang-keluar/pdf', [ExportController::class, 'exportBarangKeluarPdf'])
             ->name('exports.barang_keluar.pdf');
         Route::get('/export/download', [ExportController::class, 'download'])
             ->name('export.download');
+        
+        // Export Barang Reject
+        Route::get('/export/barang-reject-improved', [ExportController::class, 'exportBarangRejectExcelImproved'])
+            ->name('export.barangRejectImproved');
+        Route::get('/export/barang-reject/pdf', [ExportController::class, 'exportBarangRejectPdf'])
+            ->name('exports.barang_reject.pdf');
 
         Route::delete('/export/clear', [ExportController::class, 'clearLogs'])->name('export.clear');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Admin Routes
-|--------------------------------------------------------------------------
-|
-| Semua route untuk role:admin ditempatkan di sini.
-| Prefix   : /admin
-| Namespace: App\Http\Controllers\Role\admin
-| Name     : admin.*
-|
-*/
+
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->as('admin.')

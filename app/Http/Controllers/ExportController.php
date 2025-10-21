@@ -4,225 +4,177 @@ namespace App\Http\Controllers;
 
 use App\Models\Item_in;
 use App\Models\Item_out;
+use App\Models\Reject;
 use App\Models\ExportLog;
+use App\Models\Guest_carts_item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Exports\BarangKeluarExport;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\BarangMasukExport;
+use App\Exports\BarangKeluarExport;
+use App\Exports\BarangRejectExport;
 use App\Http\Controllers\Role\admin\BarangKeluarExportAdmin;
-
-
 
 class ExportController extends Controller
 {
-    /** Filter by range tanggal */
+    /** 🔹 Hitung endDate berdasarkan startDate + periode */
+    private function calculateEndDate($startDate, $period)
+    {
+        if (!$startDate) return null;
+
+        $start = \Carbon\Carbon::parse($startDate);
+
+        return match ($period) {
+            'weekly'  => $start->copy()->addWeek()->format('Y-m-d'),
+            'monthly' => $start->copy()->addMonth()->format('Y-m-d'),
+            'yearly'  => $start->copy()->addYear()->format('Y-m-d'),
+            default   => $start->copy()->format('Y-m-d'),
+        };
+    }
+
+    /** 🔹 Filter berdasarkan rentang tanggal */
     private function filterByDateRange($query, $startDate, $endDate)
     {
         if ($startDate && $endDate) {
             return $query->whereBetween('created_at', [
                 $startDate . ' 00:00:00',
-                $endDate . ' 23:59:59'
+                $endDate   . ' 23:59:59'
             ]);
         }
         return $query;
     }
 
-    /** Filter by period (weekly, monthly, yearly) */
-    private function filterByPeriod($query, $period)
-    {
-        if ($period === 'weekly') {
-            return $query->whereBetween('created_at', [
-                now()->startOfWeek(),
-                now()->endOfWeek()
-            ]);
-        } elseif ($period === 'monthly') {
-            return $query->whereYear('created_at', now()->year)
-                         ->whereMonth('created_at', now()->month);
-        } elseif ($period === 'yearly') {
-            return $query->whereYear('created_at', now()->year);
-        }
-        return $query;
-    }
-
-    /** Index export log */
+    /** 🔹 Halaman utama export */
     public function index(Request $request)
     {
-        $items = [];
-        $query = ExportLog::orderBy('created_at', 'desc');
+        $items = collect();
+        $logs  = ExportLog::orderBy('created_at', 'desc')->get();
 
         $startDate = $request->query('start_date');
-        $endDate   = $request->query('end_date');
-        $period    = $request->query('period');
-        $format    = $request->query('format', 'excel');
-
-        if ($request->filled(['start_date','end_date'])) {
-            $type = $request->query('type', 'masuk');
-            $queryItem = $type === 'masuk' ? Item_in::with('item') : Item_out::with('item');
-            $items = $this->filterByDateRange($queryItem, $startDate, $endDate)->get();
-
-            $items->map(function ($row) {
-                $row->total_price = $row->item->price * $row->quantity;
-                return $row;
-            });
-        }
-
-        if ($request->has('filter_format') && in_array($request->filter_format, ['excel','pdf'])) {
-            $query->where('format', $request->filter_format);
-        }
-
-        $logs = $query->get();
-
-        return view('role.super_admin.exports.index', compact('items','logs','period','startDate','endDate','format'));
-    }
-
-    /** Export Barang Masuk Excel */
-    public function exportBarangMasukExcel(Request $request)
-    {
-        $period   = $request->query('period', 'weekly');
-        $fileName = "barang_masuk_{$period}_" . now()->format('Ymd_His') . '.xlsx';
-
-        $query = Item_in::with('item');
-        $items = $this->filterByPeriod($query, $period)->get();
-        $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
-
-        ExportLog::create([
-            'super_admin_id' => Auth::id(),
-            'type'      => $period,
-            'data_type' => 'masuk',
-            'format'    => 'excel',
-            'file_path' => "role/super_admin/exports/{$fileName}",
-            'period'    => $period,
-        ]);
-
-        return Excel::download(new BarangMasukExport($items), $fileName);
-    }
-
-    /** Export Barang Masuk PDF */
-    public function exportBarangMasukPdf(Request $request)
-    {
-        $period   = $request->query('period', 'weekly');
-        $fileName = "barang_masuk_{$period}_" . now()->format('Ymd_His') . '.pdf';
-
-        $query = Item_in::with('item');
-        $items = $this->filterByPeriod($query, $period)->get();
-        $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
-
-        $pdf = Pdf::loadView('role.super_admin.exports.barang_masuk_pdf', compact('items', 'period'))
-                  ->setPaper('a4', 'landscape');
-
-        ExportLog::create([
-            'super_admin_id' => Auth::id(),
-            'type'      => $period,
-            'data_type' => 'masuk',
-            'format'    => 'pdf',
-            'file_path' => "role/super_admin/exports/{$fileName}",
-            'period'    => $period,
-        ]);
-
-        return $pdf->download($fileName);
-    }
-
-    /** Export Barang Keluar Excel */
-    public function exportBarangKeluarExcel(Request $request)
-    {
-        $period   = $request->query('period', 'weekly');
-        $fileName = "barang_keluar_{$period}_" . now()->format('Ymd_His') . '.xlsx';
-
-        $query = Item_out::with('item');
-        $items = $this->filterByPeriod($query, $period)->get();
-        $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
-
-        ExportLog::create([
-            'super_admin_id' => Auth::id(),
-            'type'      => $period,
-            'data_type' => 'keluar',
-            'format'    => 'excel',
-            'file_path' => "role/super_admin/exports/{$fileName}",
-            'period'    => $period,
-        ]);
-
-        return Excel::download(new BarangKeluarExport($items), $fileName);
-    }
-
-    /** Export Barang Keluar PDF */
-    public function exportBarangKeluarPdf(Request $request)
-    {
-        $period   = $request->query('period', 'weekly');
-        $fileName = "barang_keluar_{$period}_" . now()->format('Ymd_His') . '.pdf';
-
-        $query = Item_out::with('item');
-        $items = $this->filterByPeriod($query, $period)->get();
-        $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
-
-        $pdf = Pdf::loadView('role.super_admin.exports.barang_keluar_pdf', compact('items', 'period'))
-                  ->setPaper('a4', 'landscape');
-
-        ExportLog::create([
-            'super_admin_id' => Auth::id(),
-            'type'      => $period,
-            'data_type' => 'keluar',
-            'format'    => 'pdf',
-            'file_path' => "role/super_admin/exports/{$fileName}",
-            'period'    => $period,
-        ]);
-
-        return $pdf->download($fileName);
-    }
-
-    /** Custom Download by Date Range */
-    public function download(Request $request)
-    {
-        $startDate = $request->query('start_date');
-        $endDate   = $request->query('end_date');
+        $period    = $request->query('period', 'weekly');
         $type      = $request->query('type', 'masuk');
         $format    = $request->query('format', 'excel');
 
-        $period = $startDate . " s/d " . $endDate;
+        $endDate = $this->calculateEndDate($startDate, $period);
 
-        $query = $type === 'masuk' ? Item_in::with('item') : Item_out::with('item');
-        $items = $this->filterByDateRange($query, $startDate, $endDate)->get();
-        $items->map(fn($row) => $row->total_price = $row->item->price * $row->quantity);
+        if ($startDate && $endDate) {
+            // 🔹 Barang Masuk
+            if ($type === 'masuk') {
+                $items = Item_in::with('item.unit', 'supplier')
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get()
+                    ->map(function ($row) {
+                        $row->total_price = ($row->item->price ?? 0) * ($row->quantity ?? 0);
+                        return $row;
+                    });
+            }
 
-        $fileName = "barang_{$type}_{$startDate}_to_{$endDate}_" . now()->format('Ymd_His');
+            // 🔹 Barang Keluar
+            elseif ($type === 'keluar') {
+                $pegawaiItems = Item_out::with(['item.unit', 'cart.user'])
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get()
+                    ->map(function ($row) {
+                        $row->role        = 'Pegawai';
+                        $row->dikeluarkan = 'Petugas Gudang';
+                        $row->penerima    = $row->cart->user->name ?? '-';
+                        $row->total_price = ($row->item->price ?? 0) * ($row->quantity ?? 0);
+                        return $row;
+                    });
+
+                $guestItems = Guest_carts_item::with(['item.unit', 'guestCart.guest'])
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get()
+                    ->map(function ($row) {
+                        $row->role        = 'Guest';
+                        $row->dikeluarkan = 'Petugas Gudang';
+                        $row->penerima    = $row->guestCart->guest->name ?? '-';
+                        $row->total_price = ($row->item->price ?? 0) * ($row->quantity ?? 0);
+                        return $row;
+                    });
+
+                $items = $pegawaiItems->concat($guestItems)->sortBy('created_at')->values();
+            }
+
+            // 🔹 Barang Reject
+            elseif ($type === 'reject') {
+                $items = Reject::with('item.unit')
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get()
+                    ->map(function ($row) {
+                        $row->role        = 'Reject';
+                        $row->dikeluarkan = '-';
+                        $row->penerima    = '-';
+                        $row->total_price = ($row->item->price ?? 0) * ($row->quantity ?? 0);
+                        return $row;
+                    });
+            }
+        }
+
+        return view('role.super_admin.exports.index', compact(
+            'items', 'logs', 'period', 'startDate', 'endDate', 'format', 'type'
+        ));
+    }
+
+    /** 🔹 Download data */
+    public function download(Request $request)
+    {
+        $startDate = $request->query('start_date');
+        $period    = $request->query('period', 'weekly');
+        $type      = $request->query('type', 'masuk');
+        $format    = $request->query('format', 'excel');
+
+        $endDate = $this->calculateEndDate($startDate, $period);
+        $periodeText = "{$startDate} s/d {$endDate}";
+
+        // 🔹 Ambil data sesuai jenis
+        $controllerData = $this->index($request)->getData();
+        $items = $controllerData['items'] ?? collect();
+
+        $totalJumlah = $items->sum('quantity');
+        $grandTotal  = $items->sum('total_price');
+        $fileName    = "barang_{$type}_{$startDate}_to_{$endDate}_" . now()->format('Ymd_His');
 
         ExportLog::create([
             'super_admin_id' => Auth::id(),
-            'type'      => 'custom',
-            'data_type' => $type,
-            'format'    => $format,
-            'file_path' => "role/super_admin/exports/{$fileName}.{$format}",
-            'period'    => $period,
+            'type'           => $period,
+            'data_type'      => $type,
+            'format'         => $format,
+            'file_path'      => "role/super_admin/exports/{$fileName}.{$format}",
+            'period'         => $periodeText,
         ]);
 
         if ($format === 'excel') {
-            return $type === 'masuk'
-                ? Excel::download(new BarangMasukExport($items), $fileName.'.xlsx')
-                : Excel::download(new BarangKeluarExport($items), $fileName.'.xlsx');
-        } else {
-            $pdf = $type === 'masuk'
-                ? Pdf::loadView('role.super_admin.exports.barang_masuk_pdf', compact('items','startDate','endDate','period'))
-                : Pdf::loadView('role.super_admin.exports.barang_keluar_pdf', compact('items','startDate','endDate','period'));
-
-            return $pdf->setPaper('a4', 'landscape')->download($fileName.'.pdf');
+            return match($type) {
+                'masuk'  => Excel::download(new BarangMasukExport($items, $totalJumlah, $grandTotal), "{$fileName}.xlsx"),
+                'keluar' => Excel::download(new BarangKeluarExport($items, $totalJumlah, $grandTotal), "{$fileName}.xlsx"),
+                'reject' => Excel::download(new BarangRejectExport($items, $totalJumlah, $grandTotal), "{$fileName}.xlsx"),
+            };
         }
+
+        $pdfView = match($type) {
+            'masuk'  => 'role.super_admin.exports.barang_masuk_pdf',
+            'keluar' => 'role.super_admin.exports.barang_keluar_pdf',
+            'reject' => 'role.super_admin.exports.barang_reject_pdf',
+        };
+
+        $pdf = Pdf::loadView($pdfView, compact('items','startDate','endDate','periodeText','totalJumlah','grandTotal'));
+        return $pdf->setPaper('a4', 'landscape')->download("{$fileName}.pdf");
     }
 
+    /** 🔹 Bersihkan log */
     public function clearLogs()
     {
-        try {
-            // hapus semua data log export
-            ExportLog::query()->delete();
-
-            return redirect()->route('super_admin.export.index')
-                ->with('success', 'Riwayat export berhasil dibersihkan.');
-        } catch (\Exception $e) {
-            return redirect()->route('super_admin.export.index')
-                ->with('error', 'Gagal menghapus riwayat export: ' . $e->getMessage());
-        }
+        ExportLog::truncate();
+        return redirect()->route('super_admin.export.index')
+            ->with('success', 'Riwayat export berhasil dibersihkan.');
     }
+
+    // ===============================================================
+    // 🔹 BAGIAN ADMIN (Tetap dipertahankan)
+    // ===============================================================
 
     public function exportOut(Request $request)
     {
@@ -230,25 +182,22 @@ class ExportController extends Controller
         $endDate   = $request->input('end_date');
         $format    = $request->input('format', 'pdf');
 
-        // Ambil log export barang keluar
         $exports = DB::table('export_logs')
             ->where('data_type', 'keluar')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Default: kosong
         $items = collect();
 
-        // Jika user memilih tanggal, ambil data item keluar
         if ($startDate && $endDate) {
-            $items = \App\Models\Item_out::with('item')
+            $items = Item_out::with('item', 'approver')
                 ->whereBetween('created_at', [
                     $startDate . ' 00:00:00',
                     $endDate . ' 23:59:59'
                 ])
                 ->get()
                 ->map(function ($row) {
-                    $row->total_price = $row->item->price * $row->quantity;
+                    $row->total_price = ($row->item->price ?? 0) * ($row->quantity ?? 0);
                     return $row;
                 });
         }
@@ -265,7 +214,6 @@ class ExportController extends Controller
     public function clearOutHistory()
     {
         DB::table('export_logs')->where('data_type', 'keluar')->delete();
-
         return redirect()->back()->with('success', 'Riwayat export barang keluar berhasil dibersihkan.');
     }
 
@@ -274,11 +222,10 @@ class ExportController extends Controller
         $start = $request->query('start_date');
         $end   = $request->query('end_date');
 
-        $data = Item_out::with('item', 'cart.user')
+        $data = Item_out::with('item', 'cart.user', 'approver')
             ->whereBetween('released_at', [$start, $end])
             ->get();
 
-        // Gunakan package seperti Maatwebsite\Excel untuk export
         return Excel::download(new BarangKeluarExportAdmin($data), "barang_keluar_{$start}_{$end}.xlsx");
     }
 
@@ -289,7 +236,7 @@ class ExportController extends Controller
 
         $period = "Periode: " . date('d/m/Y', strtotime($start)) . " - " . date('d/m/Y', strtotime($end));
 
-        $data = Item_out::with(['item', 'cart.user'])
+        $data = Item_out::with(['item', 'cart.user', 'approver'])
             ->whereBetween(DB::raw('DATE(released_at)'), [$start, $end])
             ->orWhereBetween(DB::raw('DATE(created_at)'), [$start, $end])
             ->get();
@@ -303,7 +250,7 @@ class ExportController extends Controller
             return $row;
         });
 
-        $pdf = PDF::loadView('role.admin.export.barang_keluar_pdf', [
+        $pdf = Pdf::loadView('role.admin.export.barang_keluar_pdf', [
             'items' => $data,
             'period' => $period,
         ]);
@@ -320,6 +267,4 @@ class ExportController extends Controller
 
         return $pdf->download($fileName);
     }
-
-
 }

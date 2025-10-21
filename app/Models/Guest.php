@@ -18,9 +18,15 @@ class Guest extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    // 🔹 1 Guest hanya punya 1 cart
+    // 🔹 Guest memiliki satu cart
     public function guestCart()
     {
         return $this->hasOne(Guest_carts::class, 'guest_id', 'id');
+    }
+
+    // 🔹 Guest bisa memiliki banyak transaksi keluar
+    public function itemOutGuests()
+    {
+        return $this->hasMany(Item_out_guest::class, 'guest_id', 'id');
     }
 }

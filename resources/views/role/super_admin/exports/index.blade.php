@@ -2,45 +2,49 @@
 
 @section('content')
 <div class="container mt-4">
-    <h4 class="mb-4">
-        <i class="bi bi-box-seam"></i> Export Data Barang
-    </h4>
 
-    {{-- Form Filter --}}
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-light">
+    {{-- 🔹 Judul Halaman --}}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold text-primary mb-0">
+            <i class="bi bi-box-seam"></i> Export Data Barang
+        </h4>
+    </div>
+
+    {{-- 🔹 Filter Form --}}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-primary text-white">
             <strong><i class="bi bi-funnel"></i> Filter Data</strong>
         </div>
-        <div class="card-body">
+        <div class="card-body bg-light">
             <form action="{{ route('super_admin.export.index') }}" method="GET">
                 <div class="row g-3 align-items-end">
-                    {{-- Tanggal Mulai --}}
                     <div class="col-md-3">
-                        <label for="start_date" class="form-label">Tanggal Mulai</label>
+                        <label for="start_date" class="form-label fw-semibold">Tanggal Mulai</label>
                         <input type="date" name="start_date" id="start_date"
-                            value="{{ request('start_date') }}" class="form-control" required>
+                            value="{{ request('start_date') }}" class="form-control shadow-sm" required>
                     </div>
 
-                    {{-- Tanggal Akhir --}}
                     <div class="col-md-3">
-                        <label for="end_date" class="form-label">Tanggal Akhir</label>
-                        <select name="end_date" id="end_date" class="form-select" required>
-                            <option value="">-- Pilih Tanggal Akhir --</option>
+                        <label for="period" class="form-label fw-semibold">Periode</label>
+                        <select name="period" id="period" class="form-select shadow-sm" required>
+                            <option value="">-- Periode --</option>
+                            <option value="weekly"  {{ request('period')=='weekly'  ? 'selected' : '' }}>1 Minggu</option>
+                            <option value="monthly" {{ request('period')=='monthly' ? 'selected' : '' }}>1 Bulan</option>
+                            <option value="yearly"  {{ request('period')=='yearly'  ? 'selected' : '' }}>1 Tahun</option>
                         </select>
                     </div>
 
-                    {{-- Jenis Data --}}
-                    <div class="col-md-2">
-                        <label for="type" class="form-label">Jenis Data</label>
-                        <select name="type" id="type" class="form-select">
-                            <option value="masuk" {{ request('type')=='masuk' ? 'selected' : '' }}>Barang Masuk</option>
+                    <div class="col-md-3">
+                        <label for="type" class="form-label fw-semibold">Jenis Data</label>
+                        <select name="type" id="type" class="form-select shadow-sm">
+                            <option value="masuk"  {{ request('type')=='masuk'  ? 'selected' : '' }}>Barang Masuk</option>
                             <option value="keluar" {{ request('type')=='keluar' ? 'selected' : '' }}>Barang Keluar</option>
+                            <option value="reject" {{ request('type')=='reject' ? 'selected' : '' }}>Barang Reject</option>
                         </select>
                     </div>
 
-                    {{-- Tombol --}}
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100">
+                    <div class="col-md-3 text-end">
+                        <button type="submit" class="btn btn-primary w-100 shadow-sm">
                             <i class="bi bi-search"></i> Tampilkan
                         </button>
                     </div>
@@ -49,115 +53,154 @@
         </div>
     </div>
 
-    {{-- Preview Data --}}
+    {{-- 🔹 Preview Data --}}
     @if(isset($items) && count($items) > 0)
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">
+                <h6 class="mb-0 fw-semibold">
                     <i class="bi bi-table"></i> Data 
-                    {{ request('type')=='masuk' ? 'Barang Masuk' : 'Barang Keluar' }}
-                    ({{ count($items) }} data)
+                    @if(request('type') == 'masuk')
+                        Barang Masuk
+                    @elseif(request('type') == 'keluar')
+                        Barang Keluar
+                    @elseif(request('type') == 'reject')
+                        Barang Reject
+                    @else
+                        Barang Masuk & Keluar
+                    @endif
+                    <span class="text-muted">({{ count($items) }} data)</span>
                 </h6>
                 <div class="btn-group">
                     <a href="{{ route('super_admin.export.download', [
                         'start_date' => request('start_date'),
-                        'end_date'   => request('end_date'),
+                        'period'     => request('period'),
                         'type'       => request('type'),
                         'format'     => 'excel'
-                    ]) }}" class="btn btn-success btn-sm me-2">
+                    ]) }}" class="btn btn-success btn-sm shadow-sm">
                         <i class="bi bi-file-earmark-excel"></i> Excel
                     </a>
                     <a href="{{ route('super_admin.export.download', [
                         'start_date' => request('start_date'),
-                        'end_date'   => request('end_date'),
+                        'period'     => request('period'),
                         'type'       => request('type'),
                         'format'     => 'pdf'
-                    ]) }}" class="btn btn-primary btn-sm">
+                    ]) }}" class="btn btn-danger btn-sm shadow-sm">
                         <i class="bi bi-file-earmark-pdf"></i> PDF
                     </a>
                 </div>
             </div>
-            <div class="card-body table-responsive">
-                <table class="table table-bordered table-hover table-sm align-middle">
-                    <thead class="table-secondary">
-                        <tr class="text-center">
+            {{-- 🔹 Tabel Data --}}
+            <div class="card-body table-responsive bg-white">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-primary text-center">
+                        <tr>
                             <th>No</th>
                             <th>Nama Barang</th>
-                            <th>Jumlah</th>
-                            <th>Harga Satuan</th>
-                            <th>Total</th>
-                            <th>Tanggal</th>
+
                             @if(request('type') == 'masuk')
                                 <th>Supplier</th>
-                            @else
+                                <th>Tanggal Masuk</th>
+                            @elseif(request('type') == 'keluar')
+                                <th>Role</th>
                                 <th>Dikeluarkan Oleh</th>
+                                <th>Penerima</th>
+                                <th>Tanggal Keluar</th>
+                            @elseif(request('type') == 'reject')
+                                <th>Status</th>
+                                <th>Tanggal Reject</th>
+                                <th>Jumlah</th>
+                                <th class="text-end">Harga Satuan (Rp)</th>
+                                <th class="text-end">Total Harga (Rp)</th>
                             @endif
                         </tr>
                     </thead>
+
                     <tbody>
                         @foreach($items as $i => $row)
-                        <tr>
-                            <td class="text-center">{{ $i+1 }}</td>
-                            <td>{{ $row->item->name }}</td>
-                            <td class="text-center">{{ $row->quantity }}</td>
-                            <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
-                            <td>Rp {{ number_format($row->total_price,0,',','.') }}</td>
-                            <td>{{ $row->created_at->format('d-m-Y H:i') }}</td>
-                            @if(request('type') == 'masuk')
-                                <td>{{ $row->supplier->name ?? '-' }}</td>
-                            @else
-                                <td>{{ $row->user->name ?? '-' }}</td>
-                            @endif
-                        </tr>
+                            @php
+                                $jumlah   = $row->quantity ?? 0;
+                                $harga    = $row->item->price ?? 0;
+                                $subtotal = $row->total_price ?? ($jumlah * $harga);
+                                $role     = $row->role ?? 'Reject';
+                            @endphp
+
+                            <tr>
+                                <td class="text-center">{{ $i + 1 }}</td>
+                                <td>{{ $row->item->name ?? '-' }}</td>
+
+                                @if(request('type') == 'masuk')
+                                    <td>{{ $row->supplier->name ?? '-' }}</td>
+                                    <td>{{ optional($row->created_at)->format('d-m-Y H:i') }}</td>
+
+                                @elseif(request('type') == 'keluar')
+                                    <td class="text-center">{{ $row->role ?? '-' }}</td>
+                                    <td>{{ $row->approver->name ?? '-' }}</td>
+                                    <td>{{ $row->penerima ?? '-' }}</td>
+                                    <td>{{ optional($row->created_at)->format('d-m-Y H:i') }}</td>
+
+                                @elseif(request('type') == 'reject')
+                                    <td class="text-center">{{ $role }}</td>
+                                    <td>{{ optional($row->created_at)->format('d-m-Y H:i') }}</td>
+                                    <td class="text-center">{{ number_format($jumlah, 0, ',', '.') }}</td>
+                                    <td class="text-end">Rp {{ number_format($harga, 0, ',', '.') }}</td>
+                                    <td class="text-end fw-semibold">Rp {{ number_format($subtotal, 0, ',', '.') }}</td>
+                                @endif
+
+                                @if(request('type') != 'reject')
+                                    <td class="text-center">{{ $row->quantity ?? 0 }}</td>
+                                    <td class="text-center">{{ $row->item->unit->name ?? '-' }}</td>
+                                    <td class="text-end">Rp {{ number_format($row->item->price ?? 0, 0, ',', '.') }}</td>
+                                    <td class="text-end fw-semibold">Rp {{ number_format($row->total_price ?? 0, 0, ',', '.') }}</td>
+                                @endif
+                            </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
-        </div>
     @elseif(request()->has('start_date'))
         <div class="alert alert-warning">
             <i class="bi bi-exclamation-triangle"></i> Tidak ada data ditemukan untuk periode ini.
         </div>
     @endif
 
-    {{-- Riwayat Export --}}
-    <div class="card shadow-sm">
+    {{-- 🔹 Riwayat Export --}}
+    <div class="card shadow-sm border-0">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h6 class="mb-0"><i class="bi bi-clock-history"></i> Riwayat Export</h6>
+            <h6 class="mb-0 fw-semibold"><i class="bi bi-clock-history"></i> Riwayat Export</h6>
             <form action="{{ route('super_admin.export.clear') }}" method="POST"
                 onsubmit="return confirm('Apakah Anda yakin ingin menghapus semua riwayat export?');">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="btn btn-sm btn-danger">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
                     <i class="bi bi-trash"></i> Bersihkan Riwayat
                 </button>
             </form>
         </div>
-        <div class="card-body table-responsive">
-            <table class="table table-sm table-striped align-middle">
+        <div class="card-body table-responsive bg-white">
+            <table class="table table-striped align-middle text-center">
                 <thead class="table-secondary">
-                    <tr class="text-center">
+                    <tr>
                         <th>No</th>
                         <th>Format</th>
-                        <th>Nama File</th>
+                        <th>Jenis</th>
                         <th>Tanggal Export</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($logs as $i => $log)
                         <tr>
-                            <td class="text-center">{{ $i+1 }}</td>
-                            <td class="text-center">
+                            <td>{{ $i + 1 }}</td>
+                            <td>
                                 <span class="badge {{ $log->format == 'excel' ? 'bg-success' : 'bg-danger' }}">
                                     {{ strtoupper($log->format) }}
                                 </span>
                             </td>
-                            <td>{{ $log->file_path }}</td>
+                            <td>{{ strtoupper($log->data_type ?? '-') }}</td>
                             <td>{{ $log->created_at->format('d-m-Y H:i') }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center text-muted">Belum ada riwayat export.</td>
+                            <td colspan="4" class="text-muted">Belum ada riwayat export.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -165,44 +208,4 @@
         </div>
     </div>
 </div>
-
-{{-- Script untuk generate tanggal akhir --}}
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const startDateInput = document.getElementById("start_date");
-    const endDateSelect = document.getElementById("end_date");
-
-    startDateInput.addEventListener("change", function () {
-        endDateSelect.innerHTML = '<option value="">-- Pilih Tanggal Akhir --</option>';
-
-        if (!this.value) return;
-
-        let startDate = new Date(this.value);
-
-        for (let i = 0; i < 7; i++) {
-            let optionDate = new Date(startDate);
-            optionDate.setDate(startDate.getDate() + i);
-
-            let yyyy = optionDate.getFullYear();
-            let mm = String(optionDate.getMonth() + 1).padStart(2, '0');
-            let dd = String(optionDate.getDate()).padStart(2, '0');
-
-            let formatted = `${yyyy}-${mm}-${dd}`;
-            let opt = document.createElement("option");
-            opt.value = formatted;
-            opt.textContent = `${dd}-${mm}-${yyyy}`;
-
-            if ("{{ request('end_date') }}" === formatted) {
-                opt.selected = true;
-            }
-
-            endDateSelect.appendChild(opt);
-        }
-    });
-
-    if (startDateInput.value) {
-        startDateInput.dispatchEvent(new Event("change"));
-    }
-});
-</script>
 @endsection

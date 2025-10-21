@@ -5,8 +5,8 @@
   <div class="col-xxl">
     <div class="card">
       <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="mb-0">Tambah Item</h5>
-        <small class="text-body-secondary">tambah input item baru</small>
+        <h5 class="mb-0">Tambah Barang</h5>
+        <small class="text-body-secondary">tambah input barang baru</small>
       </div>
       <div class="card-body">
         <form action="{{ route('super_admin.items.store') }}" method="POST" enctype="multipart/form-data">
@@ -14,7 +14,7 @@
 
           {{-- Nama Item --}}
           <div class="row mb-4">
-            <label class="col-sm-2 col-form-label">Nama Item</label>
+            <label class="col-sm-2 col-form-label">Nama Barang</label>
             <div class="col-sm-10">
               <input type="text" name="name" class="form-control" placeholder="Isi Nama Item" required>
               @error('name') <small class="text-danger">{{ $message }}</small> @enderror
@@ -71,20 +71,6 @@
             </div>
           </div>
 
-          {{-- Supplier --}}
-          <div class="row mb-4">
-            <label class="col-sm-2 col-form-label">Supplier</label>
-            <div class="col-sm-10">
-              <select name="supplier_id" class="form-control">
-                <option value="">-- Pilih Supplier (opsional) --</option>
-                @foreach($suppliers as $sup)
-                  <option value="{{ $sup->id }}">{{ $sup->name }}</option>
-                @endforeach
-              </select>
-              @error('supplier_id') <small class="text-danger">{{ $message }}</small> @enderror
-            </div>
-          </div>
-
           {{-- Harga --}}
           <div class="mb-4 row">
             <label for="price" class="col-sm-2 col-form-label">Harga</label>
@@ -99,8 +85,9 @@
           <div class="mb-4 row">
             <label for="image" class="col-sm-2 col-form-label">Gambar</label>
             <div class="col-sm-10">
-              <input type="file" name="image" id="image" class="form-control">
-              @error('image') <small class="text-danger">{{ $message }}</small> @enderror
+             <input type="file" name="image" id="image" class="form-control" accept="image/*">
+              <small class="text-muted">Ukuran maksimal 1 MB (format: JPG, PNG, atau JPEG)</small>
+              @error('image') <small class="text-danger d-block">{{ $message }}</small> @enderror
             </div>
           </div>
 
@@ -128,4 +115,15 @@ document.getElementById('toggleBarcode').addEventListener('change', function () 
     }
 });
 </script>
+
+<script>
+document.getElementById('image').addEventListener('change', function() {
+  const file = this.files[0];
+  if (file && file.size > 1 * 1024 * 1024) {
+    alert('Ukuran gambar melebihi 1 MB! Silakan pilih gambar lain.');
+    this.value = '';
+  }
+});
+</script>
+
 @endsection

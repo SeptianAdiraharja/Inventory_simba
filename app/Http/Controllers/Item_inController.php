@@ -11,9 +11,25 @@ use Carbon\Carbon;
 
 class Item_inController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $items_in = Item_in::with(['item', 'supplier', 'creator'])->latest()->paginate(10);
+        $query = Item_in::with(['item', 'supplier', 'creator']);
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('item', fn($sub) => $sub->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('supplier', fn($sub) => $sub->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        $perPage = $request->get('per_page', 10);
+        $items_in = $query->latest()->paginate($perPage);
+
         return view('role.super_admin.item_ins.index', compact('items_in'));
     }
 

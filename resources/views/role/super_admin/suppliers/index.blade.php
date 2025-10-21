@@ -2,14 +2,14 @@
 @section('content')
 <div class="card">
   <div class="card-header d-flex justify-content-between align-items-center">
-    <h5 class="mb-0">Daftar Supplier</h5>
+    <h4 class="fw-bold text-primary mb-0">Daftar Supplier</h4>
     <a href="{{ route('super_admin.suppliers.create') }}" class="btn btn-sm btn-primary">
       <i class="ri ri-add-line me-1"></i> Tambah
     </a>
   </div>
   <div class="table-responsive text-nowrap">
-    <table class="table">
-      <thead>
+    <table class="table table-hover align-middle">
+      <thead class="table-light text-center">
         <tr>
           <th>Nama Supplier</th>
           <th>Kontak</th>

@@ -15,21 +15,35 @@ class ItemController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Item::with(['category', 'unit', 'supplier']);
+        $items = Item::with(['category', 'unit', 'supplier']);
 
-        // Filter berdasarkan tanggal (created_at)
-        if ($request->filled('date')) {
-            $query->whereDate('created_at', $request->date);
+        if ($request->filled('search')) {
+            $items->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('category', function ($cat) use ($request) {
+                      $cat->where('name', 'like', '%' . $request->search . '%');
+                  });
+            });
         }
 
-        // Sorting stok
-        if ($request->sort_stock) {
-            $query->orderBy('stock', $request->sort_stock);
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            $items->whereBetween('created_at', [
+                $request->date_from . ' 00:00:00',
+                $request->date_to . ' 23:59:59'
+            ]);
+        } elseif ($request->filled('date_from')) {
+            $items->whereDate('created_at', '>=', $request->date_from);
+        } elseif ($request->filled('date_to')) {
+            $items->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        if ($request->filled('sort_stock')) {
+            $items->orderBy('stock', $request->sort_stock);
         } else {
-            $query->latest();
+            $items->latest();
         }
 
-        $items = $query->get();
+        $items = $items->paginate(10);
 
         return view('role.super_admin.items.index', compact('items'));
     }
@@ -46,7 +60,7 @@ class ItemController extends Controller
     {
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
-            'code'        => 'nullable|string|max:255|unique:items,code', // opsional
+            'code'        => 'nullable|string|max:255|unique:items,code',
             'category_id' => 'required|exists:categories,id',
             'unit_id'     => 'required|exists:units,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
@@ -54,20 +68,15 @@ class ItemController extends Controller
             'image'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // kalau code kosong → generate otomatis
-        if (empty($validated['code'])) {
-            $validated['code'] = 'BRG-' . now()->format('YmdHis') . '-' . rand(1000, 9999);
-        }
-
-        // isi created_by dari user login
         $validated['created_by'] = Auth::id();
         $validated['stock'] = 0;
 
-        // Simpan gambar jika ada
+        // simpan gambar jika ada
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('images/items', 'public');
         }
 
+        // biarkan code dikosongkan supaya model generate otomatis
         Item::create($validated);
 
         return redirect()->route('super_admin.items.index')->with('success', 'Item berhasil ditambahkan.');
@@ -109,12 +118,12 @@ class ItemController extends Controller
     {
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
-            'code'        => 'required|string|max:255|unique:items,code,' . $item->id, // tetap unik
+            'code'        => 'required|string|max:255|unique:items,code,' . $item->id,
             'category_id' => 'required|exists:categories,id',
             'unit_id'     => 'required|exists:units,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'price'       => 'required|numeric|min:0',
-            'image'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'image'       => 'nullable|image|mimes:jpg,jpeg,png|max:1024',
         ]);
 
         if ($request->hasFile('image')) {
@@ -149,6 +158,4 @@ class ItemController extends Controller
 
         return $pdf->download('barcode-' . $item->code . '.pdf');
     }
-
-
 }

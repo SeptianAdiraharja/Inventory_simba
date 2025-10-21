@@ -24,7 +24,7 @@ class Item extends Model
         'expired_at' => 'datetime',
     ];
 
-    // === relasi ===
+    // === Relasi ===
     public function cartItems()
     {
         return $this->hasMany(CartItem::class, 'item_id');
@@ -47,6 +47,11 @@ class Item extends Model
         return $this->hasMany(Item_out::class, 'item_id');
     }
 
+    public function itemOutsguest()
+    {
+        return $this->hasMany(Item_out_guest::class, 'item_id');
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -67,7 +72,7 @@ class Item extends Model
         return $this->belongsTo(Supplier::class);
     }
 
-    // === accessor/helper ===
+    // === Accessor / Helper ===
     public function getExpiredCountAttribute()
     {
         return $this->itemIns->where('expired_at', '<', now())->sum('quantity');
@@ -104,27 +109,41 @@ class Item extends Model
         return $this->expired_at->isFuture() ? 'no expired' : 'expired';
     }
 
-    // === auto generate code ===
+    // === Auto Generate Code ===
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($item) {
             if (empty($item->code)) {
-                $category = \App\Models\Category::find($item->category_id);
-                $prefix = $category ? strtoupper(substr($category->name, 0, 3)) : "ITM";
-                $item->code = self::generateUniqueCode($prefix);
+                $item->code = self::generateUniqueCode($item->category_id);
             }
         });
     }
 
-    private static function generateUniqueCode($categoryCode = "ITM")
+    private static function generateUniqueCode($categoryId)
     {
-        $date = now()->format('Ymd');
-        $random = strtoupper(substr(uniqid(), -4));
-        return "{$categoryCode}-{$date}-{$random}";
+        // kode kategori 3 digit
+        $categoryCode = str_pad($categoryId, 3, '0', STR_PAD_LEFT);
+
+        // ambil item terakhir di kategori yang sama
+        $lastItem = self::where('category_id', $categoryId)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        // ambil angka terakhir dari code sebelumnya
+        $nextNumber = 1;
+        if ($lastItem && preg_match('/-(\d+)-/', $lastItem->code, $matches)) {
+            $nextNumber = ((int) $matches[1]) + 1;
+        }
+
+        $formattedNumber = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        $uniqueCode = strtoupper(substr(uniqid(), -3));
+
+        return "{$categoryCode}-{$formattedNumber}-{$uniqueCode}";
     }
 
+    // === Guest cart ===
     public function guestCartItems()
     {
         return $this->hasMany(Guest_carts_item::class, 'item_id');
