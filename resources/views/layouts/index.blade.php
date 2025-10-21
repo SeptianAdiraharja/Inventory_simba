@@ -24,6 +24,9 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 
 
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -69,8 +72,6 @@
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    {{-- sweetalert --}}
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script src="{{asset('assets/js/config.js')}}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -79,6 +80,33 @@
     <script src="{{ asset('js/modal-pagination.js') }}"></script>
     <script src="{{ asset('js/dashboard-modal.js') }}"></script>
     <script src="{{ asset('js/itemout.js') }}"></script>
+
+    <style>
+      #snackbar {
+          visibility: hidden;
+          min-width: 280px;
+          background-color: #0d6efd;
+          color: #fff;
+          text-align: center;
+          border-radius: 12px;
+          padding: 14px 18px;
+          position: fixed;
+          left: 50%;
+          bottom: 30px;
+          transform: translateX(-50%);
+          font-size: 14px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+          z-index: 3000;
+          opacity: 0;
+          transition: opacity 0.3s ease, bottom 0.3s ease;
+      }
+      #snackbar.show {
+          visibility: visible;
+          opacity: 1;
+          bottom: 50px;
+      }
+    </style>
+
 
   </head>
 
@@ -139,6 +167,9 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{{asset('assets/vendor/libs/node-waves/node-waves.js')}}"></script>
 
+  {{-- option gambar --}}
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 
     <script src="{{asset('assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js')}}"></script>
 
@@ -157,6 +188,16 @@
     <script src="{{asset('assets/js/dashboards-analytics.js')}}"></script>
 
     @stack('scripts')
+
+    <!-- ===================== -->
+    <!-- 📢 TOAST CONTAINER -->
+    <!-- ===================== -->
+    <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 2000"></div>
+
+    <!-- ===================== -->
+    <!-- ⚡ SNACKBAR -->
+    <!-- ===================== -->
+    <div id="snackbar"></div>
 
     <!-- Place this tag before closing body tag for github widget button. -->
     <script async="async" defer="defer" src="https://buttons.github.io/buttons.js"></script>

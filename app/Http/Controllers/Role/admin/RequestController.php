@@ -104,151 +104,215 @@ class RequestController extends Controller
     ======================================================== */
     public function update(Request $request, string $id)
     {
-        $newStatus = $request->status;
+        // ✅ Tambahkan log awal untuk memastikan request masuk
+        Log::info('DEBUG UPDATE STATUS - REQUEST DITERIMA', [
+            'input' => $request->all(),
+            'status' => $request->input('status'),
+            'cart_id' => $id,
+        ]);
 
+        $newStatus = $request->input('status');
+
+        // 🧩 Validasi status
         if (!in_array($newStatus, ['approved', 'rejected'])) {
-            return back()->withErrors('Status tidak valid.');
+            Log::warning('DEBUG UPDATE STATUS - STATUS TIDAK VALID', [
+                'status' => $newStatus,
+                'cart_id' => $id,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Status tidak valid.'
+            ], 400);
         }
 
-        DB::transaction(function () use ($id, $newStatus) {
-            DB::table('cart_items')
-                ->where('cart_id', $id)
-                ->update([
-                    'status' => $newStatus,
-                    'rejection_reason' => $newStatus === 'rejected' ? 'Ditolak secara keseluruhan.' : null,
-                    'updated_at' => now(),
+        try {
+            DB::transaction(function () use ($id, $newStatus) {
+
+                // 🟢 Update semua item di cart_items
+                DB::table('cart_items')
+                    ->where('cart_id', $id)
+                    ->update([
+                        'status' => $newStatus,
+                        'rejection_reason' => $newStatus === 'rejected'
+                            ? 'Ditolak secara keseluruhan.'
+                            : null,
+                        'updated_at' => now(),
+                    ]);
+
+                // 🟢 Update status di tabel carts
+                DB::table('carts')
+                    ->where('id', $id)
+                    ->update([
+                        'status' => $newStatus,
+                        'updated_at' => now(),
+                    ]);
+            });
+
+            // 🟢 Ambil data cart dan buat notifikasi
+            $cart = DB::table('carts')->find($id);
+            if ($cart) {
+                Notification::create([
+                    'user_id' => $cart->user_id,
+                    'title' => 'Request ' . ucfirst($newStatus),
+                    'message' => 'Permintaan barang kamu telah ' . $newStatus . ' secara keseluruhan.',
+                    'status' => 'unread',
                 ]);
+            }
+
+            // 🧃 Jika AJAX request, kembalikan JSON
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'status' => $newStatus,
+                    'message' => "Semua item berhasil {$newStatus}.",
+                ]);
+            }
+
+            // ✅ Jika bukan AJAX, redirect biasa
+            return back()->with('success', "Semua item berhasil {$newStatus}.");
+
+        } catch (\Throwable $e) {
+            Log::error('DEBUG UPDATE STATUS - ERROR', [
+                'error' => $e->getMessage(),
+                'cart_id' => $id,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function bulkUpdate(Request $request, $cartId)
+    {
+        $changes = $request->input('changes', []);
+
+        if (empty($changes)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada perubahan dikirim.'
+            ]);
+        }
+
+        DB::beginTransaction();
+        try {
+            $updatedItems = [];
+
+            foreach ($changes as $itemId => $status) {
+                if (!in_array($status, ['approved', 'rejected'])) continue;
+
+                DB::table('cart_items')
+                    ->where('id', $itemId)
+                    ->update([
+                        'status' => $status,
+                        'rejection_reason' => $status === 'rejected' ? 'Ditolak oleh admin.' : null,
+                        'updated_at' => now(),
+                    ]);
+
+                $updatedItems[$itemId] = ['status' => $status];
+            }
+
+            // Hitung ulang status cart
+            $cartItems = DB::table('cart_items')->where('cart_id', $cartId)->get();
+            $approved = $cartItems->where('status', 'approved')->count();
+            $rejected = $cartItems->where('status', 'rejected')->count();
+            $total = $cartItems->count();
+
+            $cartStatus = 'pending';
+            if ($approved === $total) $cartStatus = 'approved';
+            elseif ($rejected === $total) $cartStatus = 'rejected';
+            elseif ($approved > 0 || $rejected > 0) $cartStatus = 'approved_partially';
 
             DB::table('carts')
-                ->where('id', $id)
+                ->where('id', $cartId)
                 ->update([
-                    'status' => $newStatus,
+                    'status' => $cartStatus,
                     'updated_at' => now(),
                 ]);
-        });
 
-        $cart = DB::table('carts')->find($id);
+            DB::commit();
 
-        if ($cart) {
-            Notification::create([
-                'user_id' => $cart->user_id,
-                'title' => 'Request ' . ucfirst($newStatus),
-                'message' => 'Permintaan barang kamu telah ' . $newStatus . ' secara keseluruhan.',
-                'status' => 'unread',
+            return response()->json([
+                'success' => true,
+                'message' => 'Perubahan berhasil disimpan.',
+                'cart_status' => $cartStatus,
+                'items' => $updatedItems,
             ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Bulk update gagal', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
-
-        return redirect()
-            ->route('admin.request', ['status' => 'pending'])
-            ->with('success', 'Status berhasil diperbarui.');
     }
 
-    /* =======================================================
-       🟢 APPROVE ITEM – Per Item
-    ======================================================== */
-    public function approveItem(string $cartItemId)
+    // =======================
+    // ✅ APPROVE ITEM
+    // =======================
+    public function approveItem($cartItemId)
     {
+        return $this->updateItemStatus($cartItemId, 'approved');
+    }
+
+    // =======================
+    // ✅ REJECT ITEM
+    // =======================
+    public function rejectItem($cartItemId)
+    {
+        return $this->updateItemStatus($cartItemId, 'rejected');
+    }
+
+    // =======================
+    // 🔧 UPDATE STATUS HELPER
+    // =======================
+    private function updateItemStatus($cartItemId, $newStatus)
+    {
+        $item = CartItem::with('cart')->findOrFail($cartItemId);
+        $cart = $item->cart;
+
+        DB::beginTransaction();
         try {
-            return $this->updateItemStatus($cartItemId, 'approved');
-        } catch (Exception $e) {
-            Log::error('Gagal approve item', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan server.'], 500);
-        }
-    }
+            // Ubah status item
+            $item->status = $newStatus;
+            $item->save();
 
-    /* =======================================================
-       🔴 REJECT ITEM – Per Item
-    ======================================================== */
-    public function rejectItem(Request $request, string $cartItemId)
-    {
-        $request->validate(['reason' => 'required|string|max:255']);
+            // Hitung ulang status cart berdasarkan semua item
+            $cartItems = $cart->cartItems;
+            $approvedCount = $cartItems->where('status', 'approved')->count();
+            $rejectedCount = $cartItems->where('status', 'rejected')->count();
+            $totalCount = $cartItems->count();
 
-        $reason = $request->reason;
-        $cartItem = DB::table('cart_items')->find($cartItemId);
+            if ($approvedCount === $totalCount) {
+                $newCartStatus = 'approved';
+            } elseif ($rejectedCount === $totalCount) {
+                $newCartStatus = 'rejected';
+            } else {
+                $newCartStatus = 'approved_partially';
+            }
 
-        if (!$cartItem) {
-            return response()->json(['success' => false, 'message' => 'Item tidak ditemukan.'], 404);
-        }
+            $cart->status = $newCartStatus;
+            $cart->save();
 
-        DB::table('cart_items')
-            ->where('id', $cartItemId)
-            ->update([
-                'status' => 'rejected',
-                'rejection_reason' => $reason,
-                'updated_at' => now(),
+            DB::commit();
+
+            // ✅ Kirim JSON lengkap biar JS bisa update tabel tanpa reload
+            return response()->json([
+                'success' => true,
+                'message' => 'Status item berhasil diperbarui.',
+                'item_id' => $item->id,
+                'cart_id' => $cart->id,
+                'item_status' => $item->status,
+                'cart_status' => $cart->status,
             ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Gagal memperbarui status item', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Gagal memperbarui status item.']);
+        }
 
-        return $this->updateItemStatus($cartItemId, 'rejected', $reason);
     }
-
-    /* =======================================================
-       ⚙️ HELPER – Update Status Item & Cart Otomatis
-    ======================================================== */
-    protected function updateItemStatus(string $cartItemId, string $status, ?string $reason = null)
-    {
-        Log::info('UpdateItemStatus', ['id' => $cartItemId, 'status' => $status]);
-
-        $item = DB::table('cart_items')->find($cartItemId);
-        if (!$item) {
-            return response()->json(['success' => false, 'message' => 'Item tidak ditemukan.'], 404);
-        }
-
-        // Update status item
-        DB::table('cart_items')->where('id', $cartItemId)->update([
-            'status' => $status,
-            'rejection_reason' => $status === 'rejected' ? $reason : null,
-            'updated_at' => now(),
-        ]);
-
-        // Ambil ulang data setelah update (pastikan status terbaru terambil)
-        $cartItems = DB::table('cart_items')
-            ->where('cart_id', $item->cart_id)
-            ->get();
-
-        $total = $cartItems->count();
-        $approved = $cartItems->where('status', 'approved')->count();
-        $rejected = $cartItems->where('status', 'rejected')->count();
-        $pending = $cartItems->where('status', 'pending')->count();
-
-        // 🔧 Logika baru (lebih jelas dan konsisten)
-        if ($approved === $total) {
-            $newCartStatus = 'approved';
-        } elseif ($rejected === $total) {
-            $newCartStatus = 'rejected';
-        } elseif (($approved > 0 && $rejected > 0) || ($approved > 0 && $pending > 0) || ($rejected > 0 && $pending > 0)) {
-            $newCartStatus = 'approved_partially';
-        } else {
-            $newCartStatus = 'pending';
-        }
-
-        DB::table('carts')->where('id', $item->cart_id)->update([
-            'status' => $newCartStatus,
-            'updated_at' => now(),
-        ]);
-
-        $cart = DB::table('carts')->find($item->cart_id);
-
-        // Kirim notifikasi
-        if ($cart) {
-            Notification::create([
-                'user_id' => $cart->user_id,
-                'title' => 'Status Permintaan Diperbarui',
-                'message' => match ($newCartStatus) {
-                    'approved_partially' => 'Beberapa barang kamu disetujui sebagian.',
-                    'approved' => 'Semua permintaan kamu telah disetujui.',
-                    'rejected' => 'Semua permintaan kamu ditolak.',
-                    default => 'Status permintaan kamu diperbarui.',
-                },
-                'status' => 'unread',
-            ]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Status item berhasil diperbarui.',
-            'cart_status_final' => true,
-            'cart_status' => $newCartStatus,
-        ]);
-    }
-
 }

@@ -30,14 +30,6 @@
                                 <td>{{ ucfirst($p->role) }}</td>
                                 <td>{{ $p->created_at->format('d-m-Y H:i') }}</td>
                                 <td>
-                                    <div class="d-flex justify-content-center gap-2">
-                                        <a  class="btn btn-warning btn-sm">Edit</a>
-                                        <form  method="POST" onsubmit="return confirm('Yakin ingin menghapus pegawai ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
-                                        </form>
-                                    </div>
                                     <a href="{{ route('admin.pegawai.produk', $p->id) }}" class="btn btn-sm btn-info">
                                         Pilih Produk
                                     </a>

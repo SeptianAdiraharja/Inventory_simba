@@ -60,7 +60,7 @@ class ProdukController extends Controller
     /**
      * Scan item ke cart guest
      */
-   public function scan(Request $request, $guestId)
+    public function scan(Request $request, $guestId)
     {
         $request->validate([
             'item_id'  => 'required|exists:items,id',
@@ -71,30 +71,61 @@ class ProdukController extends Controller
         $guest = Guest::findOrFail($guestId);
         $item = Item::findOrFail($request->item_id);
 
-        // 🔍 Cek apakah jumlah melebihi stok
-        if ($request->quantity > $item->stock) {
-            return redirect()->back()->with('error', "Stok untuk {$item->name} tidak mencukupi.");
+        // 🧩 Validasi kode barang
+        if (trim($item->code) !== trim($request->barcode)) {
+            $message = "❌ Kode <b>{$request->barcode}</b> tidak cocok dengan <b>{$item->name}</b> ({$item->code}).";
+            return $request->ajax()
+                ? response()->json(['status' => 'error', 'message' => $message], 422)
+                : back()->with('error', $message);
         }
 
-        // Buat cart jika belum ada
+        // 🧩 Cek stok
+        if ($request->quantity > $item->stock) {
+            $message = "⚠️ Stok untuk <b>{$item->name}</b> hanya tersedia <b>{$item->stock}</b>.";
+            return $request->ajax()
+                ? response()->json(['status' => 'error', 'message' => $message], 422)
+                : back()->with('error', $message);
+        }
+
+        // 🛒 Buat cart jika belum ada
         $cart = $guest->guestCart()->firstOrCreate(
             ['guest_id' => $guest->id],
             ['session_id' => session()->getId()]
         );
 
-        // Tambah atau update item di pivot
-        if ($cart->items()->where('items.id', $request->item_id)->exists()) {
-            $cart->items()->updateExistingPivot($request->item_id, [
-                'quantity' => DB::raw("quantity + " . $request->quantity)
+        $existing = $cart->items()->where('items.id', $item->id)->first();
+
+        if ($existing) {
+            $newQty = $existing->pivot->quantity + $request->quantity;
+
+            if ($newQty > $item->stock) {
+                $message = "❗ Jumlah total untuk <b>{$item->name}</b> melebihi stok tersedia (<b>{$item->stock}</b>).";
+                return $request->ajax()
+                    ? response()->json(['status' => 'error', 'message' => $message], 422)
+                    : back()->with('error', $message);
+            }
+
+            $cart->items()->updateExistingPivot($item->id, [
+                'quantity' => $newQty,
+                'updated_at' => now(),
             ]);
+
+            $message = "🔁 Jumlah <b>{$item->name}</b> diperbarui jadi <b>{$newQty}</b>.";
         } else {
-            $cart->items()->attach($request->item_id, [
-                'quantity' => $request->quantity
+            $cart->items()->attach($item->id, [
+                'quantity' => $request->quantity,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
+            $message = "✅ Barang <b>{$item->name}</b> sebanyak <b>{$request->quantity}</b> ditambahkan ke keranjang.";
         }
 
-        return redirect()->back()->with('success', "Barang '{$item->name}' sebanyak {$request->quantity} berhasil discan ke keranjang guest.");
+        // 🔄 Jika AJAX, kirim JSON agar tidak reload halaman
+        return $request->ajax()
+            ? response()->json(['status' => 'success', 'message' => $message])
+            : back()->with('success', $message);
     }
+
 
     /**
      * Ambil cart guest untuk modal (AJAX)

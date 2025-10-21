@@ -12,7 +12,7 @@ return new class extends Migration
             ALTER TABLE carts
             MODIFY status
             ENUM('active', 'pending', 'approved', 'rejected', 'approved_partially')
-            NOT NULL DEFAULT 'pending'
+            NOT NULL DEFAULT 'active'
         ");
     }
 

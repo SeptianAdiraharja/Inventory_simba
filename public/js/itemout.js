@@ -1,114 +1,258 @@
+// =========================================================
+// 📦 ITEM OUT (SCAN & RELEASE) HANDLER — FIXED VERSION
+// =========================================================
+
 document.addEventListener("DOMContentLoaded", function () {
-  const filterButtons = document.querySelectorAll(".filter-btn");
-  const rows = document.querySelectorAll(".cart-item");
-  const sectionPegawai = document.querySelector(".section-pegawai");
-  const sectionGuest = document.querySelector(".section-guest");
+    console.log("📦 ItemOut Scanner Loaded (Fixed)");
 
-  // =============================
-  // 🔹 FILTER DATA
-  // =============================
-  filterButtons.forEach(btn => {
-    btn.addEventListener("click", function (e) {
-      e.preventDefault();
-      const filter = this.dataset.filter;
+    const forms = document.querySelectorAll(".scan-form");
+    const scannedItems = {};
 
-      rows.forEach(row => (row.style.display = ""));
-      sectionPegawai.style.display = "";
-      sectionGuest.style.display = "";
+    forms.forEach((form) => {
+        const cartId = form.dataset.cartId;
+        const input = form.querySelector(".barcode-input");
+        const resultBox = form.querySelector(".scan-result");
+        const saveScanBtn = form.querySelector(".save-scan-btn");
+        const saveAllBtn = form.querySelector(".save-all-scan-btn");
+        scannedItems[cartId] = [];
 
-      if (filter === "pegawai") {
-        sectionGuest.style.display = "none";
-      } else if (filter === "guest") {
-        sectionPegawai.style.display = "none";
-      } else if (filter === "scanned") {
-        rows.forEach(row => {
-          if (row.dataset.scanned !== "true") row.style.display = "none";
-        });
-      } else if (filter === "not-scanned") {
-        rows.forEach(row => {
-          if (row.dataset.scanned !== "false") row.style.display = "none";
-        });
-      }
-    });
-  });
+        // =========================================================
+        // 🧩 Cegah form reload saat tekan Enter
+        // =========================================================
+        form.addEventListener("submit", (e) => e.preventDefault());
 
-  // =============================
-  // 🔹 SCAN BARANG
-  // =============================
-  document.querySelectorAll(".scan-form").forEach(form => {
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
+        // =========================================================
+        // 🔹 SCAN BARCODE / QR — trigger Enter
+        // =========================================================
+        input.addEventListener("keydown", async function (e) {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
 
-      const cartId = this.dataset.cartId;
-      const barcodeInput = this.querySelector(".barcode-input");
-      const resultBox = this.querySelector(".scan-result");
-      const barcode = barcodeInput.value.trim();
+            const barcode = input.value.trim();
+            if (!barcode) return;
 
-      if (!barcode) {
-        resultBox.innerHTML = `<span class="text-danger">❗ Masukkan kode barang terlebih dahulu.</span>`;
-        return;
-      }
+            try {
+                const response = await fetch(`/admin/itemout/scan/${cartId}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": document.querySelector(
+                            'meta[name="csrf-token"]'
+                        ).content,
+                    },
+                    body: JSON.stringify({ barcode }),
+                });
 
-      resultBox.innerHTML = `<span class="text-info">⏳ Memproses kode <b>${barcode}</b>...</span>`;
+                const data = await response.json();
 
-      try {
-        const response = await fetch(`/admin/itemout/scan/${cartId}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
-          },
-          body: JSON.stringify({ barcode })
-        });
+                if (!response.ok || !data.success) {
+                    resultBox.innerHTML = `<span class="text-danger">❌ ${
+                        data.message || "Kode barang tidak sesuai."
+                    }</span>`;
+                    input.value = "";
+                    return;
+                }
 
-        const data = await response.json();
+                // 🔹 Update tampilan tabel
+                const rows = form.querySelectorAll("tbody tr");
+                let matchedRow = null;
+                rows.forEach((row) => {
+                    const code = row
+                        .querySelector(".item-code")
+                        ?.textContent.trim();
+                    const statusCell = row.querySelector("td:last-child");
+                    if (code === data.item.code) {
+                        statusCell.innerHTML = `<span class="badge bg-success">Sudah dipindai</span>`;
+                        matchedRow = row;
+                    }
+                });
 
-        if (response.ok && data.success) {
-          resultBox.innerHTML = `<span class="text-success">✅ ${data.message}</span>`;
-          barcodeInput.value = "";
-          barcodeInput.focus();
+                // 🔹 Simpan hasil ke memori
+                scannedItems[cartId].push({
+                    id: data.item.id,
+                    code: data.item.code,
+                    quantity: data.item.quantity ?? 1,
+                });
 
-          const itemRows = document.querySelectorAll(`#collapse${cartId} tbody tr`);
-          itemRows.forEach(row => {
-            const kodeCell = row.querySelector("td:nth-child(3)");
-            if (kodeCell && kodeCell.textContent.trim() === data.item.code) {
-              row.querySelector("td:last-child").innerHTML =
-                `<span class="badge bg-success">Sudah dipindai</span>`;
+                resultBox.innerHTML = `<span class="text-success">✅ ${data.message}</span>`;
+            } catch (err) {
+                console.error(err);
+                resultBox.innerHTML = `<span class="text-danger">⚠️ Gagal koneksi ke server.</span>`;
             }
-          });
 
-          const semuaSudah = Array.from(itemRows).every(row => {
-            const statusCell = row.querySelector("td:last-child");
-            return statusCell.textContent.includes("Sudah dipindai");
-          });
+            input.value = "";
+        });
 
-          if (semuaSudah) {
-            const targetRow = document.querySelector(`.cart-item[data-type="pegawai"][data-bs-target="#collapse${cartId}"]`);
-            if (targetRow) {
-              const statusCell = targetRow.querySelector("td:nth-child(3)");
-              if (statusCell) {
-                statusCell.innerHTML = `<span class="badge bg-success">✅ Sudah dipindai semua</span>`;
-              }
-              targetRow.dataset.scanned = "true";
-            }
-            resultBox.innerHTML = `<span class="text-success fw-bold">🎉 Semua barang telah berhasil dipindai! Status diperbarui otomatis.</span>`;
-          }
-        } else {
-          resultBox.innerHTML = `<span class="text-danger">❌ ${data.message || "Gagal menyimpan hasil scan."}</span>`;
+        // =========================================================
+        // 💾 SIMPAN HASIL SCAN SATU PER SATU
+        // =========================================================
+        // 💾 SIMPAN HASIL SCAN SATU PER SATU (VERSI FIX)
+        if (saveScanBtn) {
+            saveScanBtn.addEventListener("click", async function () {
+                const barcode = input.value.trim();
+                if (!barcode) {
+                    showToast(
+                        "Masukkan kode barang sebelum menyimpan.",
+                        "error"
+                    );
+                    return;
+                }
+
+                // Cek apakah sudah ada di scannedItems agar tidak dobel
+                const alreadyScanned = scannedItems[cartId].some(
+                    (item) => item.code === barcode
+                );
+                if (alreadyScanned) {
+                    showToast("Barang ini sudah dipindai sebelumnya.", "error");
+                    input.value = "";
+                    return;
+                }
+
+                try {
+                    const response = await fetch(
+                        `/admin/itemout/scan/${cartId}`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": document.querySelector(
+                                    'meta[name="csrf-token"]'
+                                ).content,
+                            },
+                            body: JSON.stringify({ barcode }),
+                        }
+                    );
+
+                    const data = await response.json();
+                    if (!data.success) {
+                        showToast(
+                            data.message || "Kode barang tidak sesuai.",
+                            "error"
+                        );
+                        input.value = "";
+                        return;
+                    }
+
+                    // Update tampilan
+                    const rows = form.querySelectorAll("tbody tr");
+                    rows.forEach((row) => {
+                        const code = row
+                            .querySelector(".item-code")
+                            ?.textContent.trim();
+                        const statusCell = row.querySelector("td:last-child");
+                        if (code === data.item.code) {
+                            statusCell.innerHTML = `<span class="badge bg-success">Sudah dipindai</span>`;
+                        }
+                    });
+
+                    // Tambahkan ke memori sementara
+                    scannedItems[cartId].push({
+                        id: data.item.id,
+                        code: data.item.code,
+                        quantity: data.item.quantity ?? 1,
+                    });
+
+                    showToast("✅ Barang berhasil dipindai!", "success");
+                    input.value = "";
+                } catch (err) {
+                    console.error(err);
+                    showToast("⚠️ Gagal menghubungi server.", "error");
+                }
+            });
         }
-      } catch (err) {
-        console.error(err);
-        resultBox.innerHTML = `<span class="text-danger">⚠️ Terjadi kesalahan koneksi ke server.</span>`;
-      }
+
+        // =========================================================
+        // 💾 SIMPAN SEMUA HASIL SCAN (FINAL)
+        // =========================================================
+        if (saveAllBtn) {
+            saveAllBtn.addEventListener("click", async function () {
+                if (
+                    !scannedItems[cartId] ||
+                    scannedItems[cartId].length === 0
+                ) {
+                    showToast(
+                        "Belum ada hasil scan yang siap disimpan.",
+                        "error"
+                    );
+                    return;
+                }
+
+                if (!confirm("Yakin ingin menyimpan semua hasil pemindaian?"))
+                    return;
+
+                try {
+                    const response = await fetch(
+                        `/admin/itemout/release/${cartId}`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": document.querySelector(
+                                    'meta[name="csrf-token"]'
+                                ).content,
+                            },
+                            body: JSON.stringify({
+                                items: scannedItems[cartId],
+                            }),
+                        }
+                    );
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast(
+                            "✅ Semua hasil scan berhasil disimpan!",
+                            "success"
+                        );
+                        resultBox.innerHTML = `<span class="text-success">Semua hasil scan telah disimpan.</span>`;
+                        scannedItems[cartId] = [];
+                    } else {
+                        showToast(
+                            data.message || "Gagal menyimpan hasil scan.",
+                            "error"
+                        );
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showToast(
+                        "⚠️ Terjadi kesalahan saat menyimpan data.",
+                        "error"
+                    );
+                }
+            });
+        }
     });
 
-    const input = form.querySelector(".barcode-input");
-    input.addEventListener("keypress", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        form.dispatchEvent(new Event("submit"));
-      }
-    });
-  });
+    // =========================================================
+    // 🎨 TOAST NOTIFICATION
+    // =========================================================
+    function showToast(message, type = "info") {
+        const container =
+            document.getElementById("toast-container") ||
+            createToastContainer();
+        const toast = document.createElement("div");
+        toast.className = `toast align-items-center text-bg-${
+            type === "success"
+                ? "success"
+                : type === "error"
+                ? "danger"
+                : "primary"
+        } border-0 show mb-2`;
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    }
+
+    function createToastContainer() {
+        const container = document.createElement("div");
+        container.id = "toast-container";
+        container.className = "toast-container position-fixed top-0 end-0 p-3";
+        document.body.appendChild(container);
+        return container;
+    }
 });

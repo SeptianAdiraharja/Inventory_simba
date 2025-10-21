@@ -171,28 +171,102 @@ class AdminPegawaiController extends Controller
         ]);
     }
 
+     /**
+     * Tambahkan item ke cart pegawai (otomatis buat cart kalau belum ada)
+     */
+    public function addToCart(Request $request)
+    {
+        $request->validate([
+            'pegawai_id' => 'required|exists:users,id',
+            'item_id'    => 'required|exists:items,id',
+            'quantity'   => 'required|integer|min:1',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $pegawaiId = $request->pegawai_id;
+            $itemId = $request->item_id;
+            $quantity = $request->quantity;
+
+            // 🔹 1. Buat cart aktif jika belum ada
+            $cart = Cart::firstOrCreate(
+                ['user_id' => $pegawaiId, 'status' => 'active'],
+                ['created_at' => now(), 'updated_at' => now()]
+            );
+
+            // 🔹 2. Tambahkan / update item dalam cart_items
+            $cartItem = CartItem::where('cart_id', $cart->id)
+                ->where('item_id', $itemId)
+                ->first();
+
+            if ($cartItem) {
+                $cartItem->increment('quantity', $quantity);
+            } else {
+                CartItem::create([
+                    'cart_id'  => $cart->id,
+                    'item_id'  => $itemId,
+                    'quantity' => $quantity,
+                    'status'   => 'pending',
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item berhasil ditambahkan ke keranjang.',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan item: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
 
     /**
  * Simpan seluruh isi cart ke item_outs
  */
-     public function saveCartToItemOut($pegawaiId)
+    public function saveCartToItemOut($pegawaiId)
     {
         DB::beginTransaction();
         try {
             $pegawai = User::findOrFail($pegawaiId);
-            $cart = Cart::with('cartItems.item')->where('user_id', $pegawai->id)->first();
 
-            if (! $cart || $cart->cartItems->isEmpty()) {
+            // 🔹 Cek apakah ada cart active
+            $cart = Cart::where('user_id', $pegawai->id)
+                    ->whereIn('status', ['active', 'approved'])
+                    ->first();
+
+            // 🔹 Jika belum ada, buat cart langsung dengan status approved
+            if (! $cart) {
+                $cart = Cart::create([
+                    'user_id' => $pegawai->id,
+                    'status'  => 'approved',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } else {
+                // Jika sudah ada, ubah status ke approved
+                $cart->update(['status' => 'approved']);
+            }
+
+            // 🔹 Ambil semua cart items yang dimiliki pegawai (bisa pending/baru)
+            $cartItems = CartItem::where('cart_id', $cart->id)->get();
+
+            if ($cartItems->isEmpty()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Keranjang masih kosong.',
                 ]);
             }
 
-            foreach ($cart->cartItems as $cartItem) {
+            foreach ($cartItems as $cartItem) {
                 $item = $cartItem->item;
 
-                // pastikan stok cukup
                 if ($item->stock < $cartItem->quantity) {
                     return response()->json([
                         'success' => false,
@@ -200,28 +274,31 @@ class AdminPegawaiController extends Controller
                     ]);
                 }
 
-                // kurangi stok di DB
+                // 🔹 Kurangi stok barang
                 $item->decrement('stock', $cartItem->quantity);
 
-                // simpan ke tabel item_outs — hanya field yang ada pada tabel
+                // 🔹 Buat record di item_out
                 Item_out::create([
                     'item_id'     => $item->id,
-                    'cart_id'     => $cart->id,                // isi cart_id
-                    'unit_id'     => $item->unit_id ?? null,   // isi unit_id dari item
+                    'cart_id'     => $cart->id,
+                    'unit_id'     => $item->unit_id ?? null,
                     'quantity'    => $cartItem->quantity,
                     'released_at' => now(),
-                    'approved_by' => Auth::id(),               // admin yang login
+                    'approved_by' => Auth::id(),
+                ]);
+
+                // 🔹 Update status cart_item langsung approved
+                $cartItem->update([
+                    'status' => 'approved',
+                    'rejection_reason' => null,
                 ]);
             }
-
-            // kosongkan cart setelah disimpan
-            $cart->cartItems()->delete();
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data berhasil disimpan ke Item Out!',
+                'message' => 'Barang berhasil disimpan ke Item Out (langsung approved)!',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
