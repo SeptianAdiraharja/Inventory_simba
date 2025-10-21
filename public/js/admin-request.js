@@ -1,266 +1,239 @@
-/**
- * File: admin-request.js (FINAL FIXED VERSION)
- * Deskripsi:
- *  - Menangani interaksi halaman request admin:
- *    detail item, approve/reject per item, approve/reject all, dan update status cart otomatis.
- */
-
 document.addEventListener("DOMContentLoaded", () => {
-    const rejectModalEl = document.getElementById("rejectModal");
-    const rejectModal = new bootstrap.Modal(rejectModalEl);
-    const rejectItemForm = document.getElementById("rejectItemForm");
-    let currentItemRow = null;
+    // =========================================================
+    // 🎨 NOTIFICATION HELPERS
+    // =========================================================
 
-    const getCsrf = () =>
-        document.querySelector('meta[name="csrf-token"]').content;
-    const showModal = (id) =>
-        new bootstrap.Modal(document.getElementById(id)).show();
+    // Toast Bootstrap-style (pojok kanan atas)
+    function showToast(message, type = "info") {
+        const container = document.getElementById("toast-container");
+        const icon =
+            type === "success"
+                ? "bi-check-circle-fill text-success"
+                : type === "error"
+                ? "bi-x-circle-fill text-danger"
+                : "bi-info-circle-fill text-primary";
 
-    const setLoading = (button, text = "Memproses...") => {
-        button.disabled = true;
-        button.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> ${text}`;
-    };
+        const toast = document.createElement("div");
+        toast.className =
+            "toast align-items-center border-0 shadow-sm fade show mb-2";
+        toast.style.background = "#fff";
+        toast.innerHTML = `
+            <div class="d-flex align-items-center p-3">
+                <i class="bi ${icon} fs-5 me-2"></i>
+                <div class="flex-grow-1">${message}</div>
+                <button type="button" class="btn-close ms-3" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.remove("show"), 3000);
+        setTimeout(() => toast.remove(), 3500);
+    }
 
-    const unsetLoading = (button, originalHtml) => {
-        button.disabled = false;
-        button.innerHTML = originalHtml;
-    };
+    // Snackbar (bawah tengah layar)
+    function showSnackbar(message) {
+        const snackbar = document.getElementById("snackbar");
+        snackbar.textContent = message;
+        snackbar.className = "show";
+        setTimeout(
+            () => (snackbar.className = snackbar.className.replace("show", "")),
+            4000
+        );
+    }
 
-    /* ==========================
-       1️⃣  Load Detail Cart
-    ========================== */
+    // =========================================================
+    // 🧩 Menyimpan perubahan sementara (belum disimpan ke DB)
+    // =========================================================
+    const pendingChanges = {};
+
+    // =========================================================
+    // 📦 Klik tombol "Detail (Lihat Barang)"
+    // =========================================================
     document.querySelectorAll(".detail-toggle-btn").forEach((btn) => {
-        btn.addEventListener("click", async () => {
+        btn.addEventListener("click", async (e) => {
+            e.preventDefault();
             const cartId = btn.dataset.cartId;
-            const detailRow = document.getElementById(`detail-row-${cartId}`);
-            const content = document.getElementById(`detail-content-${cartId}`);
+            const container = document.getElementById(
+                `detail-content-${cartId}`
+            );
+            const icon = btn.querySelector("i");
 
-            if (
-                !detailRow.classList.contains("show") ||
-                content.dataset.loaded !== "true"
-            ) {
-                content.innerHTML = `
-                    <p class="text-center text-muted m-0 p-3">
-                        <div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat detail...
-                    </p>`;
+            const isShown = container.classList.contains("show");
+            document
+                .querySelectorAll(".detail-content-wrapper")
+                .forEach((el) => el.classList.remove("show"));
 
+            if (isShown) {
+                icon.className = "bi bi-chevron-down";
+                return;
+            }
+
+            icon.className = "bi bi-chevron-up";
+            container.classList.add("show");
+
+            if (container.dataset.loaded !== "true") {
                 try {
+                    container.innerHTML = `
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>`;
                     const res = await fetch(`/admin/carts/${cartId}`);
-                    content.innerHTML = await res.text();
-                    content.dataset.loaded = "true";
-                    attachItemActionListeners(cartId);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    container.innerHTML = await res.text();
+                    container.dataset.loaded = "true";
                 } catch (err) {
-                    console.error("Error loading cart detail:", err);
-                    content.innerHTML = `<p class="text-danger text-center m-0 p-3">Gagal memuat detail.</p>`;
+                    console.error("Gagal memuat detail:", err);
+                    container.innerHTML = `<p class="text-danger text-center m-0">⚠️ Gagal memuat data detail.</p>`;
+                    showToast("Gagal memuat detail permintaan.", "error");
                 }
             }
         });
     });
 
-    /* ==========================
-       2️⃣  Listener Item Action
-    ========================== */
-    function attachItemActionListeners(cartId) {
-        const content = document.getElementById(`detail-content-${cartId}`);
+    // =========================================================
+    // 🔄 Fungsi update tampilan status item
+    // =========================================================
+    const updateItemUI = (itemRow, newStatus, temporary = true) => {
+        const badge = itemRow.querySelector(".item-status-cell .badge");
+        const actionCell = itemRow.querySelector(".item-action-cell");
 
-        // Approve per item
-        content.querySelectorAll(".item-approve-btn").forEach((btn) => {
-            btn.addEventListener("click", (e) => {
-                e.preventDefault();
-                if (confirm("Yakin ingin menyetujui item ini?")) {
-                    updateItemStatus(
-                        btn.dataset.itemId,
-                        "approved",
-                        btn.closest("tr"),
-                        btn
-                    );
-                }
-            });
-        });
+        badge.className = "badge";
+        badge.textContent =
+            newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+        if (newStatus === "approved") badge.classList.add("bg-success");
+        else if (newStatus === "rejected") badge.classList.add("bg-danger");
+        else badge.classList.add("bg-warning", "text-dark");
 
-        // Reject per item
-        content.querySelectorAll(".item-reject-btn").forEach((btn) => {
-            btn.addEventListener("click", () => {
-                currentItemRow = btn.closest("tr");
-                rejectItemForm.action = `/admin/carts/item/${btn.dataset.itemId}/reject`;
-                rejectItemForm.querySelector("textarea[name='reason']").value =
-                    "";
-                rejectModal.show();
-            });
-        });
-    }
+        if (newStatus === "approved") {
+            actionCell.innerHTML = temporary
+                ? `<span class="text-success fw-semibold"><i class="bi bi-check-circle me-1"></i> Approved (Belum Disimpan)</span>`
+                : `<span class="text-success fw-semibold"><i class="bi bi-check-circle me-1"></i> Approved</span>`;
+        } else if (newStatus === "rejected") {
+            actionCell.innerHTML = temporary
+                ? `<span class="text-danger fw-semibold"><i class="bi bi-x-octagon me-1"></i> Rejected (Belum Disimpan)</span>`
+                : `<span class="text-danger fw-semibold"><i class="bi bi-x-octagon me-1"></i> Rejected</span>`;
+        }
+    };
 
-    /* ==========================
-       3️⃣  Reject Item Modal
-    ========================== */
-    rejectItemForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const submitBtn = rejectItemForm.querySelector('button[type="submit"]');
-        const reason = rejectItemForm
-            .querySelector('textarea[name="reason"]')
-            .value.trim();
+    // =========================================================
+    // ⚡ Klik Approve / Reject (tanpa kirim ke DB)
+    // =========================================================
+    document.addEventListener("click", (e) => {
+        const approveBtn = e.target.closest(".item-approve-btn");
+        const rejectBtn = e.target.closest(".item-reject-btn");
 
-        if (!reason) {
-            alert("Harap isi alasan penolakan!");
+        if (approveBtn || rejectBtn) {
+            const isApprove = !!approveBtn;
+            const btn = isApprove ? approveBtn : rejectBtn;
+            const itemId = btn.dataset.itemId;
+            const itemRow = btn.closest("tr");
+            const container = btn.closest(".detail-content-wrapper");
+            const cartId = container.dataset.cartId;
+            const newStatus = isApprove ? "approved" : "rejected";
+
+            if (!pendingChanges[cartId]) pendingChanges[cartId] = {};
+            pendingChanges[cartId][itemId] = newStatus;
+
+            updateItemUI(itemRow, newStatus, true);
+
+            showSnackbar(
+                `Item ${
+                    newStatus === "approved" ? "disetujui" : "ditolak"
+                } (belum disimpan)`
+            );
+        }
+    });
+
+    // =========================================================
+    // 💾 Klik "Simpan Perubahan" → kirim semua pendingChanges
+    // =========================================================
+    document.addEventListener("click", async (e) => {
+        const saveBtn = e.target.closest(".cart-detail-save-btn");
+        if (!saveBtn) return;
+
+        const container = saveBtn.closest(".detail-content-wrapper");
+        const cartId = container.dataset.cartId;
+
+        if (
+            !pendingChanges[cartId] ||
+            Object.keys(pendingChanges[cartId]).length === 0
+        ) {
+            showToast("Tidak ada perubahan untuk disimpan.", "info");
             return;
         }
 
-        setLoading(submitBtn, "Menolak...");
-        try {
-            const formData = new FormData(rejectItemForm);
-            formData.append("_method", "PATCH");
-            formData.append("reason", reason);
+        saveBtn.disabled = true;
+        saveBtn.innerHTML =
+            '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
 
-            const res = await fetch(rejectItemForm.action, {
+        try {
+            const res = await fetch(`/admin/carts/${cartId}/bulk-update`, {
                 method: "POST",
                 headers: {
-                    "X-CSRF-TOKEN": getCsrf(),
+                    "X-CSRF-TOKEN": document.querySelector(
+                        'meta[name="csrf-token"]'
+                    ).content,
+                    "Content-Type": "application/json",
                     Accept: "application/json",
                 },
-                body: formData,
-            });
-
-            const data = await res.json().catch(() => ({}));
-
-            if (res.ok && data.success) {
-                rejectModal.hide();
-                updateItemUi(currentItemRow, "rejected", reason);
-                handleCartStatusModal(data);
-            } else {
-                alert(
-                    "Gagal menolak item: " + (data?.message || "Server error")
-                );
-            }
-        } catch (err) {
-            console.error("Reject error:", err);
-            alert("Terjadi kesalahan saat menolak item.");
-        } finally {
-            unsetLoading(submitBtn, "Tolak Item");
-        }
-    });
-
-    /* ==========================
-       4️⃣  Update Item Status
-    ========================== */
-    async function updateItemStatus(itemId, status, itemRow, button) {
-        const action = status === "approved" ? "approve" : "reject"; // ✅ sesuaikan ke route Laravel
-        const url = `/admin/carts/item/${itemId}/${action}`;
-        const originalHtml = button.innerHTML;
-        setLoading(button);
-
-        try {
-            const res = await fetch(url, {
-                method: "PATCH",
-                headers: {
-                    "X-CSRF-TOKEN": getCsrf(),
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ status }),
+                body: JSON.stringify({ changes: pendingChanges[cartId] }),
             });
 
             const data = await res.json();
-            if (res.ok && data.success) {
-                updateItemUi(itemRow, status);
-                handleCartStatusModal(data);
-            } else {
-                alert("Gagal memperbarui status item.");
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Terjadi kesalahan saat memperbarui status item.");
-        } finally {
-            unsetLoading(button, originalHtml);
-        }
-    }
+            if (!data.success) throw new Error(data.message);
 
-    /* ==========================
-       5️⃣  Update Tampilan Item
-    ========================== */
-    function updateItemUi(row, status, reason = null) {
-        const statusCell = row.querySelector(".item-status-cell");
-        const actionCell = row.querySelector(".item-action-cell");
-        const reasonCell = row.querySelector(".item-reason-cell");
-
-        const isApproved = status === "approved";
-        const badge = isApproved ? "bg-success" : "bg-danger";
-        const text = isApproved ? "Approved" : "Rejected";
-
-        statusCell.innerHTML = `<span class="badge ${badge}">${text}</span>`;
-        if (reasonCell)
-            reasonCell.textContent = !isApproved ? reason || "Ditolak" : "-";
-        actionCell.innerHTML = `
-            <span class="fw-semibold text-${isApproved ? "success" : "danger"}">
-                <i class="bi ${
-                    isApproved ? "bi-check2-circle" : "bi-x-octagon"
-                } me-1"></i>${text}
-            </span>`;
-    }
-
-    /* ==========================
-       6️⃣  Handle Modal Status Cart
-    ========================== */
-    function handleCartStatusModal(data) {
-        // tampilkan hanya jika semua item sudah diproses
-        if (!data.cart_status_final) return;
-
-        const modalId =
-            data.cart_status === "approved"
-                ? "cartProcessedModal"
-                : data.cart_status === "approved_partially"
-                ? "cartPartiallyApprovedModal"
-                : null;
-
-        if (modalId) {
-            showModal(modalId);
-            const modalEl = document.getElementById(modalId);
-            modalEl.addEventListener("hidden.bs.modal", () =>
-                location.reload()
+            showToast(
+                "✅ Perubahan berhasil disimpan, Silahkan lanjutkan ke Halaman Scan QR",
+                "success"
             );
-        }
-    }
+            delete pendingChanges[cartId];
 
-    /* ==========================
-       7️⃣  Approve / Reject All
-    ========================== */
-    document.querySelectorAll(".approve-all-form").forEach((form) => {
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            const isApproveAll =
-                form.querySelector('input[name="status"]').value === "approved";
-            const confirmText = isApproveAll
-                ? "Yakin ingin menyetujui SEMUA item?"
-                : "Yakin ingin menolak SEMUA item?";
-            if (!confirm(confirmText)) return;
-
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalHtml = submitBtn.innerHTML;
-            setLoading(submitBtn);
-
-            try {
-                const res = await fetch(form.action, {
-                    method: "POST",
-                    headers: { "X-CSRF-TOKEN": getCsrf() },
-                    body: new FormData(form),
-                });
-
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    if (isApproveAll) {
-                        showModal("cartProcessedModal");
-                    } else {
-                        alert("Semua item berhasil ditolak.");
-                        location.reload();
-                    }
-                } else {
-                    alert("Gagal memproses permintaan ini.");
-                }
-            } catch (err) {
-                console.error("Approve/Reject All error:", err);
-                alert("Terjadi kesalahan saat memproses.");
-            } finally {
-                unsetLoading(submitBtn, originalHtml);
+            // Update badge utama
+            const mainBadge = document.getElementById(`main-status-${cartId}`);
+            if (mainBadge) {
+                mainBadge.textContent = data.cart_status.replace("_", " ");
+                mainBadge.className = "badge";
+                if (data.cart_status === "approved")
+                    mainBadge.classList.add("bg-success");
+                else if (data.cart_status === "approved_partially")
+                    mainBadge.classList.add("bg-warning", "text-dark");
+                else if (data.cart_status === "rejected")
+                    mainBadge.classList.add("bg-danger");
             }
-        });
+
+            // Update UI item (hapus label belum disimpan)
+            const rows = container.querySelectorAll("tr[data-item-id]");
+            rows.forEach((r) => {
+                const itemId = r.dataset.itemId;
+                if (data.items && data.items[itemId]) {
+                    updateItemUI(r, data.items[itemId].status, false);
+                }
+            });
+        } catch (err) {
+            showToast("❌ Gagal menyimpan: " + err.message, "error");
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML =
+                '<i class="bi bi-save me-1"></i> Simpan Perubahan';
+        }
+    });
+
+    // =========================================================
+    // ❌ Klik "Batal" → reload detail
+    // =========================================================
+    document.addEventListener("click", async (e) => {
+        const cancelBtn = e.target.closest(".cart-detail-cancel-btn");
+        if (!cancelBtn) return;
+
+        const container = cancelBtn.closest(".detail-content-wrapper");
+        const cartId = container.dataset.cartId;
+
+        delete pendingChanges[cartId];
+        container.dataset.loaded = "false";
+
+        const res = await fetch(`/admin/carts/${cartId}`);
+        container.innerHTML = await res.text();
+        container.dataset.loaded = "true";
+
+        showSnackbar("Perubahan dibatalkan.");
     });
 });

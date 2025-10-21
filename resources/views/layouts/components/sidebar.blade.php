@@ -34,6 +34,11 @@
         @php
             use App\Models\Cart;
             $pendingCount = Cart::where('status', 'pending')->count();
+            $approvedCount = Cart::where('status', 'approved')
+                ->whereHas('cartItems', function ($q) {
+                    $q->whereNull('scanned_at'); // hanya hitung cart yang masih ada item belum discan
+                })
+                ->count()
         @endphp
 
         <!-- Pegawai -->
@@ -128,11 +133,19 @@
         </li>
 
         <li class="menu-item {{ Route::is('admin.itemout.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.itemout.index') }}" class="menu-link d-flex align-items-center text-white">
+            <a href="{{ route('admin.itemout.index') }}" class="menu-link d-flex align-items-center text-white position-relative">
                 <i class="ri ri-qr-scan-2-line me-2"></i>
                 <span>ScanQr</span>
+
+                {{-- 🔔 Tampilkan badge jika ada cart approved --}}
+                @if($approvedCount > 0)
+                    <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-success">
+                        {{ $approvedCount }}
+                    </span>
+                @endif
             </a>
         </li>
+
 
         <li class="menu-item {{ Route::is('admin.guests.index') ? 'active' : '' }}">
             <a href="{{ route('admin.guests.index') }}" class="menu-link d-flex align-items-center text-white">

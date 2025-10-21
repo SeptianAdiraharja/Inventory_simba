@@ -90,10 +90,10 @@
                     </thead>
                     <tbody>
                       @foreach($cart->cartItems as $j => $item)
-                        <tr>
+                        <tr data-item-id="{{ $item->item->id }}">
                           <td class="text-center">{{ $j+1 }}</td>
                           <td>{{ $item->item->name }}</td>
-                          <td>{{ $item->item->code }}</td>
+                          <td class="item-code">{{ $item->item->code }}</td>
                           <td class="text-center">{{ $item->quantity }}</td>
                           <td class="text-center">
                             @if($item->scanned_at)
@@ -110,9 +110,9 @@
 
                 <!-- ✅ MODAL SCAN BARANG -->
                 <div class="modal fade" id="scanModal{{ $cart->id }}" tabindex="-1" aria-labelledby="scanModalLabel{{ $cart->id }}" aria-hidden="true">
-                  <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-dialog modal-lg modal-dialog-centered"> {{-- pakai modal-lg supaya muat tabel --}}
                     <div class="modal-content">
-                      <div class="modal-header bg-primary text-white mb-3">
+                      <div class="modal-header bg-primary text-white mb-0">
                         <h5 class="modal-title" id="scanModalLabel{{ $cart->id }}">
                           <i class="bi bi-qr-code-scan me-2"></i>Pindai Barang - {{ $cart->user->name ?? 'Guest' }}
                         </h5>
@@ -120,13 +120,60 @@
                       </div>
 
                       <form class="scan-form p-3" data-cart-id="{{ $cart->id }}">
-                        <div class="mb-3">
-                          <input type="text" class="form-control barcode-input" placeholder="Scan atau ketik kode barang">
-                          <div class="mt-2 scan-result small text-muted"></div>
+                        <div class="row mb-3">
+                          <div class="col-md-8">
+                            <input type="text" class="form-control barcode-input" placeholder="🔍 Scan atau ketik kode barang lalu tekan Enter">
+                          </div>
+                          <div class="col-md-4 text-end">
+                            <button type="button" class="btn btn-primary save-scan-btn">
+                                Simpan Hasil Scan
+                            </button>
+                          </div>
+                        </div>
+
+                        <div class="scan-result small text-muted mb-3"></div>
+
+                        <!-- ✅ Tambahkan tabel daftar barang di modal -->
+                        <div class="table-responsive border rounded">
+                          <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light text-center">
+                              <tr>
+                                <th style="width:50px;">No</th>
+                                <th>Nama Barang</th>
+                                <th>Kode</th>
+                                <th style="width:80px;">Jumlah</th>
+                                <th>Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              @foreach($cart->cartItems as $j => $item)
+                                <tr>
+                                  <td class="text-center">{{ $j+1 }}</td>
+                                  <td>{{ $item->item->name }}</td>
+                                  <td class="item-code">{{ $item->item->code }}</td>
+                                  <td class="text-center">{{ $item->quantity }}</td>
+                                  <td class="text-center">
+                                    @if($item->scanned_at)
+                                      <span class="badge bg-success">Sudah dipindai</span>
+                                    @else
+                                      <span class="badge bg-secondary">Belum dipindai</span>
+                                    @endif
+                                  </td>
+                                </tr>
+                              @endforeach
+                            </tbody>
+                          </table>
                         </div>
                         <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                          <button type="submit" class="btn btn-primary">Simpan Pemindaian</button>
+                          <div class="d-flex justify-content-between w-100">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                              <i class="bi bi-x-circle me-1"></i> Tutup
+                            </button>
+
+                            <button type="button" class="btn btn-success save-all-scan-btn" data-cart-id="{{ $cart->id }}">
+                                Simpan Semua Hasil Scan
+                            </button>
+                          </div>
                         </div>
                       </form>
                     </div>
@@ -151,101 +198,6 @@
   </div>
 </div>
 
-<!-- ======================== -->
-<!-- 🔹 BAGIAN 2: TAMU -->
-<!-- ======================== -->
-<hr class="my-5">
-
-<div class="section-guest">
-  <div class="card shadow-sm border-0">
-    <div class="card-header bg-light d-flex justify-content-between align-items-center">
-      <h5 class="mb-0 text-dark fw-semibold">
-        <i class="bi bi-person-lines-fill me-2 text-warning"></i>Daftar Barang Keluar Tamu
-      </h5>
-      <small class="text-muted">Data untuk tamu yang telah melakukan transaksi</small>
-    </div>
-
-    <div class="table-responsive">
-      <table class="table table-hover table-bordered align-middle mb-0">
-        <thead class="table-warning">
-          <tr class="text-center">
-            <th style="width: 50px;">No</th>
-            <th>Nama Tamu</th>
-            <th>Tanggal Keluar</th>
-            <th style="width: 160px;">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          @forelse($guestItemOuts as $i => $guest)
-            <tr class="cart-item" data-type="guest" data-scanned="true">
-              <td class="text-center">{{ $guestItemOuts->firstItem() + $i }}</td>
-              <td>
-                <strong>{{ $guest->name }}</strong><br>
-                <small class="text-muted d-block">
-                  <i class="bi bi-telephone me-1"></i>{{ $guest->phone }}
-                </small>
-                <small class="text-warning fw-semibold">
-                  <i class="bi bi-box-seam me-1"></i>{{ $guest->guestCart?->items->count() ?? 0 }} Barang
-                </small>
-              </td>
-              <td class="text-center">
-                {{ optional($guest->guestCart?->updated_at)->format('d M Y H:i') ?? '-' }}
-              </td>
-              <td class="text-center">
-                <button class="btn btn-sm btn-outline-warning" type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapseGuest{{ $guest->id }}"
-                  aria-expanded="false"
-                  aria-controls="collapseGuest{{ $guest->id }}">
-                  <i class="bi bi-eye"></i> Detail ({{ $guest->guestCart?->items->count() ?? 0 }})
-                </button>
-              </td>
-            </tr>
-
-            <!-- DETAIL TAMU -->
-            <tr class="collapse bg-light" id="collapseGuest{{ $guest->id }}">
-              <td colspan="4">
-                <div class="p-3">
-                  <h6 class="fw-bold mb-3">Detail Barang Keluar</h6>
-                  @if($guest->guestCart && $guest->guestCart->items->count() > 0)
-                    <table class="table table-sm table-bordered mb-0">
-                      <thead class="table-light">
-                        <tr class="text-center">
-                          <th style="width:50px;">No</th>
-                          <th>Nama Barang</th>
-                          <th>Kode</th>
-                          <th style="width:80px;">Jumlah</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @foreach($guest->guestCart->items as $j => $item)
-                          <tr>
-                            <td class="text-center">{{ $j+1 }}</td>
-                            <td>{{ $item->name }}</td>
-                            <td>{{ $item->code }}</td>
-                            <td class="text-center">{{ $item->pivot->quantity }}</td>
-                          </tr>
-                        @endforeach
-                      </tbody>
-                    </table>
-                  @else
-                    <div class="text-center text-muted">Tidak ada item untuk tamu ini.</div>
-                  @endif
-                </div>
-              </td>
-            </tr>
-          @empty
-            <tr><td colspan="4" class="text-center text-muted py-3">
-              <i class="bi bi-info-circle me-1"></i> Tidak ada data barang keluar tamu.
-            </td></tr>
-          @endforelse
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-
-</div>
 
 @endsection
 

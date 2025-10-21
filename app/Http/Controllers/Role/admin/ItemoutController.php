@@ -22,36 +22,38 @@ class ItemoutController extends Controller
      * Tampilkan daftar item keluar (pegawai & tamu)
      */
     public function index()
-    {
-        // 🔹 1. Barang keluar dari PEGAWAI (Cart)
-        $approvedItems = Cart::with(['cartItems' => function($q) {
-                $q->where('status', 'approved');
-            }, 'cartItems.item', 'user'])
-            ->whereIn('status', ['approved', 'approved_partially'])
-            ->latest()
-            ->get()
-            ->filter(function ($cart) {
-                // hanya tampilkan yang BELUM semua discan
-                return !$cart->cartItems->every(fn($i) => $i->scanned_at);
-            });
+{
+    // 🔹 1. Barang keluar dari PEGAWAI (Cart)
+    $approvedItems = Cart::with(['cartItems.item', 'user'])
+        ->whereIn('status', ['approved', 'approved_partially'])
+        ->whereHas('cartItems', function ($q) {
+            // hanya ambil cart yang punya item BELUM discan
+            $q->whereNull('scanned_at');
+        })
+        ->latest()
+        ->get();
 
-        // 🔹 2. Barang keluar dari TAMU
-        $guestItemOuts = Guest::with(['guestCart.guestCartItems.item'])
-            ->whereHas('guestCart.guestCartItems')
-            ->orderByDesc('created_at')
-            ->paginate(10);
+    // 🔹 2. Barang keluar dari TAMU (tidak diubah)
+    $guestItemOuts = Guest::with(['guestCart.guestCartItems.item'])
+        ->whereHas('guestCart.guestCartItems')
+        ->orderByDesc('created_at')
+        ->paginate(10);
 
-       return view('role.admin.itemout', [
-            'approvedItems' => new LengthAwarePaginator(
-                $approvedItems->forPage(request('page', 1), 10), // ambil 10 data per halaman
-                $approvedItems->count(),                        // total item
-                10,                                             // per halaman
-                request('page', 1),                             // halaman saat ini
-                ['path' => request()->url()]                    // agar link pagination tetap benar
-            ),
-            'guestItemOuts' => $guestItemOuts,
-        ]);
-    }
+    // 🔹 3. Pagination manual untuk hasil pegawai (karena bukan paginate langsung dari query)
+    $approvedItemsPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
+        $approvedItems->forPage(request('page', 1), 10),
+        $approvedItems->count(),
+        10,
+        request('page', 1),
+        ['path' => request()->url()]
+    );
+
+    return view('role.admin.itemout', [
+        'approvedItems' => $approvedItemsPaginated,
+        'guestItemOuts' => $guestItemOuts,
+    ]);
+}
+
 
     /**
      * Scan item berdasarkan barcode.
@@ -73,7 +75,7 @@ class ItemoutController extends Controller
                 'success' => false,
                 'status'  => 'invalid',
                 'message' => '❌ Kode / QR tidak sesuai dengan barang dalam permintaan ini.',
-            ], 422);
+            ], 200);
         }
 
         if ($cartItem->scanned_at) {
@@ -81,7 +83,7 @@ class ItemoutController extends Controller
                 'success' => false,
                 'status'  => 'duplicate',
                 'message' => '⚠️ Barang ini sudah pernah dipindai.',
-            ], 409);
+            ], 200);
         }
 
         // Tandai item sudah discan

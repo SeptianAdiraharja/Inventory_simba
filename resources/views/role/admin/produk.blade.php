@@ -165,89 +165,144 @@
 
   @endsection
 
-  @push('scripts')
-  <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    // === Fokus input barcode otomatis ===
-    @foreach ($items as $item)
-    const input{{ $item->id }} = document.getElementById("barcode-{{ $item->id }}");
-    $('#scanModal-{{ $item->id }}').on('shown.bs.modal', function () {
-      input{{ $item->id }}.focus();
-    });
-    input{{ $item->id }}.addEventListener("keypress", function(e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        document.getElementById("form-{{ $item->id }}").submit();
-      }
-    });
-    @endforeach
-
-    // === Modal Cart ===
-    const openCartBtn = document.getElementById("openCartModal");
-    const cartTableBody = document.getElementById("cartTableBody");
-    const releaseForm = document.getElementById("releaseForm");
-    const cartModalEl = document.getElementById("cartModal");
-    const cartModal = new bootstrap.Modal(cartModalEl);
-
-    if(openCartBtn){
-      openCartBtn.addEventListener("click", function(){
-        const guestId = this.dataset.guestId;
-        if(!guestId) return;
-
-        fetch(`/admin/produk/guest/${guestId}/cart`)
-          .then(res => res.json())
-          .then(data => {
-            cartTableBody.innerHTML = "";
-            if(data.cartItems.length > 0){
-              data.cartItems.forEach(item => {
-                cartTableBody.innerHTML += `
-                  <tr>
-                    <td>${item.name}</td>
-                    <td>${item.code ?? '-'}</td>
-                    <td class="text-center">${item.quantity}</td>
-                  </tr>
-                `;
-              });
-            } else {
-              cartTableBody.innerHTML = `
-                <tr><td colspan="3" class="text-center text-muted py-3">
-                  <i class='ri-information-line me-1'></i>Keranjang kosong
-                </td></tr>`;
-            }
-            releaseForm.action = `/admin/produk/guest/${guestId}/release`;
-            cartModal.show();
-          });
-      });
+@push('scripts')
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // === Fokus input barcode otomatis + enter trigger ===
+  @foreach ($items as $item)
+  const input{{ $item->id }} = document.getElementById("barcode-{{ $item->id }}");
+  $('#scanModal-{{ $item->id }}').on('shown.bs.modal', function () {
+    input{{ $item->id }}.focus();
+  });
+  // Tekan Enter langsung submit (pakai AJAX)
+  input{{ $item->id }}.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      document.getElementById("form-{{ $item->id }}").dispatchEvent(new Event('submit'));
     }
+  });
+  @endforeach
 
-    // === Keluarkan Semua ===
-    releaseForm.addEventListener("submit", function(e){
+  // === AJAX submit untuk form scan ===
+  document.querySelectorAll("form[id^='form-']").forEach(form => {
+    form.addEventListener("submit", async function(e) {
       e.preventDefault();
       const url = this.action;
+      const formData = new FormData(this);
+      const modalEl = this.closest(".modal");
+      const modal = bootstrap.Modal.getInstance(modalEl);
 
-      fetch(url, {
-        method: "POST",
-        headers: {
-          "X-CSRF-TOKEN": this.querySelector('input[name="_token"]').value
+      // Bersihkan alert lama
+      this.querySelectorAll(".alert").forEach(a => a.remove());
+
+      // Tombol loading
+      const btn = this.querySelector("button[type='submit']");
+      btn.disabled = true;
+      btn.innerHTML = "<i class='ri-loader-4-line spin me-1'></i> Menyimpan...";
+
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+          body: formData,
+        });
+
+        const data = await res.json();
+
+        btn.disabled = false;
+        btn.innerHTML = "<i class='ri-check-line me-1'></i> Simpan";
+
+        // Tampilkan notifikasi hasil (success/error)
+        const alertType = data.status === "success" ? "success" : "danger";
+        const alert = document.createElement("div");
+        alert.className = `alert alert-${alertType} mt-2 mb-0`;
+        alert.innerHTML = data.message;
+        this.querySelector(".modal-body").appendChild(alert);
+
+        if (data.status === "success") {
+          // Auto close modal dan hapus alert setelah 1.2 detik
+          setTimeout(() => {
+            alert.remove();
+            modal.hide();
+          }, 1200);
         }
-      })
-      .then(res => {
-        if (!res.ok) throw new Error("Gagal memproses permintaan");
-        return res.text();
-      })
-      .then(() => {
-        cartTableBody.innerHTML = `
-          <tr><td colspan="3" class="text-center text-muted py-3">
-            <i class='ri-check-line text-success me-1'></i> Semua barang berhasil dikeluarkan.
-          </td></tr>`;
-        const badge = openCartBtn.querySelector(".badge");
-        if (badge) badge.remove();
-        setTimeout(() => cartModal.hide(), 1200);
-      })
-      .catch(err => {
-        alert("Terjadi kesalahan: " + err.message);
-      });
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = "<i class='ri-check-line me-1'></i> Simpan";
+
+        const alert = document.createElement("div");
+        alert.className = "alert alert-danger mt-2 mb-0";
+        alert.textContent = "⚠️ Terjadi kesalahan koneksi: " + err.message;
+        this.querySelector(".modal-body").appendChild(alert);
+      }
     });
   });
-  </script>
-  @endpush
+
+  // === Modal Cart ===
+  const openCartBtn = document.getElementById("openCartModal");
+  const cartTableBody = document.getElementById("cartTableBody");
+  const releaseForm = document.getElementById("releaseForm");
+  const cartModalEl = document.getElementById("cartModal");
+  const cartModal = new bootstrap.Modal(cartModalEl);
+
+  if (openCartBtn) {
+    openCartBtn.addEventListener("click", function() {
+      const guestId = this.dataset.guestId;
+      if (!guestId) return;
+
+      fetch(`/admin/produk/guest/${guestId}/cart`)
+        .then(res => res.json())
+        .then(data => {
+          cartTableBody.innerHTML = "";
+          if (data.cartItems.length > 0) {
+            data.cartItems.forEach(item => {
+              cartTableBody.innerHTML += `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${item.code ?? '-'}</td>
+                  <td class="text-center">${item.quantity}</td>
+                </tr>`;
+            });
+          } else {
+            cartTableBody.innerHTML = `
+              <tr><td colspan="3" class="text-center text-muted py-3">
+                <i class='ri-information-line me-1'></i>Keranjang kosong
+              </td></tr>`;
+          }
+          releaseForm.action = `/admin/produk/guest/${guestId}/release`;
+          cartModal.show();
+        });
+    });
+  }
+
+  // === Keluarkan Semua (Checkout) ===
+  releaseForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    const url = this.action;
+
+    fetch(url, {
+      method: "POST",
+      headers: { "X-CSRF-TOKEN": this.querySelector('input[name="_token"]').value }
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("Gagal memproses permintaan");
+      return res.text();
+    })
+    .then(() => {
+      cartTableBody.innerHTML = `
+        <tr><td colspan="3" class="text-center text-muted py-3">
+          <i class='ri-check-line text-success me-1'></i> Semua barang berhasil dikeluarkan.
+        </td></tr>`;
+      const badge = openCartBtn.querySelector(".badge");
+      if (badge) badge.remove();
+      setTimeout(() => cartModal.hide(), 1200);
+    })
+    .catch(err => {
+      alert("Terjadi kesalahan: " + err.message);
+    });
+  });
+});
+</script>
+@endpush
+
+

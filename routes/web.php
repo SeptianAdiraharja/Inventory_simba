@@ -135,13 +135,11 @@ Route::middleware(['auth', 'role:admin'])
         */
         Route::controller(RequestController::class)->group(function () {
             Route::get('/request', 'index')->name('request');
-
-            // Update status item
+            Route::get('/carts/{id}', 'show')->name('carts.show');
+            Route::patch('/carts/{id}', 'update')->name('carts.update'); // ✅ penting
             Route::patch('/carts/item/{id}/approve', 'approveItem')->name('carts.item.approve');
             Route::patch('/carts/item/{id}/reject', 'rejectItem')->name('carts.item.reject');
-
-            // Resource route (show digunakan untuk detail tabel)
-            Route::resource('carts', RequestController::class);
+            Route::post('/carts/{id}/bulk-update', 'bulkUpdate')->name('carts.bulkUpdate');
         });
 
 
@@ -211,10 +209,12 @@ Route::middleware(['auth', 'role:admin'])
         |--------------------------------------------------------------------------
         */
         Route::controller(TransaksiItemOutController::class)->group(function () {
-            Route::get('/Transaksi', 'index')->name('transaksi.out');
-            Route::post('/admin/refund', 'refundBarang')->name('pegawai.refund');
-            Route::post('/admin/edit-item', 'updateItem')->name('pegawai.updateItem');
+            Route::get('/transaksi', 'index')->name('transaksi.out');
+            Route::post('/refund', 'refundBarang')->name('pegawai.refund');
+            Route::post('/edit-item', 'updateItem')->name('pegawai.updateItem');
         });
+
+
 
         /*
         |--------------------------------------------------------------------------

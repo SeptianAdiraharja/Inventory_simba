@@ -9,7 +9,9 @@ use App\Models\Cart;
 use App\Models\Guest;
 use App\Models\CartItem;
 use App\Models\Item;
+use App\Models\Item_out;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
 class TransaksiItemOutController extends Controller
@@ -62,29 +64,82 @@ class TransaksiItemOutController extends Controller
     {
         $request->validate([
             'item_id' => 'required|exists:items,id',
+            'code' => 'required|string',
             'qty' => 'required|integer|min:1',
-            'barcode' => 'required|string'
         ]);
 
+        DB::beginTransaction();
         try {
-            DB::transaction(function () use ($request) {
-                $item = Item::findOrFail($request->item_id);
+            // ✅ Pastikan code cocok dengan item yang dimaksud
+            $scannedItem = Item::where('id', $request->item_id)
+                ->where('code', $request->code)
+                ->first();
 
-                // Kembalikan stok barang
-                $item->increment('stock', $request->qty);
+            if (!$scannedItem) {
+                return back()->with('error', 'Code tidak cocok dengan barang yang dipilih.');
+            }
 
-                // Catat ke log atau tabel refund jika kamu punya
-                DB::table('refund_logs')->insert([
-                    'item_id' => $item->id,
-                    'barcode' => $request->barcode,
-                    'qty' => $request->qty,
-                    'processed_by' => auth::id(),
-                    'created_at' => now(),
-                ]);
-            });
+            // ✅ Ambil semua item_out yang berhubungan dengan item_id
+            $itemOut = Item_out::where('item_id', $request->item_id)
+                ->orderByDesc('created_at')
+                ->first();
 
-            return back()->with('success', 'Barang berhasil direfund.');
-        } catch (\Throwable $e) {
+            if (!$itemOut) {
+                return back()->with('error', 'Data transaksi barang keluar tidak ditemukan.');
+            }
+
+            $cartId = $itemOut->cart_id;
+
+            if ($request->qty > $itemOut->quantity) {
+                return back()->with('error', 'Jumlah refund melebihi jumlah barang keluar.');
+            }
+
+            // ✅ Kurangi quantity di item_out
+            $itemOut->quantity -= $request->qty;
+            $itemOut->save();
+
+            // ✅ Update cart_item
+            $cartItem = CartItem::where('item_id', $request->item_id)
+                ->where('cart_id', $cartId)
+                ->first();
+
+            if (!$cartItem) {
+                return back()->with('error', 'Data cart item tidak ditemukan.');
+            }
+
+            if ($request->qty > $cartItem->quantity) {
+                return back()->with('error', 'Jumlah refund melebihi jumlah di cart.');
+            }
+
+            $cartItem->quantity -= $request->qty;
+
+            // Jika sudah 0, ubah status menjadi refunded
+            if ($cartItem->quantity <= 0) {
+                $cartItem->quantity = 0;
+                $cartItem->status = 'refunded';
+            }
+
+            $cartItem->save();
+
+            // ✅ Tambahkan kembali stok item
+            $scannedItem->increment('stock', $request->qty);
+
+            // ✅ Jika semua item di cart sudah refunded, ubah status cart
+            $remainingItems = CartItem::where('cart_id', $cartId)
+                ->where(function ($q) {
+                    $q->whereNull('status')->orWhere('status', '!=', 'refunded');
+                })
+                ->count();
+
+            if ($remainingItems == 0) {
+                Cart::where('id', $cartId)->update(['status' => 'refunded']);
+            }
+
+            DB::commit();
+            return back()->with('success', 'Refund berhasil. Stok barang dikembalikan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Refund error: ' . $e->getMessage());
             return back()->with('error', 'Refund gagal: ' . $e->getMessage());
         }
     }
@@ -97,29 +152,52 @@ class TransaksiItemOutController extends Controller
         $request->validate([
             'cart_item_id' => 'required|exists:cart_items,id',
             'item_id' => 'required|exists:items,id',
-            'qty' => 'required|integer|min:1'
+            'qty' => 'required|integer|min:1',
+            'code' => 'required|string'
         ]);
 
         try {
             DB::transaction(function () use ($request) {
                 $cartItem = CartItem::findOrFail($request->cart_item_id);
 
-                // Jika barang diganti, stok lama dikembalikan dulu
+                // ✅ Cari barang berdasarkan code
+                $scannedItem = Item::where('code', $request->code)->first();
+
+                if (!$scannedItem) {
+                    throw new \Exception("code tidak ditemukan di database.");
+                }
+
+                // ✅ Pastikan item yang dipilih sama dengan hasil scan
+                if ($scannedItem->id != $request->item_id) {
+                    throw new \Exception("code tidak cocok dengan barang yang dipilih.");
+                }
+
+                // ✅ Jika barang diganti
                 if ($cartItem->item_id != $request->item_id) {
                     $oldItem = Item::find($cartItem->item_id);
                     $oldItem->increment('stock', $cartItem->quantity);
 
-                    // Kurangi stok barang baru
                     $newItem = Item::find($request->item_id);
-                    $newItem->decrement('stock', $request->qty);
+                    if ($newItem->stock < $request->qty) {
+                        throw new \Exception("Stok barang baru tidak mencukupi.");
+                    }
 
+                    $newItem->decrement('stock', $request->qty);
                     $cartItem->item_id = $request->item_id;
                 } else {
-                    // Jika barang sama, update stok berdasarkan selisih
+                    // ✅ Barang sama → hitung selisih
                     $diff = $request->qty - $cartItem->quantity;
-                    $cartItem->item->decrement('stock', $diff);
+                    if ($diff > 0) {
+                        if ($cartItem->item->stock < $diff) {
+                            throw new \Exception("Stok tidak mencukupi untuk menambah jumlah.");
+                        }
+                        $cartItem->item->decrement('stock', $diff);
+                    } elseif ($diff < 0) {
+                        $cartItem->item->increment('stock', abs($diff));
+                    }
                 }
 
+                // ✅ Simpan perubahan
                 $cartItem->quantity = $request->qty;
                 $cartItem->save();
             });
