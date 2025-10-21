@@ -8,7 +8,6 @@
         <h4 class="fw-bold text-primary mb-0">
             <i class="bi bi-box-seam"></i> Export Data Barang
         </h4>
-        <small class="text-muted">Kelola laporan barang masuk & keluar</small>
     </div>
 
     {{-- 🔹 Filter Form --}}
@@ -38,8 +37,9 @@
                     <div class="col-md-3">
                         <label for="type" class="form-label fw-semibold">Jenis Data</label>
                         <select name="type" id="type" class="form-select shadow-sm">
-                            <option value="masuk" {{ request('type')=='masuk' ? 'selected' : '' }}>Barang Masuk</option>
+                            <option value="masuk"  {{ request('type')=='masuk'  ? 'selected' : '' }}>Barang Masuk</option>
                             <option value="keluar" {{ request('type')=='keluar' ? 'selected' : '' }}>Barang Keluar</option>
+                            <option value="reject" {{ request('type')=='reject' ? 'selected' : '' }}>Barang Reject</option>
                         </select>
                     </div>
 
@@ -59,7 +59,15 @@
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h6 class="mb-0 fw-semibold">
                     <i class="bi bi-table"></i> Data 
-                    {{ request('type') == 'masuk' ? 'Barang Masuk' : (request('type') == 'keluar' ? 'Barang Keluar' : 'Barang Masuk & Keluar') }}
+                    @if(request('type') == 'masuk')
+                        Barang Masuk
+                    @elseif(request('type') == 'keluar')
+                        Barang Keluar
+                    @elseif(request('type') == 'reject')
+                        Barang Reject
+                    @else
+                        Barang Masuk & Keluar
+                    @endif
                     <span class="text-muted">({{ count($items) }} data)</span>
                 </h6>
                 <div class="btn-group">
@@ -81,12 +89,10 @@
                     </a>
                 </div>
             </div>
-
-            {{-- 🔹 Tabel Data --}}
-            <div class="card-body table-responsive bg-white">
-                <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-primary text-center">
-                        <tr>
+            <div class="card-body table-responsive">
+                <table class="table table-bordered table-hover table-sm align-middle">
+                    <thead class="table-secondary">
+                        <tr class="text-center">
                             <th>No</th>
                             <th>Nama Barang</th>
                             <th>Jumlah</th>
@@ -95,72 +101,31 @@
                             <th>Tanggal</th>
                             @if(request('type') == 'masuk')
                                 <th>Supplier</th>
-                                <th>Tanggal Masuk</th>
-                            @elseif(request('type') == 'keluar' || request('type') == 'all')
-                                <th>Role</th>
+                            @else
                                 <th>Dikeluarkan Oleh</th>
-                                <th>Penerima</th>
-                                <th>Tanggal Keluar</th>
                             @endif
-
-                            <th>Jumlah</th>
-                            <th>Satuan</th>
-                            <th class="text-end">Harga Satuan</th>
-                            <th class="text-end">Total Harga</th>
                         </tr>
                     </thead>
 
                     <tbody>
                         @foreach($items as $i => $row)
-                            @php
-                                $role = $row->role ?? ($row->guestCart ? 'Guest' : 'Pegawai');
-                                $dikeluarkanOleh = $row->approver->name ?? 'Petugas Gudang';
-                                $penerima = '-';
-                                if (!empty($row->cart?->user?->name)) {
-                                    $penerima = $row->cart->user->name;
-                                } elseif (!empty($row->guestCart?->guest?->name)) {
-                                    $penerima = $row->guestCart->guest->name;
-                                } elseif (!empty($row->user?->name)) {
-                                    $penerima = $row->user->name;
-                                } elseif (!empty($row->guest?->name)) {
-                                    $penerima = $row->guest->name;
-                                }
-                            @endphp
-                            <tr>
-                                <td class="text-center">{{ $i + 1 }}</td>
-                                <td>{{ $row->item->name ?? '-' }}</td>
-
-                                @if(request('type') == 'masuk')
-                                    <td>{{ $row->supplier->name ?? '-' }}</td>
-                                    <td>{{ optional($row->created_at)->format('d-m-Y H:i') }}</td>
-
-                                @elseif(request('type') == 'keluar' || request('type') == 'all')
-                                    <td class="text-center">{{ $role }}</td>
-                                    <td>{{ $dikeluarkanOleh }}</td>
-                                    <td>{{ $penerima }}</td>
-                                    <td>{{ optional($row->created_at)->format('d-m-Y H:i') }}</td>
-                                @endif
-
-                                <td class="text-center">{{ $row->quantity ?? 0 }}</td>
-                                <td class="text-center">{{ $row->item->unit->name ?? '-' }}</td>
-                                <td class="text-end">Rp {{ number_format($row->item->price ?? 0, 0, ',', '.') }}</td>
-                                <td class="text-end fw-semibold">Rp {{ number_format($row->total_price ?? 0, 0, ',', '.') }}</td>
-                            </tr>
+                        <tr>
+                            <td class="text-center">{{ $i+1 }}</td>
+                            <td>{{ $row->item->name }}</td>
+                            <td class="text-center">{{ $row->quantity }}</td>
+                            <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
+                            <td>Rp {{ number_format($row->total_price,0,',','.') }}</td>
+                            <td>{{ $row->created_at->format('d-m-Y H:i') }}</td>
+                            @if(request('type') == 'masuk')
+                                <td>{{ $row->supplier->name ?? '-' }}</td>
+                            @else
+                                <td>{{ $row->user->name ?? '-' }}</td>
+                            @endif
+                        </tr>
                         @endforeach
                     </tbody>
-
-                    {{-- 🔹 Total Keseluruhan --}}
-                    <tfoot class="table-light fw-semibold">
-                        <tr>
-                            <td colspan="{{ request('type')=='masuk' ? 6 : 8 }}" class="text-end">TOTAL</td>
-                            <td class="text-end">
-                                Rp {{ number_format($items->sum('total_price') ?? 0, 0, ',', '.') }}
-                            </td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
-        </div>
     @elseif(request()->has('start_date'))
         <div class="alert alert-warning">
             <i class="bi bi-exclamation-triangle"></i> Tidak ada data ditemukan untuk periode ini.
