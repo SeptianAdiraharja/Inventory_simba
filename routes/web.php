@@ -88,12 +88,6 @@ Route::middleware(['auth', 'role:super_admin'])
             ->name('exports.barang_keluar.pdf');
         Route::get('/export/download', [ExportController::class, 'download'])
             ->name('export.download');
-        
-        // Export Barang Reject
-        Route::get('/export/barang-reject-improved', [ExportController::class, 'exportBarangRejectExcelImproved'])
-            ->name('export.barangRejectImproved');
-        Route::get('/export/barang-reject/pdf', [ExportController::class, 'exportBarangRejectPdf'])
-            ->name('exports.barang_reject.pdf');
 
         Route::delete('/export/clear', [ExportController::class, 'clearLogs'])->name('export.clear');
 });

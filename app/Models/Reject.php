@@ -13,7 +13,7 @@ class Reject extends Model
         'item_id',
         'name',
         'quantity',
-        'description',  
+        'description',
         'condition',
     ];
 

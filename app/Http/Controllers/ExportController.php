@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Item_in;
 use App\Models\Item_out;
-use App\Models\Reject;
 use App\Models\ExportLog;
 use App\Models\Guest_carts_item;
 use Illuminate\Http\Request;
@@ -14,7 +13,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\BarangMasukExport;
 use App\Exports\BarangKeluarExport;
-use App\Exports\BarangRejectExport;
 use App\Http\Controllers\Role\admin\BarangKeluarExportAdmin;
 
 class ExportController extends Controller
@@ -74,13 +72,52 @@ class ExportController extends Controller
 
             // 🔹 Barang Keluar
             elseif ($type === 'keluar') {
-                $pegawaiItems = Item_out::with(['item.unit', 'cart.user'])
+            $pegawaiItems = Item_out::with(['item.unit', 'cart.user'])
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->get()
+                ->map(function ($row) {
+                    $row->role        = 'Pegawai';
+                    $row->dikeluarkan = 'Petugas Gudang';
+                    $row->penerima    = $row->cart->user->name ?? '-';
+                    $row->total_price = ($row->item->price ?? 0) * ($row->quantity ?? 0);
+                    return $row;
+                });
+
+            $guestItems = Guest_carts_item::with(['item.unit', 'guestCart.guest'])
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->get()
+                ->map(function ($row) {
+                    $row->role        = 'Guest';
+                    $row->dikeluarkan = 'Petugas Gudang';
+                    $row->penerima    = $row->guestCart->guest->name ?? '-';
+                    $row->total_price = ($row->item->price ?? 0) * ($row->quantity ?? 0);
+                    return $row;
+                });
+
+            $items = $pegawaiItems->concat($guestItems)->sortBy('created_at')->values();
+        }
+
+
+            // 🔹 Semua Data
+            elseif ($type === 'all') {
+                $barangMasuk = Item_in::with('item.unit', 'supplier')
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get()
+                    ->map(function ($row) {
+                        $row->role        = 'Supplier';
+                        $row->dikeluarkan = $row->supplier->name ?? '-';
+                        $row->penerima    = '-';
+                        $row->total_price = ($row->item->price ?? 0) * ($row->quantity ?? 0);
+                        return $row;
+                    });
+
+                $pegawaiItems = Item_out::with(['item.unit', 'approver'])
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->get()
                     ->map(function ($row) {
                         $row->role        = 'Pegawai';
-                        $row->dikeluarkan = 'Petugas Gudang';
-                        $row->penerima    = $row->cart->user->name ?? '-';
+                        $row->dikeluarkan = $row->approver->name ?? 'Petugas Gudang';
+                        $row->penerima    = $row->approver->name ?? '-';
                         $row->total_price = ($row->item->price ?? 0) * ($row->quantity ?? 0);
                         return $row;
                     });
@@ -96,21 +133,7 @@ class ExportController extends Controller
                         return $row;
                     });
 
-                $items = $pegawaiItems->concat($guestItems)->sortBy('created_at')->values();
-            }
-
-            // 🔹 Barang Reject
-            elseif ($type === 'reject') {
-                $items = Reject::with('item.unit')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get()
-                    ->map(function ($row) {
-                        $row->role        = 'Reject';
-                        $row->dikeluarkan = '-';
-                        $row->penerima    = '-';
-                        $row->total_price = ($row->item->price ?? 0) * ($row->quantity ?? 0);
-                        return $row;
-                    });
+                $items = $barangMasuk->concat($pegawaiItems)->concat($guestItems)->sortBy('created_at')->values();
             }
         }
 
@@ -148,20 +171,15 @@ class ExportController extends Controller
         ]);
 
         if ($format === 'excel') {
-            return match($type) {
-                'masuk'  => Excel::download(new BarangMasukExport($items, $totalJumlah, $grandTotal), "{$fileName}.xlsx"),
-                'keluar' => Excel::download(new BarangKeluarExport($items, $totalJumlah, $grandTotal), "{$fileName}.xlsx"),
-                'reject' => Excel::download(new BarangRejectExport($items, $totalJumlah, $grandTotal), "{$fileName}.xlsx"),
-            };
+            return $type === 'masuk'
+                ? Excel::download(new BarangMasukExport($items, $totalJumlah, $grandTotal), "{$fileName}.xlsx")
+                : Excel::download(new BarangKeluarExport($items, $totalJumlah, $grandTotal), "{$fileName}.xlsx");
         }
 
-        $pdfView = match($type) {
-            'masuk'  => 'role.super_admin.exports.barang_masuk_pdf',
-            'keluar' => 'role.super_admin.exports.barang_keluar_pdf',
-            'reject' => 'role.super_admin.exports.barang_reject_pdf',
-        };
+        $pdf = ($type === 'masuk')
+            ? Pdf::loadView('role.super_admin.exports.barang_masuk_pdf', compact('items','startDate','endDate','periodeText','totalJumlah','grandTotal'))
+            : Pdf::loadView('role.super_admin.exports.barang_keluar_pdf', compact('items','startDate','endDate','periodeText','totalJumlah','grandTotal'));
 
-        $pdf = Pdf::loadView($pdfView, compact('items','startDate','endDate','periodeText','totalJumlah','grandTotal'));
         return $pdf->setPaper('a4', 'landscape')->download("{$fileName}.pdf");
     }
 
