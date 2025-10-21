@@ -35,6 +35,7 @@ class ExportController extends Controller
     }
 
     /** 🔹 Filter berdasarkan rentang tanggal */
+
     private function filterByDateRange($query, $startDate, $endDate)
     {
         if ($startDate && $endDate) {
@@ -118,6 +119,7 @@ class ExportController extends Controller
         ));
     }
 
+
     /** 🔹 Download data */
     public function download(Request $request)
     {
@@ -125,7 +127,6 @@ class ExportController extends Controller
         $period    = $request->query('period', 'weekly');
         $type      = $request->query('type', 'masuk');
         $format    = $request->query('format', 'excel');
-
         $endDate = $this->calculateEndDate($startDate, $period);
         $periodeText = "{$startDate} s/d {$endDate}";
 
@@ -268,3 +269,4 @@ class ExportController extends Controller
         return $pdf->download($fileName);
     }
 }
+

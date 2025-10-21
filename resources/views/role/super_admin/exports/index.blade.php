@@ -89,70 +89,39 @@
                     </a>
                 </div>
             </div>
-            {{-- 🔹 Tabel Data --}}
-            <div class="card-body table-responsive bg-white">
-                <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-primary text-center">
-                        <tr>
+            <div class="card-body table-responsive">
+                <table class="table table-bordered table-hover table-sm align-middle">
+                    <thead class="table-secondary">
+                        <tr class="text-center">
                             <th>No</th>
                             <th>Nama Barang</th>
-
+                            <th>Jumlah</th>
+                            <th>Harga Satuan</th>
+                            <th>Total</th>
+                            <th>Tanggal</th>
                             @if(request('type') == 'masuk')
                                 <th>Supplier</th>
-                                <th>Tanggal Masuk</th>
-                            @elseif(request('type') == 'keluar')
-                                <th>Role</th>
+                            @else
                                 <th>Dikeluarkan Oleh</th>
-                                <th>Penerima</th>
-                                <th>Tanggal Keluar</th>
-                            @elseif(request('type') == 'reject')
-                                <th>Status</th>
-                                <th>Tanggal Reject</th>
-                                <th>Jumlah</th>
-                                <th class="text-end">Harga Satuan (Rp)</th>
-                                <th class="text-end">Total Harga (Rp)</th>
                             @endif
                         </tr>
                     </thead>
 
                     <tbody>
                         @foreach($items as $i => $row)
-                            @php
-                                $jumlah   = $row->quantity ?? 0;
-                                $harga    = $row->item->price ?? 0;
-                                $subtotal = $row->total_price ?? ($jumlah * $harga);
-                                $role     = $row->role ?? 'Reject';
-                            @endphp
-
-                            <tr>
-                                <td class="text-center">{{ $i + 1 }}</td>
-                                <td>{{ $row->item->name ?? '-' }}</td>
-
-                                @if(request('type') == 'masuk')
-                                    <td>{{ $row->supplier->name ?? '-' }}</td>
-                                    <td>{{ optional($row->created_at)->format('d-m-Y H:i') }}</td>
-
-                                @elseif(request('type') == 'keluar')
-                                    <td class="text-center">{{ $row->role ?? '-' }}</td>
-                                    <td>{{ $row->approver->name ?? '-' }}</td>
-                                    <td>{{ $row->penerima ?? '-' }}</td>
-                                    <td>{{ optional($row->created_at)->format('d-m-Y H:i') }}</td>
-
-                                @elseif(request('type') == 'reject')
-                                    <td class="text-center">{{ $role }}</td>
-                                    <td>{{ optional($row->created_at)->format('d-m-Y H:i') }}</td>
-                                    <td class="text-center">{{ number_format($jumlah, 0, ',', '.') }}</td>
-                                    <td class="text-end">Rp {{ number_format($harga, 0, ',', '.') }}</td>
-                                    <td class="text-end fw-semibold">Rp {{ number_format($subtotal, 0, ',', '.') }}</td>
-                                @endif
-
-                                @if(request('type') != 'reject')
-                                    <td class="text-center">{{ $row->quantity ?? 0 }}</td>
-                                    <td class="text-center">{{ $row->item->unit->name ?? '-' }}</td>
-                                    <td class="text-end">Rp {{ number_format($row->item->price ?? 0, 0, ',', '.') }}</td>
-                                    <td class="text-end fw-semibold">Rp {{ number_format($row->total_price ?? 0, 0, ',', '.') }}</td>
-                                @endif
-                            </tr>
+                        <tr>
+                            <td class="text-center">{{ $i+1 }}</td>
+                            <td>{{ $row->item->name }}</td>
+                            <td class="text-center">{{ $row->quantity }}</td>
+                            <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
+                            <td>Rp {{ number_format($row->total_price,0,',','.') }}</td>
+                            <td>{{ $row->created_at->format('d-m-Y H:i') }}</td>
+                            @if(request('type') == 'masuk')
+                                <td>{{ $row->supplier->name ?? '-' }}</td>
+                            @else
+                                <td>{{ $row->user->name ?? '-' }}</td>
+                            @endif
+                        </tr>
                         @endforeach
                     </tbody>
                 </table>
