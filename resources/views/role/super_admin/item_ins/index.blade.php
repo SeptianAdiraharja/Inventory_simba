@@ -27,16 +27,25 @@
                     value="{{ request('end_date') }}">
             </div>
 
+            {{-- 🔽 Urutkan Stok --}}
+            <div class="col-md-3 col-sm-6">
+                <select name="sort_stock" id="sortStock" class="form-select form-select-sm">
+                    <option value="">Urutkan Stok</option>
+                    <option value="desc" {{ request('sort_stock') == 'desc' ? 'selected' : '' }}>Paling Banyak</option>
+                    <option value="asc" {{ request('sort_stock') == 'asc' ? 'selected' : '' }}>Paling Sedikit</option>
+                </select>
+            </div>
+
             {{--  Search --}}
-            <div class="col-md-4 col-sm-8">
+            <div class="col-md-2 col-sm-8">
                 <input type="text" name="search" id="autoSearchInput" class="form-control form-control-sm"
                     placeholder="Cari nama barang / supplier..."
                     value="{{ request('search') }}">
             </div>
 
             {{--  Tombol Reset di kanan --}}
-            <div class="col-md-2 col-sm-4 text-end">
-                @if(request('start_date') || request('end_date') || request('search'))
+            <div class="col-md-1 col-sm-4 text-end">
+                @if(request('start_date') || request('end_date') || request('sort_stock') || request('search'))
                     <a href="{{ route('super_admin.item_ins.index') }}" class="btn btn-sm btn-outline-secondary w-100">
                         <i class="ri-refresh-line me-1"></i> Reset
                     </a>
@@ -114,13 +123,13 @@
     </div>
 </div>
 
-{{-- 🔹 Script Auto Filter --}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('filterForm');
     const searchInput = document.getElementById('autoSearchInput');
     const startDate = document.getElementById('startDate');
     const endDate = document.getElementById('endDate');
+    const sortStock = document.getElementById('sortStock');
     let timer = null;
 
     function autoSubmit() {
@@ -137,6 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
     searchInput.addEventListener('input', autoSubmit);
     startDate.addEventListener('change', autoSubmit);
     endDate.addEventListener('change', autoSubmit);
+    sortStock.addEventListener('change', autoSubmit);
 });
 </script>
 @endsection

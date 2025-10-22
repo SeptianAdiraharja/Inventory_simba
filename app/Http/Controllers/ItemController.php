@@ -92,10 +92,17 @@ class ItemController extends Controller
         }
 
         $itemIns = $itemInQuery->get();
+
         $expiredCount = $itemIns->where('expired_at', '<', now())->sum('quantity');
         $nonExpiredCount = $itemIns->where('expired_at', '>=', now())->sum('quantity');
 
-        $suppliers = Supplier::all();
+        // 🔹 ambil supplier yang pernah masukin item ini
+        $suppliers = $item->itemIns()
+            ->with('supplier') // pastikan di model Item_in ada relasi ke Supplier
+            ->get()
+            ->pluck('supplier')
+            ->unique('id')
+            ->values();
 
         return view('role.super_admin.items.show', compact(
             'item',

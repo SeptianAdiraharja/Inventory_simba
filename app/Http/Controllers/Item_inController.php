@@ -30,6 +30,14 @@ class Item_inController extends Controller
         $perPage = $request->get('per_page', 10);
         $items_in = $query->latest()->paginate($perPage);
 
+        if ($sort = $request->sort_stock) {
+        $query->orderBy('quantity', $sort);
+        } else {
+            $query->latest(); // default urut terbaru
+        }
+
+        $items_in = $query->get();
+
         return view('role.super_admin.item_ins.index', compact('items_in'));
     }
 

@@ -138,9 +138,9 @@ class Item extends Model
         }
 
         $formattedNumber = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-        $uniqueCode = strtoupper(substr(uniqid(), -3));
+        $randomNumber = mt_rand(100, 999);
 
-        return "{$categoryCode}-{$formattedNumber}-{$uniqueCode}";
+        return "{$categoryCode}-{$formattedNumber}-{$randomNumber}";
     }
 
     // === Guest cart ===
