@@ -73,11 +73,10 @@
                                 <div class="d-flex gap-2 mt-2 mt-md-0">
                                     <button 
                                         type="button"
-                                        class="btn btn-outline-primary btn-sm btn-detail"
+                                        class="btn btn-sm btn-outline-primary btn-detail"
                                         data-id="{{ $cart->id }}">
-                                        <i class="ri-eye-line me-1"></i> Detail
+                                        <i class="bi bi-eye"></i> Detail
                                     </button>
-
 
                                     {{-- Tombol Dinamis --}}
                                     @if($cart->status == 'approved')

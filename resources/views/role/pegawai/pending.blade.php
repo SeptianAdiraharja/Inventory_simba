@@ -50,40 +50,72 @@
                                 </span>
                             </td>
                             <td>
-                                <button 
-                                    class="btn btn-sm btn-outline-primary d-flex align-items-center btn-detail"
-                                    data-id="{{ $cart->id }}">
-                                    <i class="ri-eye-line me-1"></i> Detail
+                                <button class="btn btn-sm btn-outline-primary"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#collapse{{ $cart->id }}"
+                                        aria-expanded="false"
+                                        aria-controls="collapse{{ $cart->id }}">
+                                <i class="bi bi-eye"></i> Detail
                                 </button>
-                                @if($cart->status === 'pending')
-                                    <form action="{{ route('pegawai.permintaan.cancel', $cart->id) }}" method="POST" class="cancel-form">
-                                        @csrf
-                                        <button type="submit" class="btn btn-outline-secondary btn-sm">
-                                            <i class="ri-close-line me-1"></i> Batal
-                                        </button>
-                                    </form>
-                                @endif
                             </td>
                         </tr>
+                        <tr class="collapse bg-light" id="collapse{{ $cart->id }}">
+                            <td colspan="5">
+                                <div class="p-3">
+                                    <div class="p-4 border-bottom bg-light">
+                                        @if($cart->status === 'pending')
+                                            <form action="{{ route('pegawai.permintaan.cancel', $cart->id) }}" method="POST" class="cancel-form">
+                                                @csrf
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                    <i class="ri-close-line me-1"></i> Batalkan Permintaan
+                                                </button>
+                                            </form>
+                                        @endif
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <p class="mb-1 text-muted small">Tanggal Permintaan</p>
+                                                <h6 class="mb-0">{{ $cart->created_at->format('d M Y, H:i') }} WIB</h6>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="mb-1 text-muted small">Jumlah Item</p>
+                                                <h6 class="mb-0">{{ $cart->cartItems->count() }} Produk</h6>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="table-light">
+                                        <tr class="text-center">
+                                            <th style="width:50px;">No</th>
+                                            <th style="width: 75px;">Gambar</th>
+                                            <th>Nama Produk</th>
+                                            <th style="width:200px;">Kategori</th>
+                                            <th style="width: 80px;">Jumlah</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        @foreach($cart->cartItems as $j => $item)
+                                            <tr>
+                                            <td class="text-center">{{ $j+1 }}</td>
+                                            <td class="text-center"><img src="{{ asset('storage/' . $item->item->image) }}"
+                                                    class="rounded me-3 shadow-sm"
+                                                    style="width: 75px; height: 75px; object-fit: cover;">
+                                            </td>
+                                            <td>{{ $item->item->name }}</td>
+                                            <td class="text-center">{{ $item->item->category->name ?? '-' }}</td>
+                                            <td class="text-center">{{ $item->quantity }}</td>
+                                            </tr>
+                                        @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                            </tr>
                     @endforeach
                 </tbody>
             </table>
         @endif
     </div>
-</div>
-
-{{-- Modal Detail --}}
-<div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-body p-0" id="detailContent">
-        <div class="text-center py-5 text-muted" id="loadingState" style="display:none;">
-          <i class="ri-loader-4-line ri-spin fs-1 mb-2 d-block"></i>
-          <p>Memuat detail permintaan...</p>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <style>
@@ -96,10 +128,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const forms_cancel = document.querySelectorAll('.cancel-form');
-    const buttons = document.querySelectorAll('.btn-detail');
-    const modal = new bootstrap.Modal(document.getElementById('detailModal'));
-    const detailContent = document.getElementById('detailContent');
-    const loadingState = document.getElementById('loadingState');
     forms_cancel.forEach(form => {
         form.addEventListener('submit', function (e) {
             e.preventDefault(); // cegah submit langsung
@@ -119,30 +147,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     form.submit(); // submit form kalau user setuju
                 }
             });
-        });
-    });
-    buttons.forEach(btn => {
-        btn.addEventListener('click', function () {
-            const id = this.getAttribute('data-id');
-            loadingState.style.display = 'block';
-            detailContent.innerHTML = '';
-            modal.show();
-
-            fetch(`/pegawai/permintaan/${id}/detail`)
-                .then(res => res.text())
-                .then(html => {
-                    loadingState.style.display = 'none';
-                    detailContent.innerHTML = html;
-                })
-                .catch(() => {
-                    loadingState.style.display = 'none';
-                    detailContent.innerHTML = `
-                        <div class="text-center text-danger py-5">
-                            <i class="ri-error-warning-line fs-1 mb-2 d-block"></i>
-                            <p>Gagal memuat data.</p>
-                        </div>
-                    `;
-                });
         });
     });
 });
