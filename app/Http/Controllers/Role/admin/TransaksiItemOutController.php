@@ -7,6 +7,9 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use App\Models\Cart;
 use App\Models\Guest;
+use App\Models\Guest_carts_item;
+use App\Models\Guest_carts;
+use App\Models\Item_out_guest;
 use App\Models\CartItem;
 use App\Models\Item;
 use App\Models\Item_out;
@@ -203,6 +206,135 @@ class TransaksiItemOutController extends Controller
             });
 
             return back()->with('success', 'Data barang berhasil diperbarui.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal memperbarui: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 🔹 Refund Barang untuk Guest
+     */
+    public function refundBarangGuest(Request $request)
+    {
+        $request->validate([
+            'guest_cart_item_id' => 'required|exists:guest_cart_items,id',
+            'item_id' => 'required|exists:items,id',
+            'qty' => 'required|integer|min:1',
+            'code' => 'required|string',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // 🔹 Ambil data item cart
+            $guestCartItem = Guest_carts_item::with(['item', 'guestCart'])
+                ->findOrFail($request->guest_cart_item_id);
+
+            // 🔹 Validasi scan code
+            $item = Item::where('id', $request->item_id)
+                ->where('code', $request->code)
+                ->first();
+
+            if (!$item) {
+                throw new \Exception('Kode tidak cocok dengan barang yang dipilih.');
+            }
+
+            // 🔹 Validasi qty refund
+            if ($request->qty > $guestCartItem->quantity) {
+                throw new \Exception('Jumlah refund melebihi jumlah barang di cart.');
+            }
+
+            // 🔹 Kurangi jumlah barang di cart tamu
+            $guestCartItem->decrement('quantity', $request->qty);
+
+            // 🔹 Tambahkan stok barang
+            $item->increment('stock', $request->qty);
+
+            // 🔹 Catat transaksi refund ke log (opsional)
+            Item_out_guest::create([
+                'guest_id' => $guestCartItem->guestCart->guest_id,
+                'items' => json_encode([
+                    'item_id' => $item->id,
+                    'item_name' => $item->name,
+                    'code' => $item->code,
+                    'refund_qty' => $request->qty,
+                    'action' => 'refund',
+                    'timestamp' => now()->toDateTimeString(),
+                ]),
+            ]);
+
+
+            DB::commit();
+
+            return back()->with('success', 'Refund barang tamu berhasil. Stok dikembalikan.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Refund Guest Error: ' . $e->getMessage());
+            return back()->with('error', 'Refund gagal: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 🔹 Update Barang & Qty untuk Guest
+     */
+    public function updateItemGuest(Request $request)
+    {
+        $request->validate([
+            'guest_cart_item_id' => 'required|exists:guest_cart_items,id', // sesuai tabel relasi
+            'item_id'            => 'required|exists:items,id',
+            'qty'                => 'required|integer|min:1',
+            'code'               => 'required|string',
+        ]);
+
+        try {
+            DB::transaction(function () use ($request) {
+
+                // Ambil record cart item guest
+                $guestCartItem = Guest_carts_item::findOrFail($request->guest_cart_item_id);
+                $item = Item::findOrFail($guestCartItem->item_id);
+
+                // Validasi code hasil scan
+                $scannedItem = Item::where('code', $request->code)->first();
+                if (!$scannedItem || $scannedItem->id != $request->item_id) {
+                    throw new \Exception('Kode scan tidak cocok dengan barang yang dipilih.');
+                }
+
+                // Jika user memilih item baru, kembalikan stok lama
+                if ($guestCartItem->item_id != $request->item_id) {
+                    // kembalikan stok lama
+                    $item->increment('stock', $guestCartItem->quantity);
+
+                    // kurangi stok baru
+                    $newItem = Item::findOrFail($request->item_id);
+                    if ($newItem->stock < $request->qty) {
+                        throw new \Exception('Stok tidak mencukupi untuk barang yang dipilih.');
+                    }
+                    $newItem->decrement('stock', $request->qty);
+
+                    // update item id dan qty
+                    $guestCartItem->update([
+                        'item_id'  => $request->item_id,
+                        'quantity' => $request->qty,
+                    ]);
+                } else {
+                    // Barang sama → cek selisih qty
+                    $diff = $request->qty - $guestCartItem->quantity;
+
+                    if ($diff > 0) {
+                        // nambah barang → kurangi stok
+                        if ($item->stock < $diff) {
+                            throw new \Exception('Stok tidak mencukupi untuk menambah jumlah.');
+                        }
+                        $item->decrement('stock', $diff);
+                    } elseif ($diff < 0) {
+                        // mengurangi barang → kembalikan stok
+                        $item->increment('stock', abs($diff));
+                    }
+
+                    $guestCartItem->update(['quantity' => $request->qty]);
+                }
+            });
+
+            return back()->with('success', 'Barang tamu berhasil diperbarui.');
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal memperbarui: ' . $e->getMessage());
         }

@@ -58,7 +58,7 @@
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h6 class="mb-0 fw-semibold">
-                    <i class="bi bi-table"></i> Data 
+                    <i class="bi bi-table"></i> Data
                     @if(request('type') == 'masuk')
                         Barang Masuk
                     @elseif(request('type') == 'keluar')
@@ -100,11 +100,19 @@
                             @if(request('type') == 'masuk')
                                 <th>Supplier</th>
                                 <th>Tanggal Masuk</th>
+                                <th>Jumlah</th>
+                                <th>Satuan</th>
+                                <th>Harga Satuan</th>
+                                <th>Total Harga</th>
                             @elseif(request('type') == 'keluar')
                                 <th>Role</th>
                                 <th>Dikeluarkan Oleh</th>
                                 <th>Penerima</th>
                                 <th>Tanggal Keluar</th>
+                                <th>Jumlah</th>
+                                <th>Satuan</th>
+                                <th>satuan harga</th>
+                                <th>total harga</th>
                             @elseif(request('type') == 'reject')
                                 <th>Status</th>
                                 <th>Tanggal Reject</th>
@@ -134,9 +142,9 @@
 
                                 @elseif(request('type') == 'keluar')
                                     <td class="text-center">{{ $row->role ?? '-' }}</td>
-                                    <td>{{ $row->approver->name ?? '-' }}</td>
+                                    <td>{{ $row->dikeluarkan ?? '-' }}</td>
                                     <td>{{ $row->penerima ?? '-' }}</td>
-                                    <td>{{ optional($row->created_at)->format('d-m-Y H:i') }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($row->created_at)->format('d-m-Y H:i') }}</td>
 
                                 @elseif(request('type') == 'reject')
                                     <td class="text-center">{{ $role }}</td>

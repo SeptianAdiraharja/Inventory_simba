@@ -13,7 +13,7 @@
       </button>
     </div>
 
-    <div class="row g-4 justify-content-center text-center mt-3 px-3">
+    <div class="row g-4 justify-content-center text-center my-2 px-3">
       <x-dashboard-card
         title="Barang Keluar"
         :value="$totalBarangKeluar"
@@ -145,6 +145,8 @@
   </div>
 </div>
 <!-- /IKHTISAR LALU LINTAS -->
+
+
 
 @endsection
 

@@ -56,9 +56,9 @@
                                     </small>
                                 </div>
 
-                                <span class="badge 
-                                    {{ $cart->status == 'approved' ? 'bg-success text-white' : 
-                                       ($cart->status == 'pending' ? 'bg-warning text-dark' : 'bg-danger text-white') }} 
+                                <span class="badge
+                                    {{ $cart->status == 'approved' ? 'bg-success text-white' :
+                                       ($cart->status == 'pending' ? 'bg-warning text-dark' : 'bg-danger text-white') }}
                                     rounded-pill px-3 py-2 fw-semibold">
                                     {{ ucfirst($cart->status) }}
                                 </span>
@@ -71,20 +71,20 @@
                                 </div>
 
                                 <div class="d-flex gap-2 mt-2 mt-md-0">
-                                    <a href="{{ route('pegawai.permintaan.detail', $cart->id) }}" 
+                                    <a href="{{ route('pegawai.permintaan.detail', $cart->id) }}"
                                        class="btn btn-outline-primary btn-sm">
                                         <i class="ri-eye-line me-1"></i> Detail
                                     </a>
 
                                     {{-- Tombol Dinamis --}}
-                                    @if($cart->status != 'active' && $cart->status != 'rejected')
-                                        <form action="{{ route('pegawai.permintaan.refund', $cart->id) }}" method="POST" class="refund-form">
+                                    {{-- @if($cart->status != 'active' && $cart->status != 'rejected') --}}
+                                        {{-- <form action="{{ route('pegawai.permintaan.refund', $cart->id) }}" method="POST" class="refund-form">
                                             @csrf
                                             <button type="submit" class="btn btn-outline-danger btn-sm">
                                                 <i class="ri-refund-line me-1"></i> Refund
                                             </button>
-                                        </form>
-                                    @endif
+                                        </form> --}}
+                                    {{-- @endif --}}
                                 </div>
                             </div>
                         </div>

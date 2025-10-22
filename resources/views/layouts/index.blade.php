@@ -79,7 +79,6 @@
     <script src="{{ asset('js/dashboard.js') }}"></script>
     <script src="{{ asset('js/modal-pagination.js') }}"></script>
     <script src="{{ asset('js/dashboard-modal.js') }}"></script>
-    <script src="{{ asset('js/itemout.js') }}"></script>
 
     <style>
       #snackbar {
