@@ -125,14 +125,13 @@ class ItemController extends Controller
     {
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
-            'code'        => 'required|string|max:255|unique:items,code,' . $item->id,
             'category_id' => 'required|exists:categories,id',
             'unit_id'     => 'required|exists:units,id',
-            'supplier_id' => 'nullable|exists:suppliers,id',
             'price'       => 'required|numeric|min:0',
-            'image'       => 'nullable|image|mimes:jpg,jpeg,png|max:1024',
+            'image'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
+        // Simpan gambar baru jika diupload
         if ($request->hasFile('image')) {
             if ($item->image && Storage::disk('public')->exists($item->image)) {
                 Storage::disk('public')->delete($item->image);
@@ -140,9 +139,11 @@ class ItemController extends Controller
             $validated['image'] = $request->file('image')->store('images/items', 'public');
         }
 
+        // Update field yang diizinkan
         $item->update($validated);
 
-        return redirect()->route('super_admin.items.index')->with('success', 'Item berhasil diperbarui.');
+        return redirect()->route('super_admin.items.index')
+            ->with('success', 'Item berhasil diperbarui.');
     }
 
     public function destroy(Item $item)

@@ -91,6 +91,12 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('/export/download', [ExportController::class, 'download'])
             ->name('export.download');
 
+        // Export Barang Reject
+        Route::get('/export/barang-reject-improved', [ExportController::class, 'exportBarangRejectExcelImproved'])
+            ->name('export.barangRejectImproved');
+        Route::get('/export/barang-reject/pdf', [ExportController::class, 'exportBarangRejectPdf'])
+            ->name('exports.barang_reject.pdf');
+
         Route::delete('/export/clear', [ExportController::class, 'clearLogs'])->name('export.clear');
 });
 
@@ -210,8 +216,13 @@ Route::middleware(['auth', 'role:admin'])
         */
         Route::controller(TransaksiItemOutController::class)->group(function () {
             Route::get('/transaksi', 'index')->name('transaksi.out');
+
             Route::post('/refund', 'refundBarang')->name('pegawai.refund');
             Route::post('/edit-item', 'updateItem')->name('pegawai.updateItem');
+
+            Route::post('/guest/refund', 'refundBarangGuest')->name('guest.refund');
+            Route::post('/guest/edit-item', 'updateItemGuest')->name('guest.updateItem');
+
         });
 
 
@@ -230,8 +241,6 @@ Route::middleware(['auth', 'role:admin'])
 
 
 });
-
-
 
 /*
 |--------------------------------------------------------------------------

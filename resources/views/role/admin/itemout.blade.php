@@ -164,7 +164,7 @@
                             </tbody>
                           </table>
                         </div>
-                        <div class="modal-footer">
+                        <div class="modal-footer mt-2">
                           <div class="d-flex justify-content-between w-100">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                               <i class="bi bi-x-circle me-1"></i> Tutup
@@ -210,6 +210,5 @@
 </style>
 @endpush
 
-@push('scripts')
 <script src="{{ asset('js/itemout.js') }}"></script>
-@endpush
+

@@ -3,13 +3,6 @@
 <div class="card h-100">
   <div class="card-header d-flex justify-content-between align-items-center">
     <h5 class="card-title mb-0">{{ $title }}</h5>
-
-    <!-- Tombol View All -->
-    <a href="javascript:void(0)"
-       class="text-primary small fw-bold open-modal"
-       data-type="{{ $type }}">
-       View All
-    </a>
   </div>
 
   <div class="card-body">
