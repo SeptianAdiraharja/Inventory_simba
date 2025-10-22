@@ -89,6 +89,7 @@
                             <option value="masuk"  {{ request('type')=='masuk'  ? 'selected' : '' }}>Barang Masuk</option>
                             <option value="keluar" {{ request('type')=='keluar' ? 'selected' : '' }}>Barang Keluar</option>
                             <option value="reject" {{ request('type')=='reject' ? 'selected' : '' }}>Barang Reject</option>
+                            k
                         </select>
                     </div>
 
