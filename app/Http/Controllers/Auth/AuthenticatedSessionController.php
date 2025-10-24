@@ -28,7 +28,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Redirect sesuai role
+        if (Auth::user()->is_banned) {
+            Auth::logout();
+            return redirect()->route('login')->with('error', 'Akun kamu sedang diban. Hubungi admin.');
+        }
+
         $role = Auth::user()->role;
 
         switch ($role) {
@@ -42,7 +46,6 @@ class AuthenticatedSessionController extends Controller
                 return redirect('/');
         }
     }
-
 
     /**
      * Destroy an authenticated session.

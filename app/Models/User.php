@@ -14,6 +14,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'is_banned',
+        'banned_at',
     ];
 
     protected $hidden = [
@@ -45,4 +47,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(ExportLog::class, 'super_admin_id');
     }
+    public function kopSurats()
+    {
+        return $this->hasMany(KopSurat::class);
+    }
+
 }

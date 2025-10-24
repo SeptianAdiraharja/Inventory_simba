@@ -1,222 +1,190 @@
 @extends('layouts.index')
 @section('content')
-<div class="card shadow-sm border-0">
-    {{-- 🏷️ Judul Halaman --}}
-    <div class="card-header bg-white border-0 pb-0">
-        <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
-            <h4 class="fw-bold text-primary mb-0">
-                <i class="ri-archive-2-line me-2"></i> Daftar Barang
-            </h4>
-            <a href="{{ route('super_admin.items.create') }}" class="btn btn-sm btn-primary">
-                <i class="ri-add-line me-1"></i> Tambah Barang
-            </a>
-        </div>
+<div class="container-fluid py-3">
 
-        {{-- 🔍 Filter, Range, & Search --}}
-        <form id="filterForm" method="GET" action="{{ route('super_admin.items.index') }}" class="row g-2 align-items-center">
+  {{-- 🔹 Header Utama --}}
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <h3 class="fw-bold text-primary mb-0">
+      <i class="ri ri-group-line me-2"></i> Manajemen Akun
+    </h3>
 
-            {{--  Tanggal Mulai --}}
-            <div class="col-md-3 col-sm-6">
-                <input type="date" name="date_from" id="dateFrom" class="form-control form-control-sm"
-                    value="{{ request('date_from') }}">
-            </div>
+    {{-- Tombol Tambah Akun --}}
+    <a href="{{ route('super_admin.users.create') }}" class="btn btn-primary shadow-sm">
+      <i class="ri ri-add-line me-1"></i> Tambah Akun
+    </a>
+  </div>
 
-            {{--  Tanggal Selesai --}}
-            <div class="col-md-3 col-sm-6">
-                <input type="date" name="date_to" id="dateTo" class="form-control form-control-sm"
-                    value="{{ request('date_to') }}">
-            </div>
-
-            {{--  Urutkan stok --}}
-            <div class="col-md-3 col-sm-6">
-                <select name="sort_stock" id="sortStock" class="form-select form-select-sm">
-                    <option value="">Urutkan Stok</option>
-                    <option value="desc" {{ request('sort_stock') == 'desc' ? 'selected' : '' }}>Paling Banyak</option>
-                    <option value="asc" {{ request('sort_stock') == 'asc' ? 'selected' : '' }}>Paling Sedikit</option>
-                </select>
-            </div>
-
-            {{--  Pencarian --}}
-            <div class="col-md-2 col-sm-6">
-                <input type="text" name="search" id="autoSearchInput" class="form-control form-control-sm"
-                    placeholder="Cari nama barang / kategori..."
-                    value="{{ request('search') }}">
-            </div>
-
-            {{--  Tombol Reset di kanan --}}
-            <div class="col-md-1 text-md-end">
-                @if(request('date_from') || request('date_to') || request('sort_stock') || request('search'))
-                    <a href="{{ route('super_admin.items.index') }}" class="btn btn-sm btn-outline-secondary w-100">
-                        <i class="ri-refresh-line me-1"></i> Reset
-                    </a>
-                @endif
-            </div>
-        </form>
+  {{-- 🔹 Table Admin --}}
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap">
+      <h5 class="fw-bold text-primary mb-0"><i class="ri ri-shield-user-line me-2"></i>Daftar Admin</h5>
     </div>
 
-    {{--  Tabel Data --}}
-    <div class="card-body pt-2">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light text-center">
-                    <tr>
-                        <th>Nama</th>
-                        <th>Kategori</th>
-                        <th>Satuan</th>
-                        <th>Harga</th>
-                        <th>Stok</th>
-                        <th>Tanggal Dibuat</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($items as $item)
-                    <tr class="text-center">
-                        <td class="text-start fw-semibold">{{ $item->name }}</td>
-                        <td>{{ $item->category->name ?? '-' }}</td>
-                        <td>{{ $item->unit->name ?? '-' }}</td>
-                        <td>Rp {{ number_format($item->price, 0, ',', '.') }}</td>
-                        <td>{{ $item->stock }}</td>
-                        <td>{{ $item->created_at ? $item->created_at->format('d M Y') : '-' }}</td>
-                        <td>
-                            <div class="dropdown">
-                                <button type="button" class="btn p-0 dropdown-toggle hide-arrow shadow-none" data-bs-toggle="dropdown">
-                                    <i class="ri-more-2-fill"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                                    <li>
-                                        <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#detailModal{{ $item->id }}">
-                                            <i class="ri-file-list-3-line me-2"></i> Detail
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('super_admin.items.show', $item->id) }}">
-                                            <i class="ri-eye-line me-2"></i> Show
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </td>
-                    </tr>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-primary text-center">
+          <tr>
+            <th>Akun</th>
+            <th>Email</th>
+            <th>Peran</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($users->where('role', 'admin') as $user)
+          <tr>
+            <td>
+              <div class="d-flex align-items-center">
+                <img src="{{ asset('assets/img/avatars/' . ($loop->iteration % 7 + 1) . '.png') }}"
+                     alt="Avatar" class="rounded-circle me-3" width="42" height="42">
+                <div>
+                  <strong>{{ $user->name }}</strong><br>
+                  <small class="text-muted">{{ '@' . Str::slug($user->name) }}</small>
+                </div>
+              </div>
+            </td>
 
-                    {{--  Modal Detail --}}
-                    <div class="modal fade" id="detailModal{{ $item->id }}" tabindex="-1" aria-labelledby="detailModalLabel{{ $item->id }}" aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                                <div class="modal-header bg-primary text-white py-2">
-                                    <h5 class="modal-title fw-semibold" id="detailModalLabel{{ $item->id }}">
-                                        <i class="ri-archive-line me-2"></i> Detail Barang — {{ $item->name }}
-                                    </h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                </div>
+            {{-- 🔸 Email --}}
+            <td>{{ $user->email }}</td>
 
-                                <div class="modal-body bg-light-subtle">
-                                    <div class="row mb-3">
-                                        <div class="col-md-6">
-                                            <p><strong>Kategori:</strong> {{ $item->category->name ?? '-' }}</p>
-                                            <p><strong>Satuan:</strong> {{ $item->unit->name ?? '-' }}</p>
-                                            <p><strong>Supplier:</strong> {{ $item->supplier->name ?? '-' }}</p>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <p><strong>Harga:</strong> Rp {{ number_format($item->price, 0, ',', '.') }}</p>
-                                            <p><strong>Stok:</strong> {{ $item->stock }}</p>
-                                            <p><strong>Dibuat:</strong> {{ $item->created_at ? $item->created_at->format('d M Y') : '-' }}</p>
-                                        </div>
-                                    </div>
+            {{-- 🔸 Role --}}
+            <td class="text-center"><span class="badge bg-primary">Admin</span></td>
 
-                                    <hr>
-                                    <h6 class="fw-bold text-secondary mb-3">
-                                        <i class="ri-barcode-line me-2"></i> Barcode
-                                    </h6>
+            {{-- 🔸 Aksi --}}
+            <td class="text-center">
+              <div class="d-flex align-items-center gap-2 justify-content-center">
+                <a href="{{ route('super_admin.users.edit', $user->id) }}"
+                   class="btn btn-sm btn-outline-warning d-flex align-items-center rounded-3">
+                  <i class="ri-pencil-line me-1"></i> Edit
+                </a>
+                <form action="{{ route('super_admin.users.destroy', $user->id) }}" method="POST"
+                      onsubmit="return confirm('Yakin hapus akun ini?')">
+                  @csrf @method('DELETE')
+                  <button type="submit"
+                          class="btn btn-sm btn-outline-danger d-flex align-items-center rounded-3">
+                    <i class="ri-delete-bin-6-line me-1"></i> Hapus
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="4" class="text-center text-muted py-3">
+              <i class="ri-information-line me-1"></i> Belum ada admin
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-                                    <div class="text-center">
-                                        @if($item->barcode_png_base64)
-                                            <img src="{{ $item->barcode_png_base64 }}"
-                                                alt="barcode"
-                                                class="img-fluid border rounded p-2 bg-white shadow-sm"
-                                                style="max-width: 200px;">
-                                            <p class="mt-2 small text-muted">{{ $item->code }}</p>
-                                            <p class="mt-2 small text-muted">{{ $item->name }}</p>
-                                        @else
-                                            <p class="text-muted">Barcode tidak tersedia</p>
-                                        @endif
-                                    </div>
-                                </div>
+  {{-- 🔹 Table Pegawai --}}
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap">
+      <h5 class="fw-bold text-success mb-0"><i class="ri ri-user-3-line me-2"></i>Daftar Pegawai</h5>
 
-                                <div class="modal-footer d-flex justify-content-between flex-wrap bg-white border-0 pt-3">
-                                    {{-- Cetak Barcode --}}
-                                    <form action="{{ route('super_admin.items.barcode.pdf', $item->id) }}" method="GET" target="_blank"
-                                        class="d-flex align-items-center gap-2 flex-wrap mb-2 mb-md-0">
-                                        <div class="input-group input-group-sm" style="width: 130px;">
-                                            <span class="input-group-text bg-white border-end-0 px-2">
-                                                <i class="ri-hashtag text-primary fs-6"></i>
-                                            </span>
-                                            <input type="number" name="jumlah" min="1" value="1"
-                                                   class="form-control form-control-sm border-start-0 text-center fw-semibold"
-                                                   placeholder="Qty">
-                                        </div>
-                                        <button type="submit" class="btn btn-sm btn-outline-primary rounded-3 d-flex align-items-center px-3">
-                                            <i class="ri-printer-line me-1"></i> Cetak
-                                        </button>
-                                    </form>
+      <form method="GET" action="{{ route('super_admin.users.index') }}">
+        <div class="d-flex align-items-center">
+          <select name="status" class="form-select form-select-sm shadow-sm" onchange="this.form.submit()">
+            <option value="">Semua</option>
+            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Aktif</option>
+            <option value="banned" {{ request('status') == 'banned' ? 'selected' : '' }}>Diban</option>
+          </select>
+        </div>
+      </form>
+    </div>
 
-                                    {{-- Aksi Lain --}}
-                                    <div class="d-flex align-items-center gap-2">
-                                        <a href="{{ route('super_admin.items.edit', $item->id) }}"
-                                           class="btn btn-sm btn-outline-warning d-flex align-items-center rounded-3">
-                                            <i class="ri-pencil-line me-1"></i> Edit
-                                        </a>
-                                        <form action="{{ route('super_admin.items.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Yakin hapus item ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="btn btn-sm btn-outline-danger d-flex align-items-center rounded-3">
-                                                <i class="ri-delete-bin-6-line me-1"></i> Hapus
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-success text-center">
+          <tr>
+            <th>Akun</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($users->where('role', 'pegawai') as $user)
+          <tr>
+            <td>
+              <div class="d-flex align-items-center">
+                <img src="{{ asset('assets/img/avatars/' . ($loop->iteration % 7 + 1) . '.png') }}"
+                     alt="Avatar" class="rounded-circle me-3" width="42" height="42">
+                <div>
+                  <strong>{{ $user->name }}</strong><br>
+                  <small class="text-muted">{{ '@' . Str::slug($user->name) }}</small>
+                </div>
+              </div>
+            </td>
+
+            {{-- 🔸 Email --}}
+            <td>{{ $user->email }}</td>
+
+            {{-- 🔸 Status --}}
+            <td class="text-center">
+              @if($user->is_banned)
+                <span class="badge bg-danger">Banned</span>
+              @else
+                <span class="badge bg-success">Aktif</span>
+              @endif
+            </td>
+
+            {{-- 🔸 Aksi --}}
+            <td class="text-center">
+                <div class="position-relative">
+                    <button type="button" class="btn p-0 btn-sm" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="ri-more-2-line"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <a href="{{ route('super_admin.users.edit', $user->id) }}"
+                        class="dropdown-item d-flex align-items-center">
+                            <i class="ri-pencil-line me-1"></i> Edit
+                        </a>
+                        <form action="{{ route('super_admin.users.destroy', $user->id) }}" method="POST" class="m-0">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="dropdown-item d-flex align-items-center"
+                                    onclick="return confirm('Yakin hapus akun ini?')">
+                                <i class="ri-delete-bin-6-line me-1"></i> Hapus
+                            </button>
+                        </form>
+                        @if($user->role === 'pegawai')
+                            @if($user->is_banned)
+                                <form action="{{ route('users.unban', $user->id) }}" method="POST" class="m-0">
+                                    @csrf @method('PUT')
+                                    <button type="submit" class="dropdown-item d-flex align-items-center"
+                                            onclick="return confirm('Aktifkan kembali akun ini?')">
+                                        <i class="ri-lock-unlock-line me-1"></i> Unban
+                                    </button>
+                                </form>
+                            @else
+                                <form action="{{ route('users.ban', $user->id) }}" method="POST" class="m-0">
+                                    @csrf @method('PUT')
+                                    <button type="submit" class="dropdown-item d-flex align-items-center"
+                                            onclick="return confirm('Nonaktifkan akun ini?')">
+                                        <i class="ri-forbid-line me-1"></i> Ban
+                                    </button>
+                                </form>
+                            @endif
+                        @endif
                     </div>
-                    @empty
-                    <tr>
-                        <td colspan="7" class="text-center py-4 text-muted">
-                            <i class="ri-information-line me-1"></i> Belum ada data barang.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                </div>
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="4" class="text-center text-muted py-3">
+              <i class="ri-information-line me-1"></i> Belum ada pegawai
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
     </div>
+  </div>
+
 </div>
-
-{{-- 🔹 Script Auto Filter --}}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('filterForm');
-    const searchInput = document.getElementById('autoSearchInput');
-    const dateFrom = document.getElementById('dateFrom');
-    const dateTo = document.getElementById('dateTo');
-    const sortStock = document.getElementById('sortStock');
-    let timer = null;
-
-    function autoSubmit() {
-        const from = dateFrom.value;
-        const to = dateTo.value;
-
-        // hanya kirim kalau dua tanggal kosong atau dua-duanya keisi
-        if ((from && to) || (!from && !to)) {
-            clearTimeout(timer);
-            timer = setTimeout(() => form.submit(), 500);
-        }
-    }
-
-    searchInput.addEventListener('input', autoSubmit);
-    dateFrom.addEventListener('change', autoSubmit);
-    dateTo.addEventListener('change', autoSubmit);
-    sortStock.addEventListener('change', autoSubmit);
-});
-</script>
 @endsection

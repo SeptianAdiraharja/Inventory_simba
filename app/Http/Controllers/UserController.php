@@ -8,9 +8,18 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::latest()->get();
+        $query = User::query();
+
+        if ($request->status === 'banned') {
+            $query->where('is_banned', true);
+        } elseif ($request->status === 'active') {
+            $query->where('is_banned', false);
+        }
+
+        $users = $query->latest()->get();
+
         return view('role.super_admin.users.index', compact('users'));
     }
 
@@ -64,5 +73,38 @@ class UserController extends Controller
     {
         $user->delete();
         return redirect()->route('super_admin.users.index')->with('success', 'Akun berhasil dihapus.');
+    }
+
+    public function ban($id)
+    {
+        $user = User::findOrFail($id);
+
+        // Cek kalau bukan pegawai, tolak
+        if ($user->role !== 'pegawai') {
+            return redirect()->back()->with('error', 'Hanya pegawai yang bisa diban!');
+        }
+
+        $user->update([
+            'is_banned' => true,
+            'banned_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', "Pegawai {$user->name} berhasil diban.");
+    }
+
+    public function unban($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->role !== 'pegawai') {
+            return redirect()->back()->with('error', 'Hanya pegawai yang bisa di-unban!');
+        }
+
+        $user->update([
+            'is_banned' => false,
+            'banned_at' => null,
+        ]);
+
+        return redirect()->back()->with('success', "Pegawai {$user->name} berhasil di-unban.");
     }
 }

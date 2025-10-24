@@ -1,12 +1,12 @@
 <aside id="layout-menu" class="layout-menu menu-vertical bg-dark">
     <!-- Logo & Brand -->
-    <div class="app-brand demo py-3 d-flex align-items-center justify-content-center">
+    <div class="app-brand demo py-3 d-flex align-items-center">
         <a href="index.html" class="app-brand-link d-flex align-items-center">
-            <img src="{{ asset('assets/img/icons/simba.jpg') }}" alt="Logo" class="rounded-circle" width="40" height="40">
-            <span class="app-brand-text fw-bold ms-2 text-white">UPTD Upelkes</span>
+            <img src="{{ asset('assets/img/icons/simba.jpg') }}" alt="Logo" class="rounded-circle" width="50" height="50">
+            <h4 class="app-brand-text fw-bold ms-3 mt-4 text-white">SIMBA</h4>
         </a>
     </div>
-    <small class="d-block text-center text-light mb-3">SIMBA</small>
+    <small class="d-block text-center text-light mb-3">Sistem Informasi Barang Dan Aset</small>
 
     <div class="menu-inner-shadow"></div>
     <ul class="menu-inner py-2 text-white">
@@ -105,7 +105,7 @@
         <li class="menu-item {{ Route::is('super_admin.users.*') ? 'active' : '' }}">
             <a href="{{ route('super_admin.users.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-group-line me-2"></i>
-                <span>List Pegawai</span>
+                <span>List Pengguna</span>
             </a>
         </li>
         <li class="menu-item {{ Route::is('super_admin.export.index') ? 'active' : '' }}">
