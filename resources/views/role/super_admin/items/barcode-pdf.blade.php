@@ -24,8 +24,8 @@
         }
 
         .label {
-            width: 33mm;
-            height: 15mm;
+            width: 25.6mm;
+            height: 10.4mm;
             text-align: center;
             box-sizing: border-box;
             padding: 1mm;
@@ -41,12 +41,12 @@
             height: auto;
             image-rendering: crisp-edges;
             image-rendering: pixelated;
-            transform: scale(1.05); 
+            transform: scale(1.02); 
             filter: contrast(120%) brightness(105%);
         }
 
         .label p {
-            font-size: 6pt;
+            font-size: 5pt;
             margin: 1mm 0 0 0;
             letter-spacing: 0.3pt;
         }
