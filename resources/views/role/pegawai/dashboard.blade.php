@@ -8,7 +8,7 @@
         <div class="card border-0 shadow-sm rounded-3">
             <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
                 <h5 class="mb-0 fw-semibold text-primary">
-                    <i class="bx bx-bar-chart-alt-2 me-2"></i> Request Overview ({{ ucfirst($range) }})
+                    <i class="bx bx-bar-chart-alt-2 me-2"></i> Statistik Permintaan Barang
                 </h5>
 
                 <!-- Range Filter -->
