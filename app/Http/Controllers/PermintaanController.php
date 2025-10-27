@@ -154,6 +154,7 @@ class PermintaanController extends Controller
             ->when(request('status') && request('status') != 'all', function ($query) {
                 $query->where('status', request('status'));
             })
+            ->latest()
             ->paginate(10);
 
         $statusCounts = [
@@ -176,12 +177,9 @@ class PermintaanController extends Controller
         return view('role.pegawai.pending', compact('carts'));
     }
 
-    public function detailPermintaan($id)
+    public function detailPermintaan(string $id)
     {
-        $cart = Cart::with(['cartItems.item'])
-            ->where('user_id', Auth::id())
-            ->findOrFail($id);
-
+        $cart = Cart::with(['cartItems.item.category'])->findOrFail($id);
         return view('role.pegawai.permintaan_detail', compact('cart'));
     }
 
@@ -304,6 +302,44 @@ class PermintaanController extends Controller
                         'icon' => 'success',
                         'title' => 'Berhasil!',
                         'text' => 'Permintaan berhasil di-refund dan stok dikembalikan.'
+                    ]
+                ]);
+            } catch (\Exception $e) {
+                return redirect()->back()->with([
+                    'swal' => [
+                        'icon' => 'error',
+                        'title' => 'Gagal!',
+                        'text' => $e->getMessage()
+                    ]
+                ]);
+            }
+        }
+
+    }
+
+    public function cancelItem(string $id){
+        {
+            try {
+                DB::transaction(function () use ($id) {
+                    $cart = Cart::with('cartItems.item')->findOrFail($id);
+
+                    if ($cart->user_id !== Auth::id()) {
+                        throw new \Exception('Akses tidak sah untuk keranjang ini.');
+                    }
+
+                    foreach ($cart->cartItems as $cartItem) {
+                        $item = $cartItem->item;
+                        $item->increment('stock', $cartItem->quantity);
+                    }
+
+                    $cart->update(['status' => 'rejected']);
+                });
+
+                return redirect()->back()->with([
+                    'swal' => [
+                        'icon' => 'success',
+                        'title' => 'Berhasil!',
+                        'text' => 'Permintaan berhasil di-cancel dan stok dikembalikan.'
                     ]
                 ]);
             } catch (\Exception $e) {

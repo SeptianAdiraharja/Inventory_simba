@@ -151,11 +151,10 @@
 
 
                                     {{-- Hapus Item --}}
-                                    <form action="{{ route('pegawai.cart.destroy', $item->id) }}" method="POST" class="ms-2">
+                                    <form action="{{ route('pegawai.cart.destroy', $item->id) }}" method="POST" class="ms-2 confirm-delete-form" data-item-name="{{ $item->item->name }}">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger"
-                                            onclick="return confirm('Hapus item ini dari keranjang?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" >
                                             <i class="ri-delete-bin-line"></i>
                                         </button>
                                     </form>
@@ -259,18 +258,7 @@
 
             @auth
                 @if(Auth::user()->role === 'pegawai')
-                    <!-- Cart Icon -->
-                    <li class="nav-item me-3">
-                        <a class="nav-link position-relative" href="{{ route('pegawai.permintaan.history')}}" role="button">
-                            <i class="ri ri-history-line icon-lg"></i>
-                            @if($cartexceptactive && $cartexceptactive->count() > 0)
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    {{ $cartexceptactive->count() }}
-                                </span>
-                            @endif
-                        </a>
-                    </li>
-
+                   
                     <!-- Notification Icon -->
                     <li class="nav-item dropdown me-3">
                         <a class="nav-link position-relative" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -391,39 +379,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            Swal.fire({
-                title: 'Konfirmasi',
-                text: `Ubah qty jadi ${input.value}?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Ya, yakin!',
-                cancelButtonText: 'Batal',
-                customClass: {
-                    popup: 'swal2-overflow-fix'
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                } else {
-                    input.value = original;
-                    btn.classList.remove('fade-up');
-                    btn.classList.add('fade-down');
-                    btn.addEventListener('animationend', function hideAfter() {
-                        btn.style.display = 'none';
-                        btn.removeEventListener('animationend', hideAfter);
-                    });
-                }
-            });
-        });
     });
 });
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const forms = document.querySelectorAll('.confirm-form');
+    const deleteForms = document.querySelectorAll('.confirm-delete-form');
 
     forms.forEach(form => {
         form.addEventListener('submit', function (e) {
@@ -439,6 +401,28 @@ document.addEventListener('DOMContentLoaded', function () {
             }).then((result) => {
                 if (result.isConfirmed) {
                     form.submit(); // submit form kalau user setuju
+                }
+            });
+        });
+    });
+
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const itemName = form.dataset.itemName;
+
+            Swal.fire({
+                title: 'Konfirmasi!',
+                text: `Yakin ingin menghapus item "${itemName}" dari keranjang?`,
+                icon: 'warning', 
+                showCancelButton: true,
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#d33', 
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
                 }
             });
         });
