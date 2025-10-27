@@ -33,12 +33,22 @@
         {{-- Hitung jumlah permintaan pending (notif real) --}}
         @php
             use App\Models\Cart;
+
+            // 🔸 Jumlah permintaan pending (Request)
             $pendingCount = Cart::where('status', 'pending')->count();
-            $approvedCount = Cart::where('status', 'approved')
-                ->whereHas('cartItems', function ($q) {
-                    $q->whereNull('scanned_at'); // hanya hitung cart yang masih ada item belum discan
-                })
-                ->count()
+
+            // 🔸 Jumlah cart "approved" untuk ditampilkan di menu ScanQr (khusus Pegawai)
+            $approvedCount = Cart::whereIn('status', ['approved', 'approved_partially'])
+            ->whereHas('user', function ($u) {
+                $u->where('role', 'pegawai');
+            })
+            ->whereHas('cartItems', function ($q) {
+                $q->whereNull('scanned_at');
+            })
+            ->whereDoesntHave('cartItems', function ($q) {
+                $q->whereNotNull('scanned_at');
+            }, '=', 0) // pastikan bukan cart yang semua itemnya sudah discan
+            ->count();
         @endphp
 
         <!-- Pegawai -->
@@ -181,6 +191,12 @@
             <a href="{{ route('admin.rejects.scan') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-close-circle-line me-2"></i>
                 <span>Barang Rusak / Reject</span>
+            </a>
+        </li>
+        <li class="menu-item {{ Route::is('admin.rejects.index') ? 'active' : '' }}">
+            <a href="{{ route('admin.rejects.index') }}" class="menu-link d-flex align-items-center text-white">
+                <i class="ri ri-close-circle-line me-2"></i>
+                <span>Data Barang Rusak / Reject</span>
             </a>
         </li>
         @endif

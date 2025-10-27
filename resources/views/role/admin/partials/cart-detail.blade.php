@@ -120,7 +120,13 @@
             <i class="bi bi-x-circle me-1"></i> Batal
         </button>
 
-        <button type="button" class="btn btn-primary cart-detail-save-btn">
+        @php
+            $disableSave = in_array($cart->status, ['approved', 'approved_partially', 'rejected']);
+        @endphp
+
+        <button type="button"
+                class="btn btn-primary cart-detail-save-btn {{ $disableSave ? 'disabled opacity-50' : '' }}"
+                @if($disableSave) disabled aria-disabled="true" @endif>
             <i class="bi bi-save me-1"></i> Simpan Perubahan
         </button>
     </div>

@@ -6,7 +6,7 @@
 <!-- ======================== -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
   <h4 class="fw-bold text-primary mb-2">
-    <i class="bi bi-box-seam me-2"></i>Daftar Permintaan Pegawai & Guest
+    <i class="bi bi-box-seam me-2"></i>Daftar Permintaan Pegawai
   </h4>
 </div>
 
@@ -125,7 +125,7 @@
                             <input type="text" class="form-control barcode-input" placeholder="🔍 Scan atau ketik kode barang lalu tekan Enter">
                           </div>
                           <div class="col-md-4 text-end">
-                            <button type="button" class="btn btn-primary save-scan-btn">
+                            <button type="submit" class="btn btn-primary save-scan-btn">
                                 Simpan Hasil Scan
                             </button>
                           </div>
@@ -147,11 +147,11 @@
                             </thead>
                             <tbody>
                               @foreach($cart->cartItems as $j => $item)
-                                <tr>
+                                <tr data-item-id="{{ $item->item->id }}">
                                   <td class="text-center">{{ $j+1 }}</td>
                                   <td>{{ $item->item->name }}</td>
                                   <td class="item-code">{{ $item->item->code }}</td>
-                                  <td class="text-center">{{ $item->quantity }}</td>
+                                  <td class="item-qty text-center">{{ $item->quantity }}</td>
                                   <td class="text-center">
                                     @if($item->scanned_at)
                                       <span class="badge bg-success">Sudah dipindai</span>
@@ -170,8 +170,11 @@
                               <i class="bi bi-x-circle me-1"></i> Tutup
                             </button>
 
-                            <button type="button" class="btn btn-success save-all-scan-btn" data-cart-id="{{ $cart->id }}">
-                                Simpan Semua Hasil Scan
+                            <button type="button"
+                                    class="btn btn-success save-all-scan-btn disabled"
+                                    data-cart-id="{{ $cart->id }}"
+                                    disabled>
+                              Simpan Semua Hasil Scan
                             </button>
                           </div>
                         </div>

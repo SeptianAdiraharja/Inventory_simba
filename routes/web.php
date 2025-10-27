@@ -102,141 +102,142 @@ Route::middleware(['auth', 'role:super_admin'])
 
 
 Route::middleware(['auth', 'role:admin'])
-    ->prefix('admin')
-    ->as('admin.')
-    ->group(function () {
+->prefix('admin')
+->as('admin.')
+->group(function () {
 
-        /*
-        |--------------------------------------------------------------------------
-        | Dashboard
-        |--------------------------------------------------------------------------
-        */
-        Route::controller(AdminController::class)->group(function () {
-            Route::get('/dashboard', 'index')->name('dashboard');
-            Route::get('/dashboard/data', 'getChartData');
-            Route::get('/dashboard/modal/{type}', 'loadModalData')->name('dashboard.modal.data');
-            Route::get('/dashboard/modal/barang_keluar', 'barangKeluarModal')->name('dashboard.modal.barang_keluar');
-        });
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Item Out (Barang Keluar)
-        |--------------------------------------------------------------------------
-        */
-        Route::controller(ItemoutController::class)->group(function () {
-            Route::resource('itemout', ItemoutController::class);
-            Route::get('/itemout/{cart}/struk', 'struk')->name('itemout.struk');
-            Route::post('/itemout/scan/{cart}', 'scan')->name('itemout.scan');
-            Route::get('/itemout/check-all-scanned/{cart}', 'checkAllScanned')->name('itemout.checkAllScanned');
-            Route::post('/itemout/release/{cart}', 'release')->name('itemout.release');
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
+    Route::controller(AdminController::class)->group(function () {
+        Route::get('/dashboard', 'index')->name('dashboard');
+        Route::get('/dashboard/data', 'getChartData');
+        Route::get('/dashboard/modal/{type}', 'loadModalData')->name('dashboard.modal.data');
+        Route::get('/dashboard/modal/barang_keluar', 'barangKeluarModal')->name('dashboard.modal.barang_keluar');
+    });
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Requests & Carts
-        |--------------------------------------------------------------------------
-        | Mengelola permintaan pegawai (approval / reject).
-        */
-        Route::controller(RequestController::class)->group(function () {
-            Route::get('/request', 'index')->name('request');
-            Route::get('/carts/{id}', 'show')->name('carts.show');
-            Route::patch('/carts/{id}', 'update')->name('carts.update'); // ✅ penting
-            Route::patch('/carts/item/{id}/approve', 'approveItem')->name('carts.item.approve');
-            Route::patch('/carts/item/{id}/reject', 'rejectItem')->name('carts.item.reject');
-            Route::post('/carts/{id}/bulk-update', 'bulkUpdate')->name('carts.bulkUpdate');
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | Item Out (Barang Keluar)
+    |--------------------------------------------------------------------------
+    */
+    Route::controller(ItemoutController::class)->group(function () {
+        Route::resource('itemout', ItemoutController::class);
+        Route::get('/itemout/{cart}/struk', 'struk')->name('itemout.struk');
+        Route::post('/itemout/scan/{cart}', 'scan')->name('itemout.scan');
+        Route::get('/itemout/check-all-scanned/{cart}', 'checkAllScanned')->name('itemout.checkAllScanned');
+        Route::post('/itemout/release/{cart}', 'release')->name('itemout.release');
+    });
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Guest Management
-        |--------------------------------------------------------------------------
-        */
-        Route::controller(SearchController::class)->group(function () {
-            Route::get('/guests/search', 'searchGuests')->name('guests.search');
-        });
-
-        Route::resource('guests', GuestController::class)->except('show');
-
-
-         /*
-        |--------------------------------------------------------------------------
-        | Pegawai Management
-        |--------------------------------------------------------------------------
-        */
-        Route::controller(SearchController::class)->group(function () {
-            Route::get('/guests/search', 'searchGuests')->name('guests.search');
-        });
-
-        Route::controller(AdminPegawaiController::class)->group(function () {
-            Route::resource('pegawai', AdminPegawaiController::class);
-            Route::get('/pegawai/{id}/produk', 'showProduk')->name('pegawai.produk');
-            Route::post('/pegawai/{id}/scan', [AdminPegawaiController::class, 'scan'])->name('pegawai.scan');
-            Route::get('/pegawai/{id}/cart', [AdminPegawaiController::class, 'showCart'])->name('pegawai.cart');
-            Route::delete('/pegawai/{pegawai}/cart/item/{id}', [AdminPegawaiController::class, 'destroyCartItem'])->name('admin.pegawai.cart.item.destroy');
-            Route::post('/pegawai/{id}/cart/save', [AdminPegawaiController::class, 'saveCartToItemOut'])->name('pegawai.cart.save');
+    /*
+    |--------------------------------------------------------------------------
+    | Requests & Carts
+    |--------------------------------------------------------------------------
+    | Mengelola permintaan pegawai (approval / reject).
+    */
+    Route::controller(RequestController::class)->group(function () {
+        Route::get('/request', 'index')->name('request');
+        Route::get('/carts/{id}', 'show')->name('carts.show');
+        Route::patch('/carts/{id}', 'update')->name('carts.update'); // ✅ penting
+        Route::patch('/carts/item/{id}/approve', 'approveItem')->name('carts.item.approve');
+        Route::patch('/carts/item/{id}/reject', 'rejectItem')->name('carts.item.reject');
+        Route::post('/carts/{id}/bulk-update', 'bulkUpdate')->name('carts.bulkUpdate');
+    });
 
 
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | Guest Management
+    |--------------------------------------------------------------------------
+    */
+    Route::controller(SearchController::class)->group(function () {
+        Route::get('/guests/search', 'searchGuests')->name('guests.search');
+    });
 
+    Route::resource('guests', GuestController::class)->except('show');
 
 
         /*
-        |--------------------------------------------------------------------------
-        | Produk Guest
-        |--------------------------------------------------------------------------
-        */
-        Route::controller(ProdukController::class)->group(function () {
-            Route::get('/produk', 'index')->name('produk.index');
-            Route::get('/produk/guest/{id}', 'showByGuest')->name('produk.byGuest');
-            Route::post('/produk/guest/{id}/scan', 'scan')->name('produk.scan');
-            Route::get('/produk/guest/{id}/cart', 'showCart')->name('produk.cart');
-            Route::post('/produk/guest/{id}/release', 'release')->name('produk.release');
-        });
+    |--------------------------------------------------------------------------
+    | Pegawai Management
+    |--------------------------------------------------------------------------
+    */
+    Route::controller(SearchController::class)->group(function () {
+        Route::get('/guests/search', 'searchGuests')->name('guests.search');
+    });
+
+    Route::controller(AdminPegawaiController::class)->group(function () {
+        Route::resource('pegawai', AdminPegawaiController::class);
+        Route::get('/pegawai/{id}/produk', 'showProduk')->name('pegawai.produk');
+        Route::post('/pegawai/{id}/scan', [AdminPegawaiController::class, 'scan'])->name('pegawai.scan');
+        Route::get('/pegawai/{id}/cart', [AdminPegawaiController::class, 'showCart'])->name('pegawai.cart');
+        Route::delete('/pegawai/{pegawai}/cart/item/{id}', [AdminPegawaiController::class, 'destroyCartItem'])->name('admin.pegawai.cart.item.destroy');
+        Route::post('/pegawai/{id}/cart/save', [AdminPegawaiController::class, 'saveCartToItemOut'])->name('pegawai.cart.save');
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Export Barang Keluar
-        |--------------------------------------------------------------------------
-        */
-        Route::controller(ExportController::class)->group(function () {
-            Route::get('/out', 'exportOut')->name('export.out');
-            Route::post('/out/clear', 'clearOutHistory')->name('export.out.clear');
-            Route::get('/export/barang-keluar/excel', 'exportBarangKeluarExcelAdmin')->name('barang_keluar.excel');
-            Route::get('/export/barang-keluar/pdf', 'exportBarangKeluarPdfAdmin')->name('barang_keluar.pdf');
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Data Transaksi & refund
-        |--------------------------------------------------------------------------
-        */
-        Route::controller(TransaksiItemOutController::class)->group(function () {
-            Route::get('/transaksi', 'index')->name('transaksi.out');
-
-            Route::post('/refund', 'refundBarang')->name('pegawai.refund');
-            Route::post('/edit-item', 'updateItem')->name('pegawai.updateItem');
-
-            Route::post('/guest/refund', 'refundBarangGuest')->name('guest.refund');
-            Route::post('/guest/edit-item', 'updateItemGuest')->name('guest.updateItem');
-
-        });
+    });
 
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Reject Barang
-        |--------------------------------------------------------------------------
-        */
-        Route::controller(RejectController::class)->group(function () {
-            Route::get('/rejects/scan', 'scanPage')->name('rejects.scan');
-            Route::post('/rejects/process', 'processScan')->name('rejects.process');
-            Route::get('/rejects/check/{barcode}', 'checkBarcode')->name('rejects.check');
-        });
+    /*
+    |--------------------------------------------------------------------------
+    | Produk Guest
+    |--------------------------------------------------------------------------
+    */
+    Route::controller(ProdukController::class)->group(function () {
+        Route::get('/produk', 'index')->name('produk.index');
+        Route::get('/produk/guest/{id}', 'showByGuest')->name('produk.byGuest');
+        Route::post('/produk/guest/{id}/scan', 'scan')->name('produk.scan');
+        Route::get('/produk/guest/{id}/cart', 'showCart')->name('produk.cart');
+        Route::post('/produk/guest/{id}/release', 'release')->name('produk.release');
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Export Barang Keluar
+    |--------------------------------------------------------------------------
+    */
+    Route::controller(ExportController::class)->group(function () {
+        Route::get('/out', 'exportOut')->name('export.out');
+        Route::post('/out/clear', 'clearOutHistory')->name('export.out.clear');
+        Route::get('/export/barang-keluar/excel', 'exportBarangKeluarExcelAdmin')->name('barang_keluar.excel');
+        Route::get('/export/barang-keluar/pdf', 'exportBarangKeluarPdfAdmin')->name('barang_keluar.pdf');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Data Transaksi & refund
+    |--------------------------------------------------------------------------
+    */
+    Route::controller(TransaksiItemOutController::class)->group(function () {
+        Route::get('/transaksi', 'index')->name('transaksi.out');
+
+        Route::post('/refund', 'refundBarang')->name('pegawai.refund');
+        Route::post('/edit-item', 'updateItem')->name('pegawai.updateItem');
+
+        Route::post('/guest/refund', 'refundBarangGuest')->name('guest.refund');
+        Route::post('/guest/edit-item', 'updateItemGuest')->name('guest.updateItem');
+
+    });
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reject Barang
+    |--------------------------------------------------------------------------
+    */
+    Route::controller(RejectController::class)->group(function () {
+        Route::get('/rejects', 'index')->name('rejects.index');
+        Route::get('/rejects/scan', 'scanPage')->name('rejects.scan');
+        Route::post('/rejects/process', 'processScan')->name('rejects.process');
+        Route::get('/rejects/check/{barcode}', 'checkBarcode')->name('rejects.check');
+    });
 
 
 

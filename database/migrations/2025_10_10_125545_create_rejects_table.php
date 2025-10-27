@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('name'); // nama barang rusak
             $table->integer('quantity')->default(1);
             $table->text('description')->nullable(); // catatan kerusakan
-            $table->enum('condition', ['rusak ringan', 'rusak berat'])->default('rusak ringan');
+            $table->enum('condition', ['rusak ringan', 'rusak berat', 'tidak bisa digunakan'])->default('rusak ringan');
             $table->timestamps();
         });
     }

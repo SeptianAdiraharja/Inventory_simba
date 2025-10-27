@@ -46,12 +46,15 @@
     </div>
 
     {{-- Tombol Cart --}}
-    <button class="btn btn-primary rounded-circle shadow-lg position-fixed"
-            id="cartButton"
-            style="bottom: 20px; right: 25px; width: 60px; height: 60px; z-index: 1050;">
+   <button class="btn btn-primary rounded-circle shadow-lg position-fixed position-relative"
+        id="cartButton"
+        style="bottom: 20px; right: 25px; width: 60px; height: 60px; z-index: 1050;">
         <i class="ri-shopping-cart-2-line fs-3"></i>
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-              id="cartBadge" style="display: none;">0</span>
+        <span class="position-absolute badge rounded-pill bg-danger"
+            id="cartBadge"
+            style="top: -8px; right: -8px; display: none;">
+            0
+        </span>
     </button>
 </div>
 
@@ -100,27 +103,27 @@
 
 {{-- Modal Cart --}}
 <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title text-white">Keranjang Pegawai</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
+<div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title text-white">Keranjang Pegawai</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
 
-            <div class="modal-body">
-                <div id="cartContent" class="table-responsive text-center text-muted">
-                    Memuat data...
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn btn-success" id="saveCartButton">
-                    <i class="ri-save-3-line me-1"></i> Simpan ke Item Out
-                </button>
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+        <div class="modal-body">
+            <div id="cartContent" class="table-responsive text-center text-muted">
+                Memuat data...
             </div>
         </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-success" id="saveCartButton">
+                <i class="ri-save-3-line me-1"></i> Simpan ke Item Out
+            </button>
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+        </div>
     </div>
+</div>
 </div>
 
 {{-- Script --}}
