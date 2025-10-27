@@ -1,28 +1,20 @@
-@extends('layouts.detail')
-
-@section('content')
-<div class="card border-0 shadow-sm rounded-3">
-    {{-- Header --}}
+<div class="card border-0 rounded-3">
     <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
         <h5 class="mb-0 text-primary fw-semibold">
             <i class="ri-file-list-line me-2"></i> Detail Permintaan
         </h5>
 
-        {{-- Status Badge --}}
         <span class="badge rounded-pill px-3 py-2 fw-semibold
             {{ $cart->status === 'pending' ? 'bg-warning text-dark' :
                ($cart->status === 'approved' ? 'bg-success text-white' :
                ($cart->status === 'rejected' ? 'bg-danger text-white' : 'bg-secondary text-white')) }}">
-            <i class="
-                {{ $cart->status === 'pending' ? 'ri-time-line' :
-                   ($cart->status === 'approved' ? 'ri-check-line' :
-                   ($cart->status === 'rejected' ? 'ri-close-line' : 'ri-question-line')) }}
-                me-1"></i>
+            <i class="{{ $cart->status === 'pending' ? 'ri-time-line' :
+                       ($cart->status === 'approved' ? 'ri-check-line' :
+                       ($cart->status === 'rejected' ? 'ri-close-line' : 'ri-question-line')) }} me-1"></i>
             {{ ucfirst($cart->status) }}
         </span>
     </div>
 
-    {{-- Detail Data --}}
     <div class="p-4 border-bottom bg-light">
         <div class="row g-3">
             <div class="col-md-6">
@@ -36,7 +28,6 @@
         </div>
     </div>
 
-    {{-- Tabel Produk --}}
     <div class="table-responsive text-nowrap">
         @if(!$cart || $cart->cartItems->isEmpty())
             <div class="text-center text-muted py-5">
@@ -77,20 +68,4 @@
             </table>
         @endif
     </div>
-
-    {{-- Tombol Kembali --}}
-    <div class="card-footer bg-white border-top text-end">
-        <a href="{{ route('pegawai.permintaan.pending') }}" class="btn btn-outline-primary d-inline-flex align-items-center">
-            <i class="ri-arrow-left-line me-1"></i> Kembali ke Daftar Pending
-        </a>
-    </div>
 </div>
-
-{{-- Style tambahan agar tampilan lebih halus --}}
-<style>
-    .table-hover tbody tr:hover {
-        background-color: #f8f9fa;
-        transition: background-color 0.2s ease;
-    }
-</style>
-@endsection

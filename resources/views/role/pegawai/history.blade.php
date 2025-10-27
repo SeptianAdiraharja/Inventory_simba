@@ -71,6 +71,7 @@
                                 </div>
 
                                 <div class="d-flex gap-2 mt-2 mt-md-0">
+<<<<<<< HEAD
                                     <a href="{{ route('pegawai.permintaan.detail', $cart->id) }}"
                                        class="btn btn-outline-primary btn-sm">
                                         <i class="ri-eye-line me-1"></i> Detail
@@ -79,12 +80,37 @@
                                     {{-- Tombol Dinamis --}}
                                     {{-- @if($cart->status != 'active' && $cart->status != 'rejected') --}}
                                         {{-- <form action="{{ route('pegawai.permintaan.refund', $cart->id) }}" method="POST" class="refund-form">
+=======
+                                    <button 
+                                        type="button"
+                                        class="btn btn-sm btn-outline-primary btn-detail"
+                                        data-id="{{ $cart->id }}">
+                                        <i class="bi bi-eye"></i> Detail
+                                    </button>
+
+                                    {{-- Tombol Dinamis --}}
+                                    @if($cart->status == 'approved')
+                                        <form action="{{ route('pegawai.permintaan.refund', $cart->id) }}" method="POST" class="refund-form">
+>>>>>>> cb098f3f606ec6351fe9ccca9ce40246594c9a4c
                                             @csrf
                                             <button type="submit" class="btn btn-outline-danger btn-sm">
                                                 <i class="ri-refund-line me-1"></i> Refund
                                             </button>
+<<<<<<< HEAD
                                         </form> --}}
                                     {{-- @endif --}}
+=======
+                                        </form>
+                                    @endif
+                                    @if($cart->status === 'pending')
+                                        <form action="{{ route('pegawai.permintaan.cancel', $cart->id) }}" method="POST" class="cancel-form">
+                                            @csrf
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                                <i class="ri-close-line me-1"></i> Batal
+                                            </button>
+                                        </form>
+                                    @endif
+>>>>>>> cb098f3f606ec6351fe9ccca9ce40246594c9a4c
                                 </div>
                             </div>
                         </div>
@@ -98,6 +124,20 @@
         </div>
     </div>
 </div>
+<!-- hover -->
+ <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-body p-0" id="detailContent">
+        {{-- Placeholder loading --}}
+        <div class="text-center py-5 text-muted" id="loadingState" style="display:none;">
+          <i class="ri-loader-4-line ri-spin fs-1 mb-2 d-block"></i>
+          <p>Memuat detail permintaan...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <style>
 .hover-card:hover {
@@ -109,15 +149,20 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const forms = document.querySelectorAll('.refund-form');
+    const forms_refund = document.querySelectorAll('.refund-form');
+    const forms_cancel = document.querySelectorAll('.cancel-form');
+    const buttons = document.querySelectorAll('.btn-detail');
+    const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+    const detailContent = document.getElementById('detailContent');
+    const loadingState = document.getElementById('loadingState');
 
-    forms.forEach(form => {
+    forms_refund.forEach(form => {
         form.addEventListener('submit', function (e) {
             e.preventDefault(); // cegah submit langsung
 
             Swal.fire({
-                title: 'Yakin ingin Refund permintaan ini?',
-                text: 'Tindakan ini tidak dapat dibatalkan.',
+                title: 'Konfirmasi',
+                text: 'Yakin ingin refund permintaan ini?',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Ya, refund!',
@@ -130,6 +175,51 @@ document.addEventListener('DOMContentLoaded', function () {
                     form.submit(); // submit form kalau user setuju
                 }
             });
+        });
+    });
+    forms_cancel.forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault(); // cegah submit langsung
+
+            Swal.fire({
+                title: 'Konfirmasi',
+                text: 'Yakin ingin cancel permintaan ini?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, cancel!',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit(); // submit form kalau user setuju
+                }
+            });
+        });
+    });
+    buttons.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const id = this.getAttribute('data-id');
+            loadingState.style.display = 'block';
+            detailContent.innerHTML = '';
+            modal.show();
+
+            fetch(`/pegawai/permintaan/${id}/detail`)
+                .then(res => res.text())
+                .then(html => {
+                    loadingState.style.display = 'none';
+                    detailContent.innerHTML = html;
+                })
+                .catch(() => {
+                    loadingState.style.display = 'none';
+                    detailContent.innerHTML = `
+                        <div class="text-center text-danger py-5">
+                            <i class="ri-error-warning-line fs-1 mb-2 d-block"></i>
+                            <p>Gagal memuat data.</p>
+                        </div>
+                    `;
+                });
         });
     });
 });

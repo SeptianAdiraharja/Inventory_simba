@@ -64,7 +64,7 @@
         <li class="menu-item {{ Route::is('pegawai.permintaan.history') ? 'active' : '' }}">
             <a href="{{ route('pegawai.permintaan.history') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-time-line me-2"></i>
-                <span>Riwayat Pengajuan</span>
+                <span>Riwayat Permintaan</span>
             </a>
         </li>
         @endif
