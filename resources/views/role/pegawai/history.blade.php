@@ -71,17 +71,7 @@
                                 </div>
 
                                 <div class="d-flex gap-2 mt-2 mt-md-0">
-<<<<<<< HEAD
-                                    <a href="{{ route('pegawai.permintaan.detail', $cart->id) }}"
-                                       class="btn btn-outline-primary btn-sm">
-                                        <i class="ri-eye-line me-1"></i> Detail
-                                    </a>
-
-                                    {{-- Tombol Dinamis --}}
-                                    {{-- @if($cart->status != 'active' && $cart->status != 'rejected') --}}
-                                        {{-- <form action="{{ route('pegawai.permintaan.refund', $cart->id) }}" method="POST" class="refund-form">
-=======
-                                    <button 
+                                    <button
                                         type="button"
                                         class="btn btn-sm btn-outline-primary btn-detail"
                                         data-id="{{ $cart->id }}">
@@ -91,15 +81,11 @@
                                     {{-- Tombol Dinamis --}}
                                     @if($cart->status == 'approved')
                                         <form action="{{ route('pegawai.permintaan.refund', $cart->id) }}" method="POST" class="refund-form">
->>>>>>> cb098f3f606ec6351fe9ccca9ce40246594c9a4c
+
                                             @csrf
                                             <button type="submit" class="btn btn-outline-danger btn-sm">
                                                 <i class="ri-refund-line me-1"></i> Refund
                                             </button>
-<<<<<<< HEAD
-                                        </form> --}}
-                                    {{-- @endif --}}
-=======
                                         </form>
                                     @endif
                                     @if($cart->status === 'pending')
@@ -110,7 +96,6 @@
                                             </button>
                                         </form>
                                     @endif
->>>>>>> cb098f3f606ec6351fe9ccca9ce40246594c9a4c
                                 </div>
                             </div>
                         </div>

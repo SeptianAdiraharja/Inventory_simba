@@ -72,7 +72,7 @@
                                                 </button>
                                             </form>
                                         @endif
-                                        <div class="row g-3">
+                                        <div class="row g-3 mt-1">
                                             <div class="col-md-6">
                                                 <p class="mb-1 text-muted small">Tanggal Permintaan</p>
                                                 <h6 class="mb-0">{{ $cart->created_at->format('d M Y, H:i') }} WIB</h6>
