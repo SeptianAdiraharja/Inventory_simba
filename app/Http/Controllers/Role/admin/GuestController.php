@@ -72,12 +72,5 @@ class GuestController extends Controller
         return redirect()->route('admin.guests.index')->with('success', 'Guest berhasil diperbarui.');
     }
 
-    public function destroy($id)
-    {
-        $guest = Guest::findOrFail($id);
-        $guest->delete();
-
-        return redirect()->route('admin.guests.index')->with('success', 'Guest berhasil dihapus.');
-    }
 }
 

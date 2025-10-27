@@ -27,12 +27,21 @@ class TransaksiItemOutController extends Controller
         $items = Item::all();
 
         // 🔹 Ambil cart pegawai yang semua item-nya sudah discan
-        $finishedCarts = Cart::with(['cartItems.item', 'user'])
-            ->whereIn('status', ['approved', 'approved_partially'])
-            ->get()
-            ->filter(function ($cart) {
-                return $cart->cartItems->every(fn($i) => $i->scanned_at);
-            });
+        $finishedCarts = Cart::with([
+            'cartItems' => function ($q) {
+                $q->where('status', 'approved'); // hanya ambil item yang approved
+            },
+            'cartItems.item',
+            'user'
+        ])
+        ->whereIn('status', ['approved', 'approved_partially'])
+        ->get()
+        ->filter(function ($cart) {
+            // hanya ambil cart yang punya minimal 1 item approved dan sudah discan
+            return $cart->cartItems->isNotEmpty() &&
+                $cart->cartItems->every(fn($i) => $i->scanned_at);
+        });
+
 
         // 🔹 Paginasi manual untuk Collection
         $currentPage = LengthAwarePaginator::resolveCurrentPage();

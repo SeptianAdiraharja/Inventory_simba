@@ -31,15 +31,26 @@ class PermintaanController extends Controller
             'items.*.item_id' => 'required|exists:items,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
+
         try {
             DB::transaction(function () use ($request) {
-                $cart = Cart::firstOrCreate(
-                    ['user_id' => Auth::id(), 'status' => 'active'],
-                    ['user_id' => Auth::id(), 'status' => 'active']
-                );
+                $userId = Auth::id();
 
+                // 🔹 Ambil cart aktif (jika ada), kalau tidak buat baru
+                $cart = Cart::where('user_id', $userId)
+                            ->where('status', 'active')
+                            ->first();
+
+                if (! $cart) {
+                    $cart = Cart::create([
+                        'user_id' => $userId,
+                        'status' => 'active',
+                    ]);
+                }
+
+                // 🔹 Tambahkan item ke keranjang
                 foreach ($request->items as $itemData) {
-                    $item = Item::lockForUpdate()->findOrFail($itemData['item_id']); // 🔒 kunci baris supaya stok aman di transaksi paralel
+                    $item = Item::lockForUpdate()->findOrFail($itemData['item_id']);
 
                     if ($item->stock <= 0) {
                         throw new \Exception("Stok {$item->name} sudah habis.");
@@ -49,10 +60,10 @@ class PermintaanController extends Controller
                         throw new \Exception("Jumlah melebihi stok {$item->name} (tersisa {$item->stock}).");
                     }
 
-                    // Kurangi stok dulu baru lanjut
+                    // Kurangi stok terlebih dahulu
                     $item->decrement('stock', $itemData['quantity']);
 
-                    // Tambahkan item ke keranjang
+                    // Tambahkan item ke cart_items
                     $cartItem = CartItem::firstOrNew([
                         'cart_id' => $cart->id,
                         'item_id' => $item->id,
@@ -66,14 +77,13 @@ class PermintaanController extends Controller
             $itemName = Item::find($request->items[0]['item_id'])->name;
             $qty = $request->items[0]['quantity'];
 
-            return redirect()->route('pegawai.produk')
-                ->with([
+            return redirect()->route('pegawai.produk')->with([
                 'swal' => [
                     'icon' => 'success',
                     'title' => 'Sukses!',
                     'text' => "$qty x $itemName berhasil ditambahkan ke keranjang!",
                 ]
-                ]);
+            ]);
         } catch (\Exception $e) {
             return redirect()->back()->with([
                 'swal' => [
@@ -84,7 +94,6 @@ class PermintaanController extends Controller
             ]);
         }
     }
-
 
     public function getActiveCart()
     {
@@ -121,6 +130,10 @@ class PermintaanController extends Controller
             $cart->status = 'pending';
             $cart->save();
         });
+
+        if ($cart->cartItems->isEmpty()) {
+            throw new \Exception('Keranjang masih kosong.');
+        }
 
         return redirect()
             ->back()

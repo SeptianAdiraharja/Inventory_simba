@@ -59,11 +59,44 @@
                             </td>
 
                             <td class="text-center">
-                                <button class="btn btn-sm btn-outline-primary detail-toggle-btn"
-                                        data-cart-id="{{ $req->cart_id }}">
-                                    <i class="bi bi-chevron-down me-1"></i> Detail
-                                </button>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle"
+                                            type="button" data-bs-toggle="dropdown"
+                                            aria-expanded="false">
+                                        <i class="bi bi-chevron-down me-1"></i> Opsi
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <a class="dropdown-item detail-toggle-btn"
+                                            href="#" data-cart-id="{{ $req->cart_id }}">
+                                                <i class="bi bi-eye me-2"></i> Lihat Semua Barang
+                                            </a>
+                                        </li>
+                                        @php
+                                            $isDisabled = in_array($req->status, ['approved', 'approved_partially', 'rejected']);
+                                        @endphp
+
+                                        <li>
+                                            <a class="dropdown-item approve-all-btn text-success {{ $isDisabled ? 'disabled opacity-50' : '' }}"
+                                            href="#"
+                                            data-cart-id="{{ $req->cart_id }}"
+                                            @if($isDisabled) tabindex="-1" aria-disabled="true" @endif>
+                                                <i class="bi bi-check-circle me-2"></i> Setujui Semua
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item reject-all-btn text-danger {{ $isDisabled ? 'disabled opacity-50' : '' }}"
+                                            href="#"
+                                            data-cart-id="{{ $req->cart_id }}"
+                                            @if($isDisabled) tabindex="-1" aria-disabled="true" @endif>
+                                                <i class="bi bi-x-octagon me-2"></i> Tolak Semua
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
                             </td>
+
                         </tr>
 
                         {{-- === ROW DETAIL (AJAX CONTAINER) === --}}
@@ -114,9 +147,12 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <form id="rejectItemForm" method="POST">
+            <form id="rejectItemForm" method="POST"
+                  data-is-bulk="false" {{-- Default: Item Satuan --}}
+                  data-cart-id=""
+                  data-item-id="">
                 @csrf
-                <input type="hidden" name="_method" value="PATCH">
+                {{-- Metode POST akan digunakan, tidak perlu PATCH, karena kita kirim ke endpoint 'bulk-update' --}}
 
                 <div class="modal-body">
                     <textarea name="reason" class="form-control" rows="3"
@@ -170,6 +206,11 @@
     opacity: 1;
     bottom: 50px;
 }
+.dropdown-menu a {
+    font-size: 14px;
+    padding: 8px 14px;
+}
+
 </style>
 
 @endsection

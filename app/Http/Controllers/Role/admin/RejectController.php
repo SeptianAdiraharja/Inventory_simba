@@ -18,7 +18,7 @@ class RejectController extends Controller
     {
         return view('role.admin.rejects.scan');
     }
-    
+
     public function checkBarcode($barcode)
     {
         $item = Item::where('code', $barcode)->first();
@@ -68,12 +68,19 @@ class RejectController extends Controller
     }
 
 
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+  public function index(Request $request)
     {
-        //
+        $query = Reject::with('item')->latest();
+
+        // Filter berdasarkan kondisi jika ada parameter condition
+        if ($request->has('condition') && $request->condition !== 'all') {
+            $query->where('condition', $request->condition);
+        }
+
+        $rejects = $query->get();
+
+        return view('role.admin.rejects.index', compact('rejects'))
+            ->with('selectedCondition', $request->condition ?? 'all');
     }
 
     /**

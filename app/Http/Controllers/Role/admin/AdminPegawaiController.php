@@ -102,6 +102,7 @@ class AdminPegawaiController extends Controller
                 'item_id'    => $request->item_id,
                 'quantity'   => $request->quantity,
                 'scanned_at' => now(),
+                'status'     => 'scanned',
             ]);
 
             return response()->json([
@@ -130,21 +131,23 @@ class AdminPegawaiController extends Controller
     public function showCart($pegawaiId, Request $request)
     {
         $pegawai = User::findOrFail($pegawaiId);
-        $itemId = $request->query('item_id'); // item_id opsional dari frontend
+        $itemId = $request->query('item_id');
 
-        $cart = Cart::with(['cartItems.item'])
-                    ->where('user_id', $pegawai->id)
-                    ->first();
+        $cart = Cart::with(['cartItems' => function ($q) use ($itemId) {
+                    $q->where('status', 'scanned') // hanya tampilkan item yang sudah discan
+                    ->when($itemId, fn($query) => $query->where('item_id', $itemId))
+                    ->orderByDesc('created_at')
+                    ->with('item');
+                }])
+                ->where('user_id', $pegawai->id)
+                ->whereIn('status', ['active', 'pending', 'approved'])
+                ->latest()
+                ->first();
 
         $items = [];
 
         if ($cart && $cart->cartItems->count() > 0) {
-            $cartItems = $cart->cartItems()
-                              ->when($itemId, fn($q) => $q->where('item_id', $itemId))
-                              ->orderByDesc('created_at')
-                              ->get();
-
-            foreach ($cartItems as $cartItem) {
+            foreach ($cart->cartItems as $cartItem) {
                 $items[] = [
                     'cart_item_id' => $cartItem->id,
                     'item_id'      => $cartItem->item_id,

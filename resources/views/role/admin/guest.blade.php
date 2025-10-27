@@ -67,15 +67,7 @@
                                     Edit
                                 </button>
 
-                                <!-- Tombol Hapus -->
-                                <form action="{{ route('admin.guests.destroy', $guest->id) }}"
-                                    method="POST"
-                                    class="d-inline"
-                                    onsubmit="return confirm('Yakin ingin menghapus guest ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-sm btn-danger" type="submit">Hapus</button>
-                                </form>
+                                
 
                                 <!-- Tombol Detail -->
                                 <a href="{{ route('admin.produk.byGuest', $guest->id) }}"

@@ -12,8 +12,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 
 class ItemoutController extends Controller
 {
@@ -22,37 +20,49 @@ class ItemoutController extends Controller
      * Tampilkan daftar item keluar (pegawai & tamu)
      */
     public function index()
-{
-    // 🔹 1. Barang keluar dari PEGAWAI (Cart)
-    $approvedItems = Cart::with(['cartItems.item', 'user'])
-        ->whereIn('status', ['approved', 'approved_partially'])
-        ->whereHas('cartItems', function ($q) {
-            // hanya ambil cart yang punya item BELUM discan
-            $q->whereNull('scanned_at');
-        })
-        ->latest()
-        ->get();
+    {
+        // 🔹 1. Barang keluar dari PEGAWAI (Cart)
+        $approvedItems = Cart::with(['cartItems' => function ($q) {
+                // Hanya ambil item yang BELUM discan dan berstatus approved
+                $q->whereNull('scanned_at')
+                ->where(function ($query) {
+                    $query->where('status', 'approved')
+                            ->orWhereNull('status'); // fallback jika kolom status belum ada
+                })
+                ->with('item');
+            }, 'user'])
+            ->whereIn('status', ['approved', 'approved_partially'])
+            ->whereHas('cartItems', function ($q) {
+                // Pastikan cart punya item yang sesuai filter di atas
+                $q->whereNull('scanned_at')
+                ->where(function ($query) {
+                    $query->where('status', 'approved')
+                            ->orWhereNull('status');
+                });
+            })
+            ->latest()
+            ->get();
 
-    // 🔹 2. Barang keluar dari TAMU (tidak diubah)
-    $guestItemOuts = Guest::with(['guestCart.guestCartItems.item'])
-        ->whereHas('guestCart.guestCartItems')
-        ->orderByDesc('created_at')
-        ->paginate(10);
+        // 🔹 2. Barang keluar dari TAMU
+        $guestItemOuts = Guest::with(['guestCart.guestCartItems.item'])
+            ->whereHas('guestCart.guestCartItems')
+            ->orderByDesc('created_at')
+            ->paginate(10);
 
-    // 🔹 3. Pagination manual untuk hasil pegawai (karena bukan paginate langsung dari query)
-    $approvedItemsPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
-        $approvedItems->forPage(request('page', 1), 10),
-        $approvedItems->count(),
-        10,
-        request('page', 1),
-        ['path' => request()->url()]
-    );
+        // 🔹 3. Pagination manual untuk hasil pegawai (karena bukan paginate langsung dari query)
+        $approvedItemsPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $approvedItems->forPage(request('page', 1), 10),
+            $approvedItems->count(),
+            10,
+            request('page', 1),
+            ['path' => request()->url()]
+        );
 
-    return view('role.admin.itemout', [
-        'approvedItems' => $approvedItemsPaginated,
-        'guestItemOuts' => $guestItemOuts,
-    ]);
-}
+        return view('role.admin.itemout', [
+            'approvedItems' => $approvedItemsPaginated,
+            'guestItemOuts' => $guestItemOuts,
+        ]);
+    }
 
 
     /**
@@ -78,58 +88,25 @@ class ItemoutController extends Controller
             ], 200);
         }
 
+        // Kalau item ini sudah discan di database (hasil release sebelumnya)
         if ($cartItem->scanned_at) {
             return response()->json([
                 'success' => false,
                 'status'  => 'duplicate',
-                'message' => '⚠️ Barang ini sudah pernah dipindai.',
+                'message' => '⚠️ Barang ini sudah pernah dipindai sebelumnya.',
             ], 200);
         }
 
-        // Tandai item sudah discan
-        $cartItem->update(['scanned_at' => now()]);
-
-        // ✅ Cek apakah SEMUA item sudah discan
-        $allScanned = $cart->cartItems->every(fn($ci) => $ci->scanned_at !== null);
-
-        // Jika semua sudah discan → langsung proses release otomatis
-        if ($allScanned) {
-            DB::beginTransaction();
-            try {
-                foreach ($cart->cartItems as $ci) {
-                    // Buat entri di item_outs
-                    Item_out::create([
-                        'cart_id'   => $cart->id,
-                        'item_id'   => $ci->item_id,
-                        'quantity'  => $ci->quantity,
-                        'unit_id'   => $ci->item->unit_id,
-                        'released_at' => now(),
-                        'approved_by' => Auth::id(),
-                    ]);
-                    // Kurangi stok item
-                    $ci->item->decrement('stock', $ci->quantity);
-                }
-
-                $cart->update(['picked_up_at' => now()]);
-
-                DB::commit();
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::error('Auto-release gagal: ' . $e->getMessage());
-            }
-        }
-
+        // 🚫 Jangan update DB di sini — hanya kirim respon validasi
         return response()->json([
             'success' => true,
             'status'  => 'valid',
-            'message' => '✅ Barang berhasil discan' . ($allScanned ? ' dan semua item sudah dikeluarkan.' : '.'),
-            'all_scanned' => $allScanned,
+            'message' => "✅ Barang {$cartItem->item->name} cocok dengan daftar.",
             'item' => [
                 'id'        => $cartItem->item->id,
                 'name'      => $cartItem->item->name,
                 'code'      => $cartItem->item->code,
                 'quantity'  => $cartItem->quantity,
-                'scanned_at'=> $cartItem->scanned_at,
             ],
         ]);
     }

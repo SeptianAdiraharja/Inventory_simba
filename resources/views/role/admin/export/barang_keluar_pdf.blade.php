@@ -2,40 +2,16 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Laporan Barang Keluar ({{ $period }})</title>
+    <title>Laporan Barang Keluar</title>
     <style>
         @page {
-            margin: 80px 30px 40px 30px;
+            size: A4 landscape; /* ✅ Orientasi halaman jadi LANDSCAPE */
+            margin: 50px 30px 80px 30px;
         }
 
         body {
             font-family: DejaVu Sans, sans-serif;
             font-size: 12px;
-            margin: 0;
-            position: relative;
-        }
-
-        /* Header gambar di atas */
-        .kop-surat {
-            position: fixed;
-            top: -60px;
-            left: 0;
-            right: 0;
-            text-align: center;
-        }
-
-        .kop-surat img {
-            width: 100%;
-            height: auto;
-        }
-
-        h2, h4 {
-            margin: 0;
-            padding: 0;
-        }
-
-        .content {
-            margin-top: 150px; /* beri jarak supaya teks tidak menimpa gambar kop */
         }
 
         table {
@@ -47,54 +23,152 @@
         th, td {
             border: 1px solid #000;
             padding: 6px;
-            text-align: left;
+            text-align: center;
         }
 
         th {
-            background-color: #f2f2f2;
+            background: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .title {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 13px;
         }
 
         .footer {
-            margin-top: 20px;
-            font-size: 11px;
+            position: fixed;
+            bottom: 15px;
+            left: 0;
+            right: 0;
             text-align: center;
+            font-size: 11px;
+            color: #333;
+        }
+
+        .page-number:after {
+            content: counter(page);
+        }
+
+        .kop-container {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .kop-container img {
+            max-width: 100%;
+            height: auto;
+            object-fit: contain;
         }
     </style>
 </head>
 <body>
-    <!-- Gambar kop surat -->
-    <div class="kop-surat">
-        <img src="{{ public_path('assets/img/pdf/templatepdf.png') }}" alt="Kop Surat">
-    </div>
 
-    <div class="content">
-        <h2>Laporan Barang Keluar ({{ $period }})</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Nama Barang</th>
-                    <th>Qty</th>
-                    <th>Tanggal Keluar</th>
-                    <th>Pengambil</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($items as $i => $itemOut)
-                    <tr>
-                        <td>{{ $i + 1 }}</td>
-                        <td>{{ $itemOut->item->name ?? '-' }}</td>
-                        <td>{{ $itemOut->quantity }}</td>
-                        <td>{{ $itemOut->released_date ?? $itemOut->created_at->format('d-m-Y') }}</td>
-                        <td>{{ $itemOut->cart->user->name ?? 'Tamu/Non-User' }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+    @php
+        use Carbon\Carbon;
 
-        <div class="footer">
-            <p>Dicetak pada {{ now()->format('d-m-Y H:i') }}</p>
+        $path = public_path('assets/img/pdf/kopsurat.png');
+        $grandTotal = 0;
+        $totalQuantity = 0;
+
+        if (file_exists($path)) {
+            $type = pathinfo($path, PATHINFO_EXTENSION);
+            $data = file_get_contents($path);
+            $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+        } else {
+            $base64 = null;
+        }
+    @endphp
+
+    {{-- 🔹 Kop Surat --}}
+    @if($base64)
+        <div class="kop-container">
+            <img src="{{ $base64 }}" alt="Kop Surat">
         </div>
+    @endif
+
+    {{-- 🔹 Judul --}}
+    <h2 class="title">LAPORAN BARANG KELUAR</h2>
+    <p class="subtitle">
+        Periode:
+        @if(!empty($period))
+            {{ $period }}
+        @elseif(!empty($startDate) && !empty($endDate))
+            {{ Carbon::parse($startDate)->format('d M Y') }} s/d {{ Carbon::parse($endDate)->format('d M Y') }}
+        @else
+            Semua Periode
+        @endif
+    </p>
+
+    {{-- 🔹 Tabel Data --}}
+    <table>
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Nama Barang</th>
+                <th>Penerima</th>
+                <th>Tanggal Keluar</th>
+                <th>Jumlah</th>
+            </tr>
+        </thead>
+    <tbody>
+        @forelse($items as $i => $row)
+            @php
+                $jumlah   = $row->quantity ?? 0;
+                $harga    = $row->item->price ?? 0;
+                $subtotal = $row->total_price ?? ($jumlah * $harga);
+                $grandTotal += $subtotal;
+                $totalQuantity += $jumlah;
+
+                // 🔹 Tentukan penerima
+                $penerima = '-';
+                if (!empty($row->cart?->user?->name)) {
+                    $penerima = $row->cart->user->name;
+                } elseif (!empty($row->guestCart?->guest?->name)) {
+                    $penerima = $row->guestCart->guest->name;
+                } elseif (!empty($row->user?->name)) {
+                    $penerima = $row->user->name;
+                } elseif (!empty($row->guest?->name)) {
+                    $penerima = $row->guest->name;
+                }
+            @endphp
+            <tr>
+                <td>{{ $i + 1 }}</td>
+                <td>{{ $row->item->name ?? '-' }}</td>
+                <td>{{ $penerima }}</td>
+                <td>{{ optional($row->created_at)->format('d-m-Y') ?? '-' }}</td>
+                <td>{{ number_format($jumlah, 0, ',', '.') }}</td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="5">Tidak ada data barang keluar pada periode ini.</td>
+            </tr>
+        @endforelse
+    </tbody>
+
+    {{-- 🔹 Total --}}
+    <tfoot>
+        <tr>
+            <th colspan="4" style="text-align:right;">Total Jumlah Barang</th>
+            <th>{{ number_format($totalQuantity, 0, ',', '.') }}</th>
+        </tr>
+    </tfoot>
+</table>
+
+
+    {{-- 🔹 Footer --}}
+    <div class="footer">
+        Dicetak pada: {{ now()->format('d-m-Y H:i') }} &nbsp;|&nbsp;
+        Halaman <span class="page-number"></span>
     </div>
+
 </body>
 </html>

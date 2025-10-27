@@ -15,7 +15,9 @@ class RequestController extends Controller
     ======================================================== */
     public function index(Request $request)
     {
-        // 🧹 Hapus otomatis cart yang sudah final lebih dari 3 hari
+        // =========================================================
+        // 🧹 Hapus otomatis cart_items dari cart yang sudah final > 3 hari
+        // =========================================================
         DB::table('cart_items')
             ->whereIn('cart_id', function ($q) {
                 $q->select('id')
@@ -25,6 +27,9 @@ class RequestController extends Controller
             })
             ->delete();
 
+        // =========================================================
+        // 🔍 Filter cart
+        // =========================================================
         $status = $request->get('status');
         $recent = now()->subDays(3);
 
@@ -41,18 +46,27 @@ class RequestController extends Controller
                 'carts.updated_at',
                 DB::raw('COALESCE(SUM(cart_items.quantity), 0) as total_quantity')
             )
+            // =========================================================
+            // 🚫 Hanya tampilkan cart yang masih aktif atau final < 3 hari
+            // =========================================================
+            ->where(function ($query) use ($recent) {
+                $query->where('carts.status', 'pending')
+                    ->orWhere('carts.status', 'approved_partially')
+                    ->orWhere(function ($q) use ($recent) {
+                        $q->whereIn('carts.status', ['approved', 'rejected'])
+                        ->where('carts.updated_at', '>=', $recent);
+                    });
+            })
+            // =========================================================
+            // 🎯 Filter tambahan berdasarkan parameter "status" dari request
+            // =========================================================
             ->when($status, function ($query) use ($status, $recent) {
                 return match ($status) {
                     'pending' => $query->where('carts.status', 'pending'),
-                    'rejected', 'approved', 'approved_partially' =>
-                        $query->where('carts.status', $status)->where('carts.updated_at', '>=', $recent),
-                    default => $query->where(function ($sub) use ($recent) {
-                        $sub->where('carts.status', 'pending')
-                            ->orWhere(function ($q) use ($recent) {
-                                $q->whereIn('carts.status', ['rejected', 'approved', 'approved_partially'])
-                                    ->where('carts.updated_at', '>=', $recent);
-                            });
-                    }),
+                    'approved' => $query->where('carts.status', 'approved')->where('carts.updated_at', '>=', $recent),
+                    'approved_partially' => $query->where('carts.status', 'approved_partially'),
+                    'rejected' => $query->where('carts.status', 'rejected')->where('carts.updated_at', '>=', $recent),
+                    default => $query
                 };
             })
             ->groupBy(
@@ -187,31 +201,46 @@ class RequestController extends Controller
 
     public function bulkUpdate(Request $request, $cartId)
     {
-        $changes = $request->input('changes', []);
+        $status = $request->input('status');
+        $reason = $request->input('reason');
+        $changes = $request->input('changes');
 
-        if (empty($changes)) {
+        if (!$status && !$changes) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tidak ada perubahan dikirim.'
+                'message' => 'Tidak ada status dikirim.'
             ]);
         }
 
         DB::beginTransaction();
         try {
-            $updatedItems = [];
-
-            foreach ($changes as $itemId => $status) {
-                if (!in_array($status, ['approved', 'rejected'])) continue;
-
+            // CASE 1: Approve / Reject Semua
+            if ($status) {
                 DB::table('cart_items')
-                    ->where('id', $itemId)
+                    ->where('cart_id', $cartId)
                     ->update([
                         'status' => $status,
-                        'rejection_reason' => $status === 'rejected' ? 'Ditolak oleh admin.' : null,
+                        'rejection_reason' => $status === 'rejected'
+                            ? ($reason ?: 'Ditolak oleh admin.')
+                            : null,
                         'updated_at' => now(),
                     ]);
+            }
 
-                $updatedItems[$itemId] = ['status' => $status];
+            // CASE 2: Perubahan per item (changes)
+            if (is_array($changes) || is_object($changes)) {
+                foreach ($changes as $itemId => $change) {
+                    DB::table('cart_items')
+                        ->where('id', $itemId)
+                        ->where('cart_id', $cartId)
+                        ->update([
+                            'status' => $change['status'],
+                            'rejection_reason' => $change['status'] === 'rejected'
+                                ? ($change['reason'] ?? 'Ditolak oleh admin.')
+                                : null,
+                            'updated_at' => now(),
+                        ]);
+                }
             }
 
             // Hitung ulang status cart
@@ -238,17 +267,18 @@ class RequestController extends Controller
                 'success' => true,
                 'message' => 'Perubahan berhasil disimpan.',
                 'cart_status' => $cartStatus,
-                'items' => $updatedItems,
+                'reason' => $reason,
             ]);
+
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Bulk update gagal', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
             ], 500);
         }
     }
+
 
     // =======================
     // ✅ APPROVE ITEM
