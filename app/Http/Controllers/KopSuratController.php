@@ -32,7 +32,7 @@ class KopSuratController extends Controller
             'email' => 'nullable|email',
             'website' => 'nullable|string|max:255',
             'kota' => 'nullable|string|max:255',
-            'logo' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
+            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
         ]);
 
         if ($request->hasFile('logo')) {
@@ -62,7 +62,7 @@ class KopSuratController extends Controller
             'email' => 'nullable|email',
             'website' => 'nullable|string|max:255',
             'kota' => 'nullable|string|max:255',
-            'logo' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
+            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
         ]);
 
         // 🔸 Hapus logo lama jika upload baru

@@ -13,7 +13,7 @@
         .page-number:after { content: counter(page); }
         @page {
             margin-top: 80px;
-            margin-bottom: 40px; 
+            margin-bottom: 40px;
         }
         body {
             font-family: sans-serif;

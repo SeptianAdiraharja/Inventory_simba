@@ -26,10 +26,10 @@
 
     .barcode {
         position: absolute;
-        top: 3mm;   
+        top: 3mm;
         left: 50%;
         transform: translateX(-50%);
-        width: 26mm;   
+        width: 26mm;
         height: auto;
         image-rendering: crisp-edges;
         filter: contrast(130%) brightness(110%);
