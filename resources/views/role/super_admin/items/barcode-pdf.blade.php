@@ -1,71 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>Barcode - {{ $item->code }}</title>
-    <style>
-        @page {
-            size: A4;
-            margin: 5mm;
-        }
-        body {
-            font-family: 'Arial', sans-serif;
-            font-size: 7pt;
-            margin: 0;
-            padding: 0;
-        }
+<meta charset="utf-8">
+<title>Barcode - {{ $item->code }}</title>
+<style>
+    @page { size: 30mm 20mm; margin: 0; }
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 30mm;
+        height: 20mm;
+    }
 
-        .sheet {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-start;
-            align-items: flex-start;
-            gap: 2mm;
-        }
+    body {
+        position: relative;
+        font-family: Arial, sans-serif;
+    }
 
-        .label {
-            width: 25.6mm;
-            height: 10.4mm;
-            text-align: center;
-            box-sizing: border-box;
-            padding: 1mm;
-            border: 0.1mm solid transparent; 
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
+    .label {
+        width: 30mm;
+        height: 20mm;
+        position: relative;
+        page-break-after: always;
+    }
 
-        .label img {
-            width: 100%;
-            height: auto;
-            image-rendering: crisp-edges;
-            image-rendering: pixelated;
-            transform: scale(1.02); 
-            filter: contrast(120%) brightness(105%);
-        }
+    .barcode {
+        position: absolute;
+        top: 3mm;   
+        left: 50%;
+        transform: translateX(-50%);
+        width: 26mm;   
+        height: auto;
+        image-rendering: crisp-edges;
+        filter: contrast(130%) brightness(110%);
+    }
 
-        .label p {
-            font-size: 5pt;
-            margin: 1mm 0 0 0;
-            letter-spacing: 0.3pt;
-        }
-    </style>
+    .code {
+        position: absolute;
+        bottom: 7mm;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 6pt;
+        font-weight: bold;
+        margin: 0;
+    }
+
+    .name {
+        position: absolute;
+        bottom: 3mm;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 5.5pt;
+        margin: 0;
+    }
+</style>
 </head>
 <body>
-    <div class="sheet">
-        @for ($i = 0; $i < $jumlah; $i++)
-            <div class="label">
-                @if($item->barcode_png_base64)
-                    <img 
-                        src="data:image/png;base64,{{ base64_encode(base64_decode(str_replace('data:image/png;base64,', '', $item->barcode_png_base64))) }}" 
-                        alt="barcode"
-                    >
-                    <p>{{ $item->code }}</p>
-                    <p>{{ $item->name }}</p>
-                @endif
-            </div>
-        @endfor
+@for ($i = 0; $i < $jumlah; $i++)
+    <div class="label">
+        <img src="{{ $item->barcode_png_base64 }}" class="barcode" alt="barcode">
+        <p class="code">{{ $item->code }}</p>
+        <p class="name">{{ $item->name }}</p>
     </div>
+@endfor
 </body>
 </html>
