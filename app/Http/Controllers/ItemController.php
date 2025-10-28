@@ -158,12 +158,25 @@ class ItemController extends Controller
 
     public function printBarcode(Request $request, Item $item)
     {
-        $jumlah = $request->get('jumlah', 1);
-        $ukuran = $request->get('ukuran', 'A4');
+        $jumlah = (int) $request->get('jumlah', 1);
 
-        $pdf = Pdf::loadView('role.super_admin.items.barcode-pdf', compact('item', 'jumlah', 'ukuran'))
-            ->setPaper('A4', 'portrait');
+        $widthPt = (30 / 25.4) * 72;   
+        $heightPt = (20 / 25.4) * 72; 
 
-        return $pdf->download('barcode-' . $item->code . '.pdf');
+        $pdf = Pdf::loadView('role.super_admin.items.barcode-pdf', compact('item', 'jumlah'))
+            ->setPaper([0, 0, $widthPt, $heightPt], 'portrait')
+            ->setOptions([
+                'margin-top' => 0,
+                'margin-bottom' => 0,
+                'margin-left' => 0,
+                'margin-right' => 0,
+                'dpi' => 300,
+                'enable-smart-shrinking' => false,
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+            ]);
+
+        return $pdf->stream('barcode-' . $item->code . '.pdf');
     }
+
 }

@@ -128,7 +128,6 @@
                                     <h6 class="fw-bold text-secondary mb-3">
                                         <i class="ri-barcode-line me-2"></i> Barcode
                                     </h6>
-
                                     <div class="text-center">
                                         @if($item->barcode_png_base64)
                                             <img src="{{ $item->barcode_png_base64 }}"
