@@ -27,7 +27,7 @@
                     value="{{ request('end_date') }}">
             </div>
 
-            {{-- 🔽 Urutkan Stok --}}
+            {{-- Urutkan Stok --}}
             <div class="col-md-3 col-sm-6">
                 <select name="sort_stock" id="sortStock" class="form-select form-select-sm">
                     <option value="">Urutkan Stok</option>
@@ -73,7 +73,7 @@
                     @forelse($items_in as $row)
                         @php
                             $isExpired = $row->expired_at ? $row->expired_at->isPast() : null;
-                            $statusText = $isExpired === null ? 'Tidak Berlaku' : ($isExpired ? 'Expired' : 'Aktif');
+                            $statusText = $isExpired === null ? 'Tidak Berlaku' : ($isExpired ? 'Expired' : 'Belum Expired');
                             $statusClass = $isExpired === null ? 'bg-secondary'
                                           : ($isExpired ? 'bg-danger' : 'bg-success');
                         @endphp

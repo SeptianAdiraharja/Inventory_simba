@@ -9,63 +9,81 @@
         }
 
         body {
-            font-family: DejaVu Sans, sans-serif;
-            font-size: 12px;
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            color: #000;
         }
 
+        /* Hilangkan border di seluruh table utama */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            margin-top: 10px;
         }
 
         th, td {
-            border: 1px solid #000;
-            padding: 6px;
+            border: 0.5px solid #000;
+            padding: 6px 8px;
             text-align: center;
         }
 
         th {
-            background: #f2f2f2;
+            background: #f8f8f8;
             font-weight: bold;
         }
 
         .title {
             text-align: center;
-            margin-top: 10px;
-            font-size: 16px;
+            margin-top: 5px;
+            font-size: 15pt;
             font-weight: bold;
+            text-transform: uppercase;
         }
 
         .subtitle {
             text-align: center;
-            margin-top: 5px;
-            font-size: 13px;
+            font-size: 12pt;
+            margin-top: 3px;
+            margin-bottom: 10px;
         }
 
         .footer {
             position: fixed;
-            bottom: 15px;
+            bottom: 20px;
             left: 0;
             right: 0;
             text-align: center;
-            font-size: 11px;
-            color: #333;
+            font-size: 11pt;
+            color: #000;
         }
 
-        .page-number:after {
-            content: counter(page);
+        .kop-table {
+            width: 100%;
+            border: none;
+            margin-bottom: 5px;
         }
 
-        .kop-container {
-            text-align: center;
-            margin-bottom: 15px;
+        .kop-table td {
+            border: none;
+            vertical-align: middle;
         }
 
-        .kop-container img {
-            max-width: 100%;
-            height: auto;
+        .kop-logo {
+            width: 90px;
+            height: 90px;
             object-fit: contain;
+        }
+
+        .kop-text {
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* Garis kop surat */
+        .kop-line {
+            border: 1.8px solid #000;
+            margin-top: 3px;
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -87,11 +105,46 @@
         }
     @endphp
 
-    {{-- 🔹 Kop Surat --}}
-    @if($base64)
-        <div class="kop-container">
-            <img src="{{ $base64 }}" alt="Kop Surat">
-        </div>
+    {{-- 🔹 KOP SURAT --}}
+    @if(isset($kopSurat))
+        <table style="width:100%; border:none; border-collapse:collapse; margin-bottom:10px;">
+            <tr>
+            {{-- Logo kiri --}}
+                @php
+                    $logoPath = public_path('storage/' . $kopSurat->logo);
+                    $logoBase64 = '';
+                    if (file_exists($logoPath)) {
+                        $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+                        $data = file_get_contents($logoPath);
+                        $logoBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                    }
+                @endphp
+
+                @if($logoBase64)
+                    <img src="{{ $logoBase64 }}" style="width:145px; height:auto; object-fit:contain; display:block; margin:0;">
+                @else
+                    <img src="{{ public_path('images/default-logo.png') }}" style="width:145px; height:auto; object-fit:contain; display:block; margin:0;">
+                @endif
+                <td style="text-align:center; vertical-align:middle; border:none;">
+                    <div style="font-family:'Times New Roman', serif; margin:0; padding:0; line-height:1.4;">
+                        <div style="font-size:17pt; font-weight:700; text-transform:uppercase; margin:0;">
+                            {{ strtoupper($kopSurat->nama_instansi) }}
+                        </div>
+                        <div style="font-size:20pt; font-weight:900; text-transform:uppercase; margin-top:3px;">
+                            {{ strtoupper($kopSurat->nama_unit) }}
+                        </div>
+                        <div style="font-size:11.5pt; font-weight:500; margin-top:6px;">
+                            {{ $kopSurat->alamat }}
+                            Telp: {{ $kopSurat->telepon }} <br>
+                            Website: {{ $kopSurat->website }} | Email: {{ $kopSurat->email }}<br>
+                            {{ $kopSurat->kota }}
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        {{-- Garis bawah --}}
+        <div style="border-top:3px solid #000; margin-top:5px; margin-bottom:20px;"></div>
     @endif
 
     {{-- 🔹 Judul --}}
@@ -177,12 +230,20 @@
         </tfoot>
     </table>
 
-    {{-- 🔹 Footer --}}
-    <div class="footer">
-        Dicetak pada: {{ now()->format('d-m-Y H:i') }} &nbsp;|&nbsp;
-        Halaman <span class="page-number"></span>
-    </div>
-
+    <script type="text/php">
+    if (isset($pdf)) {
+        $pdf->page_script('
+            $font = $fontMetrics->get_font("Helvetica", "normal");
+            $size = 9;
+            $date = date("d-m-Y H:i");
+            $pageText = "Dicetak pada: " . $date . " | Halaman " . $PAGE_NUM . " dari " . $PAGE_COUNT;
+            $width = $fontMetrics->get_text_width($pageText, $font, $size);
+            $x = ($pdf->get_width() - $width) / 2;
+            $y = $pdf->get_height() - 25;
+            $pdf->text($x, $y, $pageText, $font, $size);
+        ');
+    }
+    </script>
 </body>
 </html>
 

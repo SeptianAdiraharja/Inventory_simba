@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->enum('role', ['super_admin', 'admin', 'pegawai']);
+            
+            $table->boolean('is_banned')->default(false);
+            $table->timestamp('banned_at')->nullable();
+
             $table->rememberToken();
             $table->timestamps();
         });

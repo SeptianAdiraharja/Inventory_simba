@@ -7,6 +7,7 @@ use App\Models\Item_out;
 use App\Models\Reject;
 use App\Models\ExportLog;
 use App\Models\Guest_carts_item;
+use App\Models\KopSurat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -112,24 +113,34 @@ class ExportController extends Controller
                     });
             }
         }
-
+            $kopSurat = KopSurat::all();
         return view('role.super_admin.exports.index', compact(
-            'items', 'logs', 'period', 'startDate', 'endDate', 'format', 'type'
+            'items', 'logs', 'period', 'startDate', 'endDate', 'format', 'type', 'kopSurat'
         ));
     }
 
     /** 🔹 Download data */
     public function download(Request $request)
     {
+        // 🔹 Cek pilihan kop surat
+        if (!$request->has('kop_surat')) {
+            return back()->with('warning', 'Silakan pilih kop surat terlebih dahulu sebelum mengunduh.');
+        }
+
+        $kopSuratId = $request->input('kop_surat');
+        $kopSurat   = KopSurat::find($kopSuratId);
+
+        if (!$kopSurat) {
+            return back()->with('warning', 'Kop surat yang dipilih tidak ditemukan.');
+        }
+
         $startDate = $request->query('start_date');
         $period    = $request->query('period', 'weekly');
         $type      = $request->query('type', 'masuk');
         $format    = $request->query('format', 'excel');
-
-        $endDate = $this->calculateEndDate($startDate, $period);
+        $endDate   = $this->calculateEndDate($startDate, $period);
         $periodeText = "{$startDate} s/d {$endDate}";
 
-        // 🔹 Ambil data sesuai jenis
         $controllerData = $this->index($request)->getData();
         $items = $controllerData['items'] ?? collect();
 
@@ -153,15 +164,29 @@ class ExportController extends Controller
                 'reject' => Excel::download(new BarangRejectExport($items, $totalJumlah, $grandTotal), "{$fileName}.xlsx"),
             };
         }
-
         $pdfView = match($type) {
             'masuk'  => 'role.super_admin.exports.barang_masuk_pdf',
             'keluar' => 'role.super_admin.exports.barang_keluar_pdf',
             'reject' => 'role.super_admin.exports.barang_reject_pdf',
         };
 
+        $options = [
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => true,
+            'isRemoteEnabled' => true
+        ];
+
+        $pdf = ($type === 'masuk')
+            ? Pdf::loadView('role.super_admin.exports.barang_masuk_pdf', compact(
+                'items','startDate','endDate','periodeText','totalJumlah','grandTotal','kopSurat'
+            ))->setOptions($options)
+            : Pdf::loadView('role.super_admin.exports.barang_keluar_pdf', compact(
+                'items','startDate','endDate','periodeText','totalJumlah','grandTotal','kopSurat'
+            ))->setOptions($options);
+
         $pdf = Pdf::loadView($pdfView, compact('items','startDate','endDate','periodeText','totalJumlah','grandTotal'));
         return $pdf->setPaper('a4', 'landscape')->download("{$fileName}.pdf");
+
     }
 
     /** 🔹 Bersihkan log */

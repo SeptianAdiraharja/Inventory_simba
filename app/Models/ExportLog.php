@@ -17,4 +17,10 @@ class ExportLog extends Model
     {
         return $this->belongsTo(User::class, 'super_admin_id');
     }
+
+    public function kopSurat()
+    {
+        return $this->belongsTo(KopSurat::class);
+    }
+
 }

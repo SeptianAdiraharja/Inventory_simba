@@ -11,6 +11,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\PermintaanController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\KopSuratController;
 
 // Role Controllers
 use App\Http\Controllers\Role\SuperAdminController;
@@ -34,6 +35,14 @@ use App\Http\Controllers\SearchController;
 Route::get('/', function () {
     return view('welcome');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Banned
+|--------------------------------------------------------------------------
+*/
+Route::put('/users/{id}/ban', [UserController::class, 'ban'])->name('users.ban');
+Route::put('/users/{id}/unban', [UserController::class, 'unban'])->name('users.unban');
 
 /*
 |--------------------------------------------------------------------------
@@ -98,6 +107,7 @@ Route::middleware(['auth', 'role:super_admin'])
             ->name('exports.barang_reject.pdf');
 
         Route::delete('/export/clear', [ExportController::class, 'clearLogs'])->name('export.clear');
+        Route::resource('kop_surat', KopSuratController::class);
 });
 
 

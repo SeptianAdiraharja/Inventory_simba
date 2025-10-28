@@ -123,15 +123,12 @@ class Item extends Model
 
     private static function generateUniqueCode($categoryId)
     {
-        // kode kategori 3 digit
         $categoryCode = str_pad($categoryId, 3, '0', STR_PAD_LEFT);
 
-        // ambil item terakhir di kategori yang sama
         $lastItem = self::where('category_id', $categoryId)
             ->orderBy('id', 'desc')
             ->first();
 
-        // ambil angka terakhir dari code sebelumnya
         $nextNumber = 1;
         if ($lastItem && preg_match('/-(\d+)-/', $lastItem->code, $matches)) {
             $nextNumber = ((int) $matches[1]) + 1;
