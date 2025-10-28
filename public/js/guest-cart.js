@@ -1,0 +1,132 @@
+document.addEventListener("DOMContentLoaded", () => {
+  // === Fokus dan submit otomatis barcode ===
+  document.querySelectorAll("input[id^='barcode-']").forEach(input => {
+    const modalId = input.id.replace("barcode-", "");
+    $(`#scanModal-${modalId}`).on("shown.bs.modal", () => input.focus());
+    input.addEventListener("keypress", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById(`form-${modalId}`).dispatchEvent(new Event("submit"));
+      }
+    });
+  });
+
+  // === Submit form scan barang ===
+  document.querySelectorAll("form[id^='form-']").forEach(form => {
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const url = form.action;
+      const btn = form.querySelector("button[type='submit']");
+      const modal = bootstrap.Modal.getInstance(form.closest(".modal"));
+      const formData = new FormData(form);
+
+      btn.disabled = true;
+      btn.innerHTML = "<i class='ri-loader-4-line spin me-1'></i> Menyimpan...";
+
+      try {
+        const res = await fetch(url, { method: "POST", headers: { "X-Requested-With": "XMLHttpRequest" }, body: formData });
+        const data = await res.json();
+
+        if (data.status === "success") {
+          Swal.fire({
+            icon: "success",
+            title: "Berhasil!",
+            text: data.message,
+            timer: 1500,
+            showConfirmButton: false,
+          });
+          modal.hide();
+          setTimeout(() => window.location.reload(), 1600);
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Gagal!",
+            text: data.message || "Terjadi kesalahan.",
+          });
+        }
+      } catch (err) {
+        Swal.fire({
+          icon: "error",
+          title: "Kesalahan Koneksi",
+          text: err.message,
+        });
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = "<i class='ri-check-line me-1'></i> Simpan";
+      }
+    });
+  });
+
+  // === Buka Modal Cart ===
+  const openCartBtn = document.getElementById("openCartModal");
+  const cartTableBody = document.getElementById("cartTableBody");
+  const releaseForm = document.getElementById("releaseForm");
+  const cartModal = new bootstrap.Modal(document.getElementById("cartModal"));
+
+  if (openCartBtn) {
+    openCartBtn.addEventListener("click", () => {
+      const guestId = openCartBtn.dataset.guestId;
+      if (!guestId) return;
+      fetch(`/admin/produk/guest/${guestId}/cart`)
+        .then(res => res.json())
+        .then(data => {
+          cartTableBody.innerHTML = "";
+          if (data.cartItems.length > 0) {
+            data.cartItems.forEach(item => {
+              cartTableBody.innerHTML += `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${item.code ?? "-"}</td>
+                  <td class="text-center">${item.quantity}</td>
+                </tr>`;
+            });
+          } else {
+            cartTableBody.innerHTML = `
+              <tr><td colspan="3" class="text-center text-muted py-3">
+                <i class='ri-information-line me-1'></i>Keranjang kosong
+              </td></tr>`;
+          }
+          releaseForm.action = `/admin/produk/guest/${guestId}/release`;
+          cartModal.show();
+        });
+    });
+  }
+
+  // === Release semua barang ===
+  releaseForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    const url = releaseForm.action;
+    const csrf = releaseForm.querySelector('input[name="_token"]').value;
+
+    const confirm = await Swal.fire({
+      title: "Keluarkan Semua Barang?",
+      text: "Pastikan data sudah benar.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Ya, keluarkan!",
+      cancelButtonText: "Batal",
+      reverseButtons: true,
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+      const res = await fetch(url, { method: "POST", headers: { "X-CSRF-TOKEN": csrf } });
+      if (!res.ok) throw new Error("Gagal memproses permintaan");
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil!",
+        text: "Semua barang berhasil dikeluarkan.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      setTimeout(() => window.location.reload(), 1600);
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Gagal!",
+        text: "Terjadi kesalahan: " + err.message,
+      });
+    }
+  });
+});

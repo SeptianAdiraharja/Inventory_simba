@@ -170,5 +170,24 @@
         Halaman <span class="page-number"></span>
     </div>
 
+    <script type="text/php">
+        if (isset($pdf)) {
+            $pdf->page_script('
+                if ($PAGE_COUNT > 0) {
+                    $font = $fontMetrics->get_font("DejaVu Sans, Helvetica, sans-serif", "normal");
+                    $size = 10;
+                    $pageText = "Halaman " . $PAGE_NUM . " dari " . $PAGE_COUNT;
+
+                    // 🔹 Posisi tengah bawah kertas A4 landscape
+                    $width = $pdf->get_width();
+                    $textWidth = $fontMetrics->get_text_width($pageText, $font, $size);
+                    $x = ($width - $textWidth) / 2;  // hitung posisi tengah
+                    $y = $pdf->get_height() - 30;    // jarak 30px dari bawah
+
+                    $pdf->text($x, $y, $pageText, $font, $size);
+                }
+            ');
+        }
+    </script>
 </body>
 </html>

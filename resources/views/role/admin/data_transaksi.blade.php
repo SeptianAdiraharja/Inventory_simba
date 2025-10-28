@@ -5,7 +5,7 @@
 
     <div class="card shadow-lg border-0 rounded-4">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3 px-4">
-            <h4 class="mb-0 fw-bold"><i class="bi bi-box-seam me-2"></i>Data Transaksi Barang Keluar</h4>
+            <h4 class="mb-0 fw-bold text-white"><i class="bi bi-box-seam me-2 text-white"></i>Data Transaksi Barang Keluar</h4>
         </div>
 
         <div class="card-body p-0">
@@ -258,7 +258,11 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
+                        {{-- Hidden: cart_item_id (penting) --}}
+                        <input type="hidden" name="cart_item_id" id="refundCartItemId">
+                        {{-- Hidden: item id (opsional tapi berguna) --}}
                         <input type="hidden" name="item_id" id="refundItemId">
+
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Nama Barang</label>
                             <input type="text" class="form-control" id="refundItemName" readonly>
@@ -269,7 +273,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Jumlah Refund</label>
-                            <input type="number" name="qty" class="form-control" min="1" required>
+                            <input type="number" name="qty" id="refundQty" class="form-control" min="1" required>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -280,6 +284,7 @@
             </div>
         </div>
     </div>
+
 
     {{-- 🔸 Modal Edit --}}
     <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
@@ -467,18 +472,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // ======================================================
-    // 🟢 Modal Refund
+    // 🟢 Modal Refund (Pegawai)
     // ======================================================
     const refundModal = document.getElementById('refundModal');
     if (refundModal) {
         refundModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
-            const itemName = button.getAttribute('data-item-name');
+            const cartItemId = button.getAttribute('data-cart-item-id'); // ID dari cart_items
             const itemId = button.getAttribute('data-item-id');
-            document.getElementById('refundItemName').value = itemName;
+            const itemName = button.getAttribute('data-item-name');
+            const maxQty = button.getAttribute('data-max-qty');
+
+            document.getElementById('refundCartItemId').value = cartItemId;
             document.getElementById('refundItemId').value = itemId;
+            document.getElementById('refundItemName').value = itemName;
+
+            const refundQtyInput = document.getElementById('refundQty');
+            refundQtyInput.value = 1; // default
+            if (maxQty) {
+                refundQtyInput.setAttribute('max', maxQty);
+            } else {
+                refundQtyInput.removeAttribute('max');
+            }
         });
     }
+
 
     const editModal = document.getElementById('editModal');
     if (editModal) {

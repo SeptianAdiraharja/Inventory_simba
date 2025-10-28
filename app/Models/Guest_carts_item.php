@@ -10,7 +10,7 @@ class Guest_carts_item extends Model
     use HasFactory;
 
     protected $table = 'guest_cart_items';
-    protected $fillable = ['guest_cart_id', 'item_id', 'quantity'];
+    protected $fillable = ['guest_cart_id', 'item_id', 'quantity', 'released_at'];
 
     // 🔹 Pivot ke cart utama
     public function guestCart()
