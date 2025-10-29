@@ -118,7 +118,6 @@ class RequestController extends Controller
     ======================================================== */
     public function update(Request $request, string $id)
     {
-        // ✅ Tambahkan log awal untuk memastikan request masuk
         Log::info('DEBUG UPDATE STATUS - REQUEST DITERIMA', [
             'input' => $request->all(),
             'status' => $request->input('status'),
@@ -127,7 +126,6 @@ class RequestController extends Controller
 
         $newStatus = $request->input('status');
 
-        // 🧩 Validasi status
         if (!in_array($newStatus, ['approved', 'rejected'])) {
             Log::warning('DEBUG UPDATE STATUS - STATUS TIDAK VALID', [
                 'status' => $newStatus,
@@ -161,9 +159,19 @@ class RequestController extends Controller
                         'status' => $newStatus,
                         'updated_at' => now(),
                     ]);
+
+                // 🔹 Jika semua ditolak → kembalikan stok semua item
+                if ($newStatus === 'rejected') {
+                    $cartItems = DB::table('cart_items')->where('cart_id', $id)->get();
+                    foreach ($cartItems as $item) {
+                        DB::table('items')
+                            ->where('id', $item->item_id)
+                            ->increment('stock', $item->quantity);
+                    }
+                }
             });
 
-            // 🟢 Ambil data cart dan buat notifikasi
+            // 🟢 Kirim notifikasi ke user
             $cart = DB::table('carts')->find($id);
             if ($cart) {
                 Notification::create([
@@ -174,7 +182,6 @@ class RequestController extends Controller
                 ]);
             }
 
-            // 🧃 Jika AJAX request, kembalikan JSON
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
@@ -183,7 +190,6 @@ class RequestController extends Controller
                 ]);
             }
 
-            // ✅ Jika bukan AJAX, redirect biasa
             return back()->with('success', "Semua item berhasil {$newStatus}.");
 
         } catch (\Throwable $e) {
@@ -225,6 +231,16 @@ class RequestController extends Controller
                             : null,
                         'updated_at' => now(),
                     ]);
+
+                // 🔹 Jika semua ditolak → kembalikan stok semua item
+                if ($status === 'rejected') {
+                    $cartItems = DB::table('cart_items')->where('cart_id', $cartId)->get();
+                    foreach ($cartItems as $item) {
+                        DB::table('items')
+                            ->where('id', $item->item_id)
+                            ->increment('stock', $item->quantity);
+                    }
+                }
             }
 
             // CASE 2: Perubahan per item (changes)
@@ -240,10 +256,20 @@ class RequestController extends Controller
                                 : null,
                             'updated_at' => now(),
                         ]);
+
+                    // 🔹 Jika item ditolak → kembalikan stok item tersebut
+                    if ($change['status'] === 'rejected') {
+                        $cartItem = DB::table('cart_items')->where('id', $itemId)->first();
+                        if ($cartItem) {
+                            DB::table('items')
+                                ->where('id', $cartItem->item_id)
+                                ->increment('stock', $cartItem->quantity);
+                        }
+                    }
                 }
             }
 
-            // Hitung ulang status cart
+            // 🧮 Hitung ulang status cart
             $cartItems = DB::table('cart_items')->where('cart_id', $cartId)->get();
             $approved = $cartItems->where('status', 'approved')->count();
             $rejected = $cartItems->where('status', 'rejected')->count();
@@ -279,7 +305,6 @@ class RequestController extends Controller
         }
     }
 
-
     // =======================
     // ✅ APPROVE ITEM
     // =======================
@@ -301,14 +326,22 @@ class RequestController extends Controller
     // =======================
     private function updateItemStatus($cartItemId, $newStatus)
     {
-        $item = CartItem::with('cart')->findOrFail($cartItemId);
+        $item = CartItem::with(['cart', 'item'])->findOrFail($cartItemId);
         $cart = $item->cart;
+        $product = $item->item; // ambil data barang dari relasi
 
         DB::beginTransaction();
         try {
             // Ubah status item
             $item->status = $newStatus;
             $item->save();
+
+            // Jika reject → kembalikan stok ke tabel items
+            if ($newStatus === 'rejected') {
+                DB::table('items')
+                    ->where('id', $product->id)
+                    ->increment('stock', $item->quantity);
+            }
 
             // Hitung ulang status cart berdasarkan semua item
             $cartItems = $cart->cartItems;
@@ -329,7 +362,6 @@ class RequestController extends Controller
 
             DB::commit();
 
-            // ✅ Kirim JSON lengkap biar JS bisa update tabel tanpa reload
             return response()->json([
                 'success' => true,
                 'message' => 'Status item berhasil diperbarui.',
@@ -343,6 +375,5 @@ class RequestController extends Controller
             Log::error('Gagal memperbarui status item', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Gagal memperbarui status item.']);
         }
-
     }
 }

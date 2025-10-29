@@ -112,9 +112,9 @@ Route::middleware(['auth', 'role:super_admin'])
 
 
 Route::middleware(['auth', 'role:admin'])
-->prefix('admin')
-->as('admin.')
-->group(function () {
+    ->prefix('admin')
+    ->as('admin.')
+    ->group(function () {
 
     /*
     |--------------------------------------------------------------------------
@@ -204,6 +204,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/produk/guest/{id}/scan', 'scan')->name('produk.scan');
         Route::get('/produk/guest/{id}/cart', 'showCart')->name('produk.cart');
         Route::post('/produk/guest/{id}/release', 'release')->name('produk.release');
+        Route::post('/produk/guest/{id}/cart/update', 'updateCart')->name('produk.cart.update');
+        Route::delete('/produk/guest/{id}/cart/item/{itemId}', 'destroy')->name('produk.cart.remove');
     });
 
 

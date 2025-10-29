@@ -12,11 +12,15 @@
     width: 60px;
     height: 60px;
     z-index: 1050;
+    position: fixed;
+    overflow: visible;
   ">
   <i class="ri-shopping-cart-2-line fs-3"></i>
-  @if(isset($cartItems) && $cartItems->count() > 0)
-    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-      {{ $cartItems->count() }}
+  @if(isset($cartItems) && $cartItems->filter(fn($i) => is_null($i->pivot->released_at))->count() > 0)
+    <span
+      class="position-absolute badge rounded-pill bg-danger"
+      style="top: -3px; right: -2px; transform: translate(50%, -50%); font-size: 0.75rem; padding: 4px 6px; border: 2px solid white; z-index: 2000;">
+      {{ $cartItems->filter(fn($i) => is_null($i->pivot->released_at))->count() }}
     </span>
   @endif
 </button>
@@ -121,6 +125,7 @@
               <th>Nama Barang</th>
               <th>Kode</th>
               <th class="text-center">Jumlah</th>
+              <th class="text-center">Aksi</th>
             </tr>
           </thead>
           <tbody id="cartTableBody">

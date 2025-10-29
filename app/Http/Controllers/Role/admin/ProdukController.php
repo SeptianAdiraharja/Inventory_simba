@@ -7,17 +7,21 @@ use App\Models\Item;
 use App\Models\Guest;
 use App\Models\Item_out_guest;
 use App\Models\Category;
-use App\Models\Guest_carts_item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProdukController extends Controller
 {
+    /**
+     * Tampilkan semua produk
+     */
     public function index(Request $request)
     {
         $query = $request->input('q');
         $kategori = $request->input('kategori');
 
+        // Query utama
         $items = Item::with('category')
             ->when($query, function ($q) use ($query) {
                 $q->where(function ($sub) use ($query) {
@@ -34,73 +38,30 @@ class ProdukController extends Controller
             })
             ->latest()
             ->paginate(12)
-            ->withQueryString();
+            ->withQueryString(); // 🔥 menjaga query tetap ada saat pagination
 
+        // Ambil semua kategori untuk dropdown filter
         $categories = Category::all();
 
         return view('role.admin.produk', compact('items', 'categories'));
     }
 
     /**
-     * Tampilkan produk + cart guest (hanya item yang belum direlease)
+     * Tampilkan produk + cart guest
      */
     public function showByGuest($id)
     {
-        $guest = Guest::with('guestCart')->findOrFail($id);
+       $guest = Guest::with(['guestCart.items' => function ($q) {
+            $q->wherePivot('released_at', null);
+        }])->findOrFail($id);
         $items = Item::with('category')->get();
 
         $cart = $guest->guestCart;
-
-        // ✅ Ambil item cart yang belum direlease
-        $cartItems = collect();
-        if ($cart) {
-            $cartItems = Guest_carts_item::where('guest_cart_id', $cart->id)
-                ->whereNull('released_at')
-                ->with('item')
-                ->get()
-                ->pluck('item')
-                ->map(function ($guestCartItems) {
-                    $item = $guestCartItems->item;
-                    if($item){
-                        $item->quantity = $guestCartItems->quantity;
-                    }
-                    return $item;
-                })
-            ->filter();
-        }
+        $cartItems = $cart?->items ?? collect();
 
         return view('role.admin.produk', compact('guest', 'items', 'cartItems'));
     }
 
-    /**
-     * Ambil cart guest untuk modal (AJAX)
-     */
-    public function showCart($guestId)
-    {
-        $guest = Guest::with('guestCart')->findOrFail($guestId);
-
-        $guestCart = $guest->guestCart;
-
-        // ✅ Ambil hanya item yang belum direlease
-        $guestCartItems = collect();
-        if ($guestCart) {
-            $guestCartItems = Guest_carts_item::where('guest_cart_id', $guestCart->id)
-                ->whereNull('released_at') // 👈 hanya item yang belum keluar
-                ->with('item')
-                ->get();
-        }
-
-        $cartItems = $guestCartItems->map(function ($cartItem) {
-            return [
-                'id'       => $cartItem->item->id,
-                'name'     => $cartItem->item->name,
-                'code'     => $cartItem->item->code,
-                'quantity' => $cartItem->quantity,
-            ];
-        });
-
-        return response()->json(['cartItems' => $cartItems]);
-    }
 
 
     /**
@@ -172,73 +133,149 @@ class ProdukController extends Controller
             : back()->with('success', $message);
     }
 
+
+    /**
+     * Ambil cart guest untuk modal (AJAX)
+     */
+   public function showCart($guestId)
+    {
+        $guest = Guest::with(['guestCart.items' => function ($q) {
+            // hanya ambil item yang belum direlease
+            $q->wherePivot('released_at', null);
+        }])->findOrFail($guestId);
+
+        $cartItems = $guest->guestCart?->items->map(function ($item) {
+            return [
+                'id'       => $item->id,
+                'name'     => $item->name,
+                'code'     => $item->code,
+                'quantity' => $item->pivot->quantity,
+            ];
+        }) ?? collect();
+
+        return response()->json(['cartItems' => $cartItems]);
+    }
+
+
     /**
      * ✅ Checkout / Release barang guest
-     * Sekarang: update kolom released_at di guest_cart_items
+     * Tidak menghapus cart dan pivot, hanya menandai is_released = true
      */
     public function release($guestId)
     {
-        $guest = Guest::with(['guestCart.items'])->findOrFail($guestId);
+        $guest = Guest::with('guestCart.items')->findOrFail($guestId);
 
-        // Validasi cart
         if (!$guest->guestCart || $guest->guestCart->items->isEmpty()) {
             return redirect()->back()->with('error', 'Keranjang guest kosong.');
         }
 
+        if ($guest->guestCart->is_released ?? false) {
+            return redirect()->back()->with('warning', 'Barang untuk guest ini sudah pernah dikeluarkan.');
+        }
+
         DB::beginTransaction();
         try {
-            // 🔹 Ambil hanya item yang belum direlease
-            $cartItems = Guest_carts_item::where('guest_cart_id', $guest->guestCart->id)
-                ->whereNull('released_at')
-                ->with('item')
-                ->get();
-
-            if ($cartItems->isEmpty()) {
-                return redirect()->back()->with('warning', 'Semua barang sudah dikeluarkan sebelumnya.');
-            }
-
-            // 🔹 Siapkan data untuk JSON log
-            $itemsData = $cartItems->map(function ($cartItem) {
+            $itemsData = $guest->guestCart->items->map(function ($item) {
                 return [
-                    'item_id'  => $cartItem->item->id,
-                    'name'     => $cartItem->item->name,
-                    'quantity' => $cartItem->quantity,
+                    'item_id'  => $item->id,
+                    'name'     => $item->name,
+                    'quantity' => $item->pivot->quantity,
                 ];
             })->toArray();
 
-            // 🔹 Simpan ke tabel item_out_guests
             Item_out_guest::create([
                 'guest_id'   => $guest->id,
                 'items'      => json_encode($itemsData),
                 'printed_at' => now(),
             ]);
 
-            // 🔹 Kurangi stok
-            foreach ($cartItems as $cartItem) {
-                $item = $cartItem->item;
-                if ($item->stock < $cartItem->quantity) {
+            foreach ($guest->guestCart->items as $item) {
+                if ($item->stock < $item->pivot->quantity) {
                     throw new \Exception("Stok untuk {$item->name} tidak mencukupi.");
                 }
 
-                $item->decrement('stock', $cartItem->quantity);
+                $item->decrement('stock', $item->pivot->quantity);
+
+                // 🔹 Tambahkan baris ini agar released_at terisi
+                DB::table('guest_cart_items')
+                    ->where('guest_cart_id', $guest->guestCart->id)
+                    ->where('item_id', $item->id)
+                    ->update(['released_at' => now()]);
             }
 
-            // 🔹 Update semua item di cart jadi released
-            Guest_carts_item::where('guest_cart_id', $guest->guestCart->id)
-                ->whereNull('released_at')
-                ->update(['released_at' => now()]);
+            // Tandai cart sudah direlease
+            $guest->guestCart->update(['is_released' => true]);
 
             DB::commit();
 
             return redirect()
                 ->route('admin.produk.byGuest', $guest->id)
-                ->with('success', 'Barang berhasil dikeluarkan dan ditandai sebagai released.');
+                ->with('success', 'Barang berhasil dikeluarkan dan released_at terisi.');
         } catch (\Throwable $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
+    public function updateCart(Request $request, $guestId)
+    {
+        try {
+            $guest = \App\Models\Guest::with('guestCart.items')->findOrFail($guestId);
+            $cart = $guest->guestCart;
+
+            if (!$cart) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cart tidak ditemukan.'
+                ], 404);
+            }
+
+            $itemId = $request->input('item_id');
+            $quantity = (int) $request->input('quantity');
+
+            // Validasi kuantitas
+            if ($quantity < 1) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Jumlah harus minimal 1.'
+                ], 422);
+            }
+
+            $item = $cart->items()->where('items.id', $itemId)->first();
+            if (!$item) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Item tidak ditemukan di cart.'
+                ], 404);
+            }
+
+            // Cek stok sebelum update
+            if ($quantity > $item->stock) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Stok tersedia untuk {$item->name} hanya {$item->stock}."
+                ], 422);
+            }
+
+            // Update pivot table
+            $cart->items()->updateExistingPivot($itemId, [
+                'quantity' => $quantity,
+                'updated_at' => now(),
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Jumlah barang berhasil diperbarui.'
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Cart update error: ' . $e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat update cart: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
     // Resource method bawaan
     public function create() {}
@@ -246,5 +283,27 @@ class ProdukController extends Controller
     public function show(string $id) {}
     public function edit(string $id) {}
     public function update(Request $request, string $id) {}
-    public function destroy(string $id) {}
+    public function destroy($guestId, $itemId) {
+        try {
+            $guest = Guest::with('guestCart.items')->findOrFail($guestId);
+            $cart = $guest->guestCart;
+
+            if (!$cart) {
+                return response()->json(['status' => 'error', 'message' => 'Cart tidak ditemukan.'], 404);
+            }
+
+            $item = $cart->items()->where('items.id', $itemId)->first();
+            if (!$item) {
+                return response()->json(['status' => 'error', 'message' => 'Item tidak ditemukan di cart.'], 404);
+            }
+
+            // Hapus relasi item dari pivot
+            $cart->items()->detach($itemId);
+
+            return response()->json(['status' => 'success', 'message' => 'Item berhasil dihapus dari cart.']);
+        } catch (\Throwable $e) {
+            Log::error('Cart remove error: ' . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+        }
+    }
 }

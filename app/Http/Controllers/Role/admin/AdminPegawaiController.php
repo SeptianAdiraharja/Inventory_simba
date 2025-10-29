@@ -134,7 +134,7 @@ class AdminPegawaiController extends Controller
         $itemId = $request->query('item_id');
 
         $cart = Cart::with(['cartItems' => function ($q) use ($itemId) {
-                    $q->where('status', 'scanned') // hanya tampilkan item yang sudah discan
+                    $q->where('status', 'scanned')
                     ->when($itemId, fn($query) => $query->where('item_id', $itemId))
                     ->orderByDesc('created_at')
                     ->with('item');
@@ -145,7 +145,6 @@ class AdminPegawaiController extends Controller
                 ->first();
 
         $items = [];
-
         if ($cart && $cart->cartItems->count() > 0) {
             foreach ($cart->cartItems as $cartItem) {
                 $items[] = [
@@ -165,11 +164,36 @@ class AdminPegawaiController extends Controller
             }
         }
 
+        // 🔹 Hitung total permintaan minggu ini
+        $weeklyRequestCount = Item_out::whereHas('cart', function ($query) use ($pegawaiId) {
+                $query->where('user_id', $pegawaiId);
+            })
+            ->whereBetween('released_at', [now()->startOfWeek(), now()->endOfWeek()])
+            ->count();
+
+        // 🔹 Tambahkan jumlah permintaan aktif/pending di cart minggu ini
+        $activePendingCount = CartItem::whereHas('cart', function ($query) use ($pegawaiId) {
+                $query->where('user_id', $pegawaiId)
+                    ->whereIn('status', ['active', 'pending', 'approved']);
+            })
+            ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+            ->count();
+
+        // 🔹 Gabungkan dua sumber
+        $totalWeekly = $weeklyRequestCount + $activePendingCount;
+
+        $hasReachedLimit = $totalWeekly >= 5;
+
         return response()->json([
             'success' => true,
             'data' => [
                 'cart_id' => $cart ? $cart->id : null,
                 'items'   => $items,
+                'weekly_request_count' => $totalWeekly,
+                'has_reached_limit' => $hasReachedLimit,
+                'limit_message' => $hasReachedLimit
+                    ? 'Pegawai ini sudah mencapai batas peminjaman mingguan (5 permintaan).'
+                    : null,
             ],
         ]);
     }
