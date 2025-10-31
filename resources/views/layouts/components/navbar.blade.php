@@ -201,54 +201,98 @@
         </a>
     </div>
 
+    <!-- Breadcrumb Section -->
+    <div class="d-flex align-items-center">
+        <nav aria-label="breadcrumb" class="ms-2">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="{{ url('/' . (Auth::user()->role === 'admin' ? 'admin/dashboard' : 'pegawai/dashboard')) }}"
+                    class="text-decoration-none text-secondary fw-semibold">
+                        <i class="ri-home-4-line me-1"></i>Dashboard
+                    </a>
+                </li>
+
+                @php
+                    // ambil URL segment untuk menentukan posisi breadcrumb
+                    $segments = request()->segments();
+                @endphp
+
+                @foreach($segments as $index => $segment)
+                    @if($index > 0)
+                        @php
+                            $url = url(implode('/', array_slice($segments, 0, $index + 1)));
+                            $isLast = $index === count($segments) - 1;
+                        @endphp
+
+                        @if(!$isLast)
+                            <li class="breadcrumb-item">
+                                <a href="{{ $url }}" class="text-decoration-none text-secondary">
+                                    {{ ucfirst($segment) }}
+                                </a>
+                            </li>
+                        @else
+                            <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">
+                                {{ ucfirst($segment) }}
+                            </li>
+                        @endif
+                    @endif
+                @endforeach
+            </ol>
+        </nav>
+    </div>
+
+
     <div class="navbar-nav-right d-flex align-items-center justify-content-end" id="navbar-collapse">
 
         @auth
             @if(Auth::user()->role === 'pegawai' || Auth::user()->role === 'admin')
             @if (request()->is('pegawai/produk*') || request()->is('admin/produk/guest*'))
                 <!-- Search Bar -->
-                <div class="navbar-nav align-items-center mt-2">
-                    <div class="nav-item d-flex align-items-center">
-                        <form
-                            action="{{ request()->is('admin/guests*')
-                                ? route('admin.guests.index')
-                                : (request()->is('admin/produk*')
-                                    ? route('admin.produk.index')
-                                    : (request()->is('pegawai/*')
-                                        ? route('pegawai.produk.search')
-                                        : route('pegawai.produk.search'))) }}"
-                            method="GET"
-                            class="d-flex align-items-center px-3 py-1 border border-secondary-subtle bg-white bg-opacity-75 rounded-pill shadow-sm"
-                            style="transition: all 0.2s ease;">
+                <!-- ============================= -->
+                <!-- 🔍 SEARCH BAR (CENTERED) -->
+                <!-- ============================= -->
+                <div class="flex-grow-1 d-flex justify-content-center align-items-center">
+                    <form
+                        action="{{ request()->is('admin/guests*')
+                            ? route('admin.guests.index')
+                            : (request()->is('admin/produk*')
+                                ? route('admin.produk.index')
+                                : (request()->is('pegawai/*')
+                                    ? route('pegawai.produk.search')
+                                    : route('pegawai.produk.search'))) }}"
+                        method="GET"
+                        class="d-flex align-items-center px-3 py-1 border border-secondary-subtle bg-white bg-opacity-75 rounded-pill shadow-sm"
+                        style="max-width: 600px; width: 100%; transition: all 0.2s ease;"
+                    >
 
-                            {{-- Dropdown kategori --}}
-                            <select name="kategori"
-                                    class="form-select border-0 bg-transparent text-secondary fw-medium"
-                                    style="width: 150px; font-size: 14px; outline: none; box-shadow: none;"
-                                    onchange="this.form.submit()">
-                                <option value="none">Pilih Kategori</option>
-                                <option value="none">Semua</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->name }}" {{ request('kategori') == $category->name ? 'selected' : '' }}>
-                                        {{ $category->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                        {{-- Dropdown kategori --}}
+                        <select name="kategori"
+                                class="form-select border-0 bg-transparent text-secondary fw-medium"
+                                style="width: 150px; font-size: 14px; outline: none; box-shadow: none;"
+                                onchange="this.form.submit()">
+                            <option value="none">Pilih Kategori</option>
+                            <option value="none">Semua</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->name }}" {{ request('kategori') == $category->name ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
 
-                            {{-- Icon search --}}
-                            <i class="ri ri-search-line icon-lg lh-0 me-2 text-secondary opacity-75"></i>
+                        {{-- Icon search --}}
+                        <i class="ri ri-search-line icon-lg lh-0 me-2 text-secondary opacity-75"></i>
 
-                            {{-- Input pencarian --}}
-                            <input type="text"
-                                name="q"
-                                class="form-control border-0 bg-transparent shadow-none text-secondary"
-                                placeholder="Search..."
-                                aria-label="Search..."
-                                style="font-size: 14px; width: 400px;"
-                                value="{{ request('q') }}" />
-                        </form>
-                    </div>
+                        {{-- Input pencarian --}}
+                        <input type="text"
+                            name="q"
+                            class="form-control border-0 bg-transparent shadow-none text-secondary"
+                            placeholder="Cari produk..."
+                            aria-label="Search..."
+                            style="font-size: 14px;"
+                            value="{{ request('q') }}" />
+                    </form>
                 </div>
+
                 @endif
             @endif
         @endauth
@@ -258,7 +302,7 @@
 
             @auth
                 @if(Auth::user()->role === 'pegawai')
-                   
+
                     <!-- Notification Icon -->
                     <li class="nav-item dropdown me-3">
                         <a class="nav-link position-relative" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -415,11 +459,11 @@ document.addEventListener('DOMContentLoaded', function () {
             Swal.fire({
                 title: 'Konfirmasi!',
                 text: `Yakin ingin menghapus item "${itemName}" dari keranjang?`,
-                icon: 'warning', 
+                icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Ya, hapus!',
                 cancelButtonText: 'Batal',
-                confirmButtonColor: '#d33', 
+                confirmButtonColor: '#d33',
             }).then((result) => {
                 if (result.isConfirmed) {
                     form.submit();
@@ -466,5 +510,27 @@ document.addEventListener('DOMContentLoaded', function () {
     transform: translateY(6px);
   }
 }
+
+.breadcrumb {
+  background: transparent;
+  font-size: 0.9rem;
+  margin-left: 5px;
+}
+.breadcrumb-item + .breadcrumb-item::before {
+  content: "›";
+  color: #aaa;
+}
+.breadcrumb-item a {
+  color: #6c63ff;
+  transition: color 0.2s;
+}
+.breadcrumb-item a:hover {
+  color: #7d0dfd;
+}
+.breadcrumb-item.active {
+  color: #7d0dfd;
+}
+
+
 </style>
 @endpush

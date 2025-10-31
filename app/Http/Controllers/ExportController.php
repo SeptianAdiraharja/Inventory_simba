@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Item_in;
 use App\Models\Item_out;
 use App\Models\ExportLog;
+use App\Models\Reject;
 use App\Models\Guest_carts_item;
 use App\Models\KopSurat;
 use Illuminate\Http\Request;
@@ -84,6 +85,7 @@ class ExportController extends Controller
                     return $row;
                 });
 
+
             $guestItems = Guest_carts_item::with(['item.unit', 'guestCart.guest'])
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->get()
@@ -97,6 +99,19 @@ class ExportController extends Controller
 
             $items = $pegawaiItems->concat($guestItems)->sortBy('created_at')->values();
         }
+
+            // 🔹 Barang Reject
+            elseif ($type === 'reject') {
+                $items = Reject::with('item.unit')
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get()
+                    ->map(function ($row) {
+                        $row->role = $row->condition ?? '-';
+                        $row->total_price = ($row->item->price ?? 0) * ($row->quantity ?? 0);
+                        return $row;
+                    });
+            }
+
 
 
             // 🔹 Semua Data
@@ -194,13 +209,20 @@ class ExportController extends Controller
             'isRemoteEnabled' => true
         ];
 
-        $pdf = ($type === 'masuk')
-            ? Pdf::loadView('role.super_admin.exports.barang_masuk_pdf', compact(
-                'items','startDate','endDate','periodeText','totalJumlah','grandTotal','kopSurat'
-            ))->setOptions($options)
-            : Pdf::loadView('role.super_admin.exports.barang_keluar_pdf', compact(
+        if ($type === 'masuk') {
+            $pdf = Pdf::loadView('role.super_admin.exports.barang_masuk_pdf', compact(
                 'items','startDate','endDate','periodeText','totalJumlah','grandTotal','kopSurat'
             ))->setOptions($options);
+        } elseif ($type === 'keluar') {
+            $pdf = Pdf::loadView('role.super_admin.exports.barang_keluar_pdf', compact(
+                'items','startDate','endDate','periodeText','totalJumlah','grandTotal','kopSurat'
+            ))->setOptions($options);
+        } else {
+            $pdf = Pdf::loadView('role.super_admin.exports.barang_reject_pdf', compact(
+                'items','startDate','endDate','periodeText','totalJumlah','kopSurat'
+            ))->setOptions($options);
+        }
+
 
         return $pdf->setPaper('a4', 'landscape')->download("{$fileName}.pdf");
 

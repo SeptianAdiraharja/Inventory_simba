@@ -25,8 +25,8 @@
                             <button class="btn btn-sm btn-outline-primary rounded-pill px-3" data-period="yearly">Tahunan</button>
                           </div>
                         </div>
-                        <div class="chart-container" style="position: relative; height: 400px; width: 100%;">
-                          <canvas id="overviewChart"></canvas>
+                        <div class="chart-container flex-grow-1 d-flex align-items-stretch" style="height: 100%; min-height: 380px;">
+                          <canvas id="overviewChart" style="width: 100%; height: 100%;"></canvas>
                         </div>
                       </div>
                     </div>
