@@ -77,7 +77,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="//unpkg.com/alpinejs" defer></script>
     <script src="{{ asset('js/dashboard.js') }}"></script>
-    <script src="{{ asset('js/modal-pagination.js') }}"></script>
     <script src="{{ asset('js/dashboard-modal.js') }}"></script>
 
     <style>

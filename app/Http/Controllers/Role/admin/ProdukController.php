@@ -128,9 +128,18 @@ class ProdukController extends Controller
         }
 
         // 🔄 Jika AJAX, kirim JSON agar tidak reload halaman
-        return $request->ajax()
-            ? response()->json(['status' => 'success', 'message' => $message])
-            : back()->with('success', $message);
+       if ($request->ajax()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => $message,
+                'item_name' => $item->name,
+                'quantity' => $request->quantity,
+                'item_id' => $item->id,
+            ]);
+        }
+
+        // 🔙 Kalau bukan AJAX, redirect biasa
+        return back()->with('success', $message);
     }
 
 

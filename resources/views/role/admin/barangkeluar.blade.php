@@ -1,34 +1,36 @@
 @extends('layouts.index')
 
 @section('content')
-<div class="container-fluid py-3 animate__animated animate__fadeIn">
-    <div class="card shadow-sm border-0 rounded-4">
-        <div class="card-body">
-            <h5 class="fw-bold mb-3">
-                <i class="bi bi-box-arrow-up"></i> Export Data Barang Keluar
-            </h5>
+<div class="container-fluid py-4 animate__animated animate__fadeIn">
+    <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
 
-            {{-- Filter Data (Menggunakan satu form untuk filter, tombol export di bawah) --}}
-            <div class="card bg-light border-0 mb-4">
-                <div class="card-body">
+        <div class="card-body bg-light">
+            <h4 class="fw-bold mb-4 text-primary">
+                <i class="bi bi-box-arrow-up"></i> Export Data Barang Keluar
+            </h4>
+
+            {{-- =============== FILTER DATA =============== --}}
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body bg-white p-4 rounded-4">
                     <h6 class="fw-semibold text-secondary mb-3">
                         <i class="bi bi-funnel"></i> Filter Data
                     </h6>
                     <form method="GET" action="{{ route('admin.export.out') }}" id="filter-form" class="row g-3 align-items-end">
                         <div class="col-md-3">
                             <label class="form-label fw-semibold">Tanggal Mulai</label>
-                            <input type="date" name="start_date" value="{{ $startDate ?? '' }}" class="form-control" required>
+                            <input type="date" name="start_date" value="{{ $startDate ?? '' }}" class="form-control shadow-sm rounded-3" required>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-semibold">Tanggal Akhir</label>
-                            <input type="date" name="end_date" value="{{ $endDate ?? '' }}" class="form-control" required>
+                            <input type="date" name="end_date" value="{{ $endDate ?? '' }}" class="form-control shadow-sm rounded-3" required>
                         </div>
                         <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary w-100">
+                            <button type="submit" class="btn btn-primary w-100 rounded-3 fw-semibold shadow-sm">
                                 <i class="bi bi-search"></i> Tampilkan
                             </button>
                         </div>
                     </form>
+
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             const startInput = document.querySelector('input[name="start_date"]');
@@ -41,39 +43,29 @@
                 </div>
             </div>
 
-            ---
-
-            {{-- Hasil Filter (Preview Table dengan tampilan baru) --}}
+            {{-- =============== HASIL FILTER =============== --}}
             @if(isset($items) && $items->count() > 0)
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-body">
-                        {{-- Header dan Tombol Export seperti di gambar --}}
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="card-body bg-white p-4 rounded-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                             <h6 class="fw-semibold text-secondary mb-0">
-                                <i class="bi bi-list-check"></i> Data Barang Keluar ({{ $startDate }} s/d {{ $endDate }})
+                                <i class="bi bi-list-check"></i> Data Barang Keluar
+                                <span class="text-muted">({{ $startDate }} s/d {{ $endDate }})</span>
                             </h6>
-                            {{-- Tombol Export (Pastikan route 'admin.export.out.download' tersedia) --}}
                             <div>
-                                <a
-                                    href="{{ route('admin.barang_keluar.excel', ['start_date' => $startDate, 'end_date' => $endDate]) }}"
-                                    class="btn btn-success btn-sm me-2"
-                                    target="_blank"
-                                >
+                                <a href="{{ route('admin.barang_keluar.excel', ['start_date' => $startDate, 'end_date' => $endDate]) }}"
+                                   class="btn btn-success btn-sm rounded-3 shadow-sm me-2" target="_blank">
                                     <i class="bi bi-file-earmark-excel"></i> Excel
                                 </a>
-                                <a
-                                    href="{{ route('admin.barang_keluar.pdf', ['start_date' => $startDate, 'end_date' => $endDate]) }}"
-                                    class="btn btn-primary btn-sm"
-                                    target="_blank"
-                                >
+                                <a href="{{ route('admin.barang_keluar.pdf', ['start_date' => $startDate, 'end_date' => $endDate]) }}"
+                                   class="btn btn-primary btn-sm rounded-3 shadow-sm" target="_blank">
                                     <i class="bi bi-file-earmark-pdf"></i> PDF
                                 </a>
                             </div>
                         </div>
 
                         <div class="table-responsive">
-                            {{-- Modifikasi Table Header dan Body --}}
-                            <table class="table table-bordered align-middle text-center">
+                            <table class="table table-bordered align-middle text-center mb-0">
                                 <thead class="table-primary">
                                     <tr>
                                         <th>NO</th>
@@ -86,12 +78,10 @@
                                 <tbody>
                                     @foreach ($items as $i => $itemOut)
                                     <tr>
-                                        <td>{{ $i + 1 }}</td>
-                                        {{-- itemOut adalah record dari item_outs --}}
-                                        <td>{{ $itemOut->item->name ?? 'Barang Dihapus' }}</td>
-                                        <td>{{ $itemOut->quantity }}</td>
+                                        <td class="fw-semibold text-secondary">{{ $i + 1 }}</td>
+                                        <td class="fw-semibold text-dark">{{ $itemOut->item->name ?? 'Barang Dihapus' }}</td>
+                                        <td class="text-primary fw-bold">{{ $itemOut->quantity }}</td>
                                         <td>{{ \Carbon\Carbon::parse($itemOut->released_at ?? $itemOut->created_at)->format('d-m-Y H:i') }}</td>
-                                        {{-- Menampilkan nama pengambil/pengguna dari relasi cart -> user --}}
                                         <td>{{ $itemOut->cart->user->name ?? 'Tamu/Non-User' }}</td>
                                     </tr>
                                     @endforeach
@@ -100,36 +90,29 @@
                         </div>
                     </div>
                 </div>
-            @endif
-
-            @if(isset($items) && $items->count() > 0)
-                {{-- tampilkan tabel (sudah di atas) --}}
             @elseif(request()->has('start_date') && request()->has('end_date'))
-                <div class="alert alert-warning">
-                    Tidak ada data barang keluar pada rentang tanggal tersebut.
+                <div class="alert alert-warning rounded-4 shadow-sm p-3 text-center fw-semibold">
+                    <i class="bi bi-exclamation-circle"></i> Tidak ada data barang keluar pada rentang tanggal tersebut.
                 </div>
             @endif
 
-
-            ---
-
-            {{-- Riwayat Export (Tidak Berubah) --}}
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body">
+            {{-- =============== RIWAYAT EXPORT =============== --}}
+            <div class="card border-0 shadow-sm rounded-4 mt-4">
+                <div class="card-body bg-white p-4 rounded-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="fw-semibold text-secondary mb-0">
                             <i class="bi bi-clock-history"></i> Riwayat Export
                         </h6>
                         <form action="{{ route('admin.export.out.clear') }}" method="POST">
                             @csrf
-                            <button type="submit" class="btn btn-danger btn-sm">
+                            <button type="submit" class="btn btn-danger btn-sm rounded-3 shadow-sm">
                                 <i class="bi bi-trash"></i> Bersihkan Riwayat
                             </button>
                         </form>
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table align-middle table-bordered text-center">
+                        <table class="table align-middle table-bordered text-center mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th>NO</th>
@@ -142,13 +125,15 @@
                                 @forelse ($exports as $index => $export)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
-                                    <td>{{ strtoupper($export->format) }}</td>
-                                    <td>{{ $export->filename }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($export->created_at)->format('d/m/Y H:i') }}</td>
+                                    <td><span class="badge bg-primary px-3 py-2">{{ strtoupper($export->format) }}</span></td>
+                                    <td class="fw-medium text-dark">{{ $export->filename }}</td>
+                                    <td class="text-muted">{{ \Carbon\Carbon::parse($export->created_at)->format('d/m/Y H:i') }}</td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="text-muted">Belum ada riwayat export.</td>
+                                    <td colspan="4" class="text-muted py-3">
+                                        <i class="bi bi-info-circle"></i> Belum ada riwayat export.
+                                    </td>
                                 </tr>
                                 @endforelse
                             </tbody>

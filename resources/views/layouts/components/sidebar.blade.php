@@ -180,7 +180,7 @@
     </ul>
 
     <!-- Waktu Server -->
-    <div class="text-center py-3 text-white border-top border-secondary small text-glow">
+    <div class="text-center py-3 text-white border-top border-secondary fw-bold">
         <i class="ri ri-time-line me-1"></i>
         <span id="server-time">Memuat waktu...</span>
     </div>

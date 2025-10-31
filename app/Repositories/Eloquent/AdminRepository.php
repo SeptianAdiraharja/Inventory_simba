@@ -64,7 +64,7 @@ class AdminRepository implements AdminRepositoryInterface
             ->leftJoin('guests', 'guests.created_by', '=', 'sessions.user_id')
             ->select(
                 DB::raw('COALESCE(guests.id, sessions.id) as requester_id'),
-                DB::raw('COALESCE(guests.name, sessions.ip_address) as name'),
+                DB::raw('COALESCE(guests.name, "Guest") as name'),
                 DB::raw('SUM(guest_cart_items.quantity) as total_quantity')
             )
             ->groupBy('guests.id', 'guests.name', 'sessions.id', 'sessions.ip_address')
@@ -72,7 +72,8 @@ class AdminRepository implements AdminRepositoryInterface
             ->map(function ($item) {
                 $item->type = 'guest';
                 return $item;
-            });
+        });
+
 
         // --- Gabungkan dan urutkan ---
         $combined = $userRequests->concat($guestRequests)
@@ -98,7 +99,7 @@ class AdminRepository implements AdminRepositoryInterface
             ];
         });
     }
-    
+
 
     /**
      * 🔹 Ambil data chart mingguan/bulanan/tahunan

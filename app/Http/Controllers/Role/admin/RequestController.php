@@ -139,49 +139,65 @@ class RequestController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($id, $newStatus) {
+            DB::beginTransaction();
 
-                // 🟢 Update semua item di cart_items
-                DB::table('cart_items')
-                    ->where('cart_id', $id)
-                    ->update([
-                        'status' => $newStatus,
-                        'rejection_reason' => $newStatus === 'rejected'
-                            ? 'Ditolak secara keseluruhan.'
-                            : null,
-                        'updated_at' => now(),
-                    ]);
+            // 🟢 Update semua item di cart_items
+            DB::table('cart_items')
+                ->where('cart_id', $id)
+                ->update([
+                    'status' => $newStatus,
+                    'rejection_reason' => $newStatus === 'rejected'
+                        ? 'Ditolak secara keseluruhan.'
+                        : null,
+                    'updated_at' => now(),
+                ]);
 
-                // 🟢 Update status di tabel carts
-                DB::table('carts')
-                    ->where('id', $id)
-                    ->update([
-                        'status' => $newStatus,
-                        'updated_at' => now(),
-                    ]);
+            // 🟢 Update status di tabel carts
+            DB::table('carts')
+                ->where('id', $id)
+                ->update([
+                    'status' => $newStatus,
+                    'updated_at' => now(),
+                ]);
 
-                // 🔹 Jika semua ditolak → kembalikan stok semua item
-                if ($newStatus === 'rejected') {
-                    $cartItems = DB::table('cart_items')->where('cart_id', $id)->get();
-                    foreach ($cartItems as $item) {
-                        DB::table('items')
-                            ->where('id', $item->item_id)
-                            ->increment('stock', $item->quantity);
-                    }
+            // 🔹 Jika semua ditolak → kembalikan stok semua item
+            if ($newStatus === 'rejected') {
+                $cartItems = DB::table('cart_items')->where('cart_id', $id)->get();
+                foreach ($cartItems as $item) {
+                    DB::table('items')
+                        ->where('id', $item->item_id)
+                        ->increment('stock', $item->quantity);
                 }
-            });
+            }
 
-            // 🟢 Kirim notifikasi ke user
+            DB::commit();
+
+            // 🟢 Kirim notifikasi ke user sesuai hasil akhir
             $cart = DB::table('carts')->find($id);
             if ($cart) {
+                $notifTitle = '';
+                $notifMessage = '';
+
+                switch ($newStatus) {
+                    case 'approved':
+                        $notifTitle = 'Permintaan Disetujui';
+                        $notifMessage = 'Permintaan barang kamu telah disetujui sepenuhnya.';
+                        break;
+                    case 'rejected':
+                        $notifTitle = 'Permintaan Ditolak';
+                        $notifMessage = 'Permintaan barang kamu telah ditolak.';
+                        break;
+                }
+
                 Notification::create([
                     'user_id' => $cart->user_id,
-                    'title' => 'Request ' . ucfirst($newStatus),
-                    'message' => 'Permintaan barang kamu telah ' . $newStatus . ' secara keseluruhan.',
+                    'title' => $notifTitle,
+                    'message' => $notifMessage,
                     'status' => 'unread',
                 ]);
             }
 
+            // 🔹 Kembalikan response AJAX
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
@@ -193,6 +209,7 @@ class RequestController extends Controller
             return back()->with('success', "Semua item berhasil {$newStatus}.");
 
         } catch (\Throwable $e) {
+            DB::rollBack();
             Log::error('DEBUG UPDATE STATUS - ERROR', [
                 'error' => $e->getMessage(),
                 'cart_id' => $id,
@@ -286,6 +303,39 @@ class RequestController extends Controller
                     'status' => $cartStatus,
                     'updated_at' => now(),
                 ]);
+
+            // Tambahkan ini di akhir sebelum "DB::commit()" di bulkUpdate()
+            $cart = DB::table('carts')->find($cartId);
+            if ($cart) {
+                $notifTitle = '';
+                $notifMessage = '';
+
+                switch ($cartStatus) {
+                    case 'approved':
+                        $notifTitle = 'Permintaan Disetujui';
+                        $notifMessage = 'Permintaan barang kamu telah disetujui sepenuhnya.';
+                        break;
+                    case 'rejected':
+                        $notifTitle = 'Permintaan Ditolak';
+                        $notifMessage = 'Semua permintaan barang kamu telah ditolak.';
+                        break;
+                    case 'approved_partially':
+                        $notifTitle = 'Sebagian Permintaan Disetujui';
+                        $notifMessage = 'Sebagian permintaan barang kamu disetujui, sebagian lainnya ditolak.';
+                        break;
+                    default:
+                        $notifTitle = 'Status Permintaan Diperbarui';
+                        $notifMessage = 'Status permintaan barang kamu telah diperbarui.';
+                        break;
+                }
+
+                Notification::create([
+                    'user_id' => $cart->user_id,
+                    'title' => $notifTitle,
+                    'message' => $notifMessage,
+                    'status' => 'unread',
+                ]);
+            }
 
             DB::commit();
 

@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // === Fokus dan submit otomatis barcode ===
+    // === Fokus & submit otomatis barcode ===
     document.querySelectorAll("input[id^='barcode-']").forEach((input) => {
         const modalId = input.id.replace("barcode-", "");
         $(`#scanModal-${modalId}`).on("shown.bs.modal", () => input.focus());
@@ -35,15 +35,42 @@ document.addEventListener("DOMContentLoaded", () => {
                 const data = await res.json();
 
                 if (data.status === "success") {
+                    // === Tampilkan pesan sukses manis tanpa reload ===
                     Swal.fire({
-                        icon: "success",
-                        title: "Berhasil!",
-                        text: data.message,
-                        timer: 1500,
+                        iconHtml:
+                            '<i class="ri-checkbox-circle-line text-success fs-1"></i>',
+                        title: "<b>Berhasil!</b>",
+                        html: `
+              <div class="text-start mt-2" style="font-size: 0.95rem;">
+                ✅ Barang <b>${data.item_name}</b> sebanyak <b>${data.quantity}</b> ditambahkan ke keranjang.
+              </div>
+            `,
                         showConfirmButton: false,
+                        timer: 2000,
+                        customClass: {
+                            popup: "shadow rounded-4 p-4",
+                            title: "fw-semibold text-dark",
+                            htmlContainer: "text-muted",
+                        },
+                        didClose: () => modal.hide(),
                     });
-                    modal.hide();
-                    setTimeout(() => window.location.reload(), 1600);
+
+                    // Update badge jumlah item di tombol cart
+                    const badge = document.querySelector(
+                        "#openCartModal .badge"
+                    );
+                    if (badge) {
+                        badge.textContent = parseInt(badge.textContent) + 1;
+                    } else {
+                        const btn = document.getElementById("openCartModal");
+                        const badgeEl = document.createElement("span");
+                        badgeEl.className =
+                            "position-absolute badge rounded-pill bg-danger";
+                        badgeEl.style.cssText =
+                            "top:-5px; right:-5px; font-size:0.8rem; padding:6px 8px;";
+                        badgeEl.textContent = "1";
+                        btn.appendChild(badgeEl);
+                    }
                 } else {
                     Swal.fire({
                         icon: "error",
@@ -82,30 +109,30 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (data.cartItems.length > 0) {
                         data.cartItems.forEach((item) => {
                             cartTableBody.innerHTML += `
-                              <tr data-id="${item.id}">
-                                <td>${item.name}</td>
-                                <td>${item.code ?? "-"}</td>
-                                <td class="text-center">
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    class="form-control form-control-sm text-center update-qty"
-                                    value="${item.quantity}"
-                                    style="width: 80px; margin: 0 auto;"
-                                  >
-                                </td>
-                                <td class="text-center">
-                                  <button class="btn btn-sm btn-danger rounded-pill delete-item">
-                                    <i class="ri-delete-bin-line"></i>
-                                  </button>
-                                </td>
-                              </tr>`;
+                <tr data-id="${item.id}">
+                  <td>${item.name}</td>
+                  <td>${item.code ?? "-"}</td>
+                  <td class="text-center">
+                    <input
+                      type="number"
+                      min="1"
+                      class="form-control form-control-sm text-center update-qty"
+                      value="${item.quantity}"
+                      style="width: 80px; margin: 0 auto;"
+                    >
+                  </td>
+                  <td class="text-center">
+                    <button class="btn btn-sm btn-danger rounded-pill delete-item">
+                      <i class="ri-delete-bin-line"></i>
+                    </button>
+                  </td>
+                </tr>`;
                         });
                     } else {
                         cartTableBody.innerHTML = `
-                            <tr><td colspan="4" class="text-center text-muted py-3">
-                              <i class='ri-information-line me-1'></i>Keranjang kosong
-                            </td></tr>`;
+              <tr><td colspan="4" class="text-center text-muted py-3">
+                <i class='ri-information-line me-1'></i>Keranjang kosong
+              </td></tr>`;
                     }
 
                     releaseForm.action = `/admin/produk/guest/${guestId}/release`;
@@ -183,13 +210,18 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!confirm.isConfirmed) return;
 
         try {
-            const res = await fetch(`/admin/produk/guest/${guestId}/cart/item/${itemId}`, {
-                method: "DELETE",
-                headers: {
-                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-            });
+            const res = await fetch(
+                `/admin/produk/guest/${guestId}/cart/item/${itemId}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        "X-CSRF-TOKEN": document.querySelector(
+                            'meta[name="csrf-token"]'
+                        ).content,
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                }
+            );
 
             const data = await res.json();
             if (data.status === "success") {
@@ -201,20 +233,23 @@ document.addEventListener("DOMContentLoaded", () => {
                     showConfirmButton: false,
                 });
                 tr.remove();
+
+                // Update badge
+                const badge = document.querySelector("#openCartModal .badge");
+                if (badge) {
+                    const current = parseInt(badge.textContent) - 1;
+                    if (current > 0) badge.textContent = current;
+                    else badge.remove();
+                }
+
                 if (!cartTableBody.querySelector("tr")) {
                     cartTableBody.innerHTML = `
-                        <tr>
-                          <td colspan="4" class="text-center text-muted py-3">
-                            <i class='ri-information-line me-1'></i>Keranjang kosong
-                          </td>
-                        </tr>`;
+            <tr>
+              <td colspan="4" class="text-center text-muted py-3">
+                <i class='ri-information-line me-1'></i>Keranjang kosong
+              </td>
+            </tr>`;
                 }
-            } else {
-                Swal.fire({
-                    icon: "error",
-                    title: "Gagal!",
-                    text: data.message || "Gagal menghapus item",
-                });
             }
         } catch (err) {
             Swal.fire({
@@ -225,44 +260,33 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // === Release semua barang ===
-    releaseForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const url = releaseForm.action;
-        const csrf = releaseForm.querySelector('input[name="_token"]').value;
+    // === Floating Cart Button (drag & move) ===
+    const cartBtn = document.getElementById("openCartModal");
+    if (cartBtn) {
+        let offsetX,
+            offsetY,
+            isDragging = false;
 
-        const confirm = await Swal.fire({
-            title: "Keluarkan Semua Barang?",
-            text: "Pastikan data sudah benar.",
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonText: "Ya, keluarkan!",
-            cancelButtonText: "Batal",
-            reverseButtons: true,
+        cartBtn.addEventListener("mousedown", (e) => {
+            isDragging = true;
+            offsetX = e.clientX - cartBtn.getBoundingClientRect().left;
+            offsetY = e.clientY - cartBtn.getBoundingClientRect().top;
+            cartBtn.style.transition = "none";
         });
 
-        if (!confirm.isConfirmed) return;
+        document.addEventListener("mousemove", (e) => {
+            if (!isDragging) return;
+            const x = e.clientX - offsetX;
+            const y = e.clientY - offsetY;
+            cartBtn.style.left = x + "px";
+            cartBtn.style.top = y + "px";
+            cartBtn.style.right = "auto";
+            cartBtn.style.bottom = "auto";
+        });
 
-        try {
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "X-CSRF-TOKEN": csrf },
-            });
-            if (!res.ok) throw new Error("Gagal memproses permintaan");
-            Swal.fire({
-                icon: "success",
-                title: "Berhasil!",
-                text: "Semua barang berhasil dikeluarkan.",
-                timer: 1500,
-                showConfirmButton: false,
-            });
-            setTimeout(() => window.location.reload(), 1600);
-        } catch (err) {
-            Swal.fire({
-                icon: "error",
-                title: "Gagal!",
-                text: "Terjadi kesalahan: " + err.message,
-            });
-        }
-    });
+        document.addEventListener("mouseup", () => {
+            isDragging = false;
+            cartBtn.style.transition = "all 0.2s ease";
+        });
+    }
 });

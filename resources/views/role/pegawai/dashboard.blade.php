@@ -1,14 +1,107 @@
 @extends('layouts.index')
 
 @section('content')
+<style>
+    /* ===== UI/UX Custom Styling (Ramah Mata & Elegan) ===== */
+    body {
+        background-color: #f7f9fb !important;
+    }
+
+    .card {
+        border-radius: 16px !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-header {
+        border-bottom: 1px solid #eef1f5 !important;
+        padding: 1.2rem 1.5rem !important;
+    }
+
+    .card-header h5 {
+        font-size: 1.1rem;
+        color: #1d3557;
+        display: flex;
+        align-items: center;
+    }
+
+    .btn {
+        font-size: 0.9rem !important;
+        border-radius: 8px !important;
+        padding: 0.4rem 0.9rem !important;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+        background-color: #4e73df !important;
+        border-color: #4e73df !important;
+    }
+
+    .btn-outline-primary {
+        border-color: #b0c4ff !important;
+        color: #4e73df !important;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #4e73df !important;
+        color: white !important;
+    }
+
+    .table {
+        font-size: 0.95rem;
+    }
+
+    .table thead th {
+        background-color: #f1f4fa !important;
+        color: #495057;
+        font-weight: 600;
+        border-bottom: 2px solid #e2e6ea !important;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f9fbff !important;
+        transition: background 0.2s ease;
+    }
+
+    .badge {
+        border-radius: 8px !important;
+        font-size: 0.85rem;
+    }
+
+    .avatar img {
+        width: 42px;
+        height: 42px;
+        border: 2px solid #f1f1f1;
+        object-fit: cover;
+    }
+
+    canvas {
+        background: linear-gradient(to bottom, #ffffff, #f9faff);
+        border-radius: 12px;
+        padding: 10px;
+    }
+
+    /* Responsif */
+    @media (max-width: 768px) {
+        .card-header form {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+        }
+
+        .card-header .btn {
+            width: 100%;
+        }
+    }
+</style>
+
 <div class="row gy-4">
 
     <!-- Request Overview Chart -->
     <div class="col-xl-12 col-md-6">
-        <div class="card border-0 shadow-sm rounded-3">
-            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
-                <h5 class="mb-0 fw-semibold text-primary">
-                    <i class="bx bx-bar-chart-alt-2 me-2"></i> Statistik Permintaan Barang
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="bx bx-bar-chart-alt-2 me-2 text-primary"></i> Statistik Permintaan Barang
                 </h5>
 
                 <!-- Range Filter -->
@@ -35,20 +128,19 @@
             </div>
         </div>
     </div>
-    <!-- /Request Overview Chart -->
 
     <!-- User Request Data Table -->
     <div class="col-12">
-        <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
-            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <div class="card overflow-hidden">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-semibold text-secondary">
-                    <i class="bx bx-user me-2"></i>Aktivitas Permintaan
+                    <i class="bx bx-user me-2 text-primary"></i> Aktivitas Permintaan
                 </h5>
             </div>
 
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+                <table class="table align-middle mb-0">
+                    <thead>
                         <tr>
                             <th>User</th>
                             <th>Email</th>
@@ -65,7 +157,7 @@
                                             <img src="{{ asset('assets/img/avatars/1.png') }}" alt="Avatar" class="rounded-circle" />
                                         </div>
                                         <div>
-                                            <h6 class="mb-0">{{ $user->name }}</h6>
+                                            <h6 class="mb-0 fw-semibold">{{ $user->name }}</h6>
                                             <small class="text-muted">#{{ $user->id }}</small>
                                         </div>
                                     </div>
@@ -90,7 +182,6 @@
             </div>
         </div>
     </div>
-    <!-- /User Request Data Table -->
 
 </div>
 
@@ -150,14 +241,15 @@
             scales: {
                 x: {
                     grid: { display: false },
-                    ticks: { color: '#6c757d' }
+                    ticks: { color: '#6c757d', font: { size: 12 } }
                 },
                 y: {
                     beginAtZero: true,
                     grid: { color: '#f2f4f7' },
                     ticks: {
                         stepSize: 10,
-                        color: '#6c757d'
+                        color: '#6c757d',
+                        font: { size: 12 }
                     }
                 }
             }
