@@ -1,10 +1,12 @@
-<div class="card border-0 rounded-3">
-    <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 text-primary fw-semibold">
-            <i class="ri-file-list-line me-2"></i> Detail Permintaan
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden animate__animated animate__fadeIn">
+    {{-- Header --}}
+    <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center flex-wrap py-3 px-4">
+        <h5 class="mb-0 text-primary fw-semibold d-flex align-items-center gap-2">
+            <i class="ri-file-list-line fs-5"></i> Detail Permintaan
         </h5>
 
-        <span class="badge rounded-pill px-3 py-2 fw-semibold
+        {{-- Status Badge Dinamis --}}
+        <span class="badge rounded-pill px-3 py-2 fw-semibold fs-6
             {{ $cart->status === 'pending' ? 'bg-warning text-dark' :
                ($cart->status === 'approved' ? 'bg-success text-white' :
                ($cart->status === 'rejected' ? 'bg-danger text-white' : 'bg-secondary text-white')) }}">
@@ -15,51 +17,63 @@
         </span>
     </div>
 
+    {{-- Informasi Utama --}}
     <div class="p-4 border-bottom bg-light">
-        <div class="row g-3">
+        <div class="row g-4">
             <div class="col-md-6">
                 <p class="mb-1 text-muted small">Tanggal Permintaan</p>
-                <h6 class="mb-0">{{ $cart->created_at->format('d M Y, H:i') }} WIB</h6>
+                <h6 class="mb-0 fw-semibold text-dark">
+                    {{ $cart->created_at->format('d M Y, H:i') }} WIB
+                </h6>
             </div>
             <div class="col-md-6">
                 <p class="mb-1 text-muted small">Jumlah Item</p>
-                <h6 class="mb-0">{{ $cart->cartItems->count() }} Produk</h6>
+                <h6 class="mb-0 fw-semibold text-dark">
+                    {{ $cart->cartItems->count() }} Produk
+                </h6>
             </div>
         </div>
     </div>
 
-    <div class="table-responsive text-nowrap">
+    {{-- Tabel Produk --}}
+    <div class="table-responsive text-nowrap bg-white">
         @if(!$cart || $cart->cartItems->isEmpty())
             <div class="text-center text-muted py-5">
-                <i class="ri-inbox-line fs-1 mb-2 d-block"></i>
-                <p class="mb-0">Tidak ada produk dalam permintaan ini.</p>
+                <i class="ri-inbox-line fs-1 mb-2 d-block opacity-75"></i>
+                <p class="mb-1 fs-6">Tidak ada produk dalam permintaan ini.</p>
                 <small class="text-secondary">Permintaan kosong atau telah dihapus.</small>
             </div>
         @else
-            <table class="table table-hover align-middle mb-0">
+            <table class="table align-middle mb-0">
                 <thead class="table-light">
-                    <tr>
-                        <th>Produk</th>
+                    <tr class="fw-semibold text-secondary">
+                        <th class="ps-4">Produk</th>
                         <th class="text-center" style="width: 15%;">Jumlah</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($cart->cartItems as $item)
                         <tr>
-                            <td>
+                            <td class="ps-4">
                                 <div class="d-flex align-items-center">
-                                    <img src="{{ asset('storage/' . $item->item->image) }}"
-                                         class="rounded me-3 shadow-sm"
-                                         style="width: 55px; height: 55px; object-fit: cover;">
-                                    <div>
-                                        <h6 class="mb-0 text-truncate">{{ $item->item->name }}</h6>
+                                    <div class="me-3 flex-shrink-0">
+                                        <img src="{{ asset('storage/' . $item->item->image) }}"
+                                             alt="{{ $item->item->name }}"
+                                             class="rounded shadow-sm"
+                                             style="width: 60px; height: 60px; object-fit: cover;">
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1 fw-semibold text-dark text-truncate">
+                                            {{ $item->item->name }}
+                                        </h6>
                                         <small class="text-muted">
+                                            <i class="ri-price-tag-3-line me-1"></i>
                                             Kategori: {{ $item->item->category->name ?? '-' }}
                                         </small>
                                     </div>
                                 </div>
                             </td>
-                            <td class="text-center fw-semibold">
+                            <td class="text-center fw-semibold text-dark">
                                 {{ $item->quantity }}
                             </td>
                         </tr>
@@ -69,3 +83,48 @@
         @endif
     </div>
 </div>
+
+{{-- ===== Style Tambahan ===== --}}
+<style>
+    .card {
+        background-color: #fff;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+    }
+
+    .table thead th {
+        background-color: #f8f9fc !important;
+        color: #495057 !important;
+        border-bottom: 2px solid #e2e6ea !important;
+        font-size: 0.92rem;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f9fbff !important;
+        transition: background-color 0.2s ease;
+    }
+
+    .badge {
+        font-size: 0.85rem;
+    }
+
+    .animate__animated {
+        animation-duration: 0.3s;
+    }
+
+    @media (max-width: 768px) {
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 0.8rem;
+        }
+
+        .table img {
+            width: 50px !important;
+            height: 50px !important;
+        }
+    }
+</style>

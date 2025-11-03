@@ -1,8 +1,139 @@
 @extends('layouts.index')
 
 @section('content')
+<style>
+    /* =============================
+       ✨ UI/UX Styling for Permintaan Pending ✨
+       ============================= */
+    body {
+        background-color: #f7f9fb !important;
+    }
+
+    /* ===== Breadcrumb ===== */
+    .breadcrumb-wrapper {
+        margin-bottom: 1.8rem;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .breadcrumb {
+        background: transparent !important;
+        margin-bottom: 0;
+        padding: 0;
+        font-size: 0.92rem;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        color: #6c757d;
+        content: "/";
+        padding: 0 0.5rem;
+    }
+
+    .breadcrumb-item a {
+        color: #4e73df;
+        text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .page-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1d3557;
+        margin: 0;
+    }
+
+    /* ===== Card & Table ===== */
+    .card {
+        border-radius: 16px !important;
+        border: none !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+        background-color: #fff;
+    }
+
+    .card-header {
+        border-bottom: 1px solid #eef1f5 !important;
+        padding: 1rem 1.5rem !important;
+        background: #fff !important;
+    }
+
+    .card-header h5 {
+        font-size: 1.05rem;
+        color: #1d3557;
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .table {
+        font-size: 0.95rem;
+    }
+
+    .table thead th {
+        background-color: #f8f9fc !important;
+        color: #495057;
+        font-weight: 600;
+        border-bottom: 2px solid #e2e6ea !important;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f9fafc !important;
+        transition: background-color 0.2s ease;
+    }
+
+    .collapse td {
+        background-color: #f8faff !important;
+    }
+
+    .btn-outline-primary {
+        border-color: #b0c4ff !important;
+        color: #4e73df !important;
+        border-radius: 8px !important;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #4e73df !important;
+        color: white !important;
+    }
+
+    .btn-outline-danger {
+        border-radius: 8px !important;
+    }
+
+    /* ===== Responsiveness ===== */
+    @media (max-width: 768px) {
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 0.8rem;
+        }
+    }
+</style>
+
+{{-- 🧭 Breadcrumb --}}
+<div class="breadcrumb-wrapper">
+    <h4 class="page-title"><i class="bx bx-time-five me-2 text-primary"></i> Permintaan Pending</h4>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{{ route('pegawai.dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Permintaan Pending</li>
+        </ol>
+    </nav>
+</div>
+
+{{-- 🧾 Konten Utama --}}
 <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+    <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center flex-wrap">
         <h5 class="mb-0 text-primary fw-semibold">
             <i class="ri-time-line me-2"></i> Permintaan Pending
         </h5>
@@ -56,23 +187,28 @@
                                         data-bs-target="#collapse{{ $cart->id }}"
                                         aria-expanded="false"
                                         aria-controls="collapse{{ $cart->id }}">
-                                <i class="bi bi-eye"></i> Detail
+                                    <i class="bi bi-eye"></i> Detail
                                 </button>
                             </td>
                         </tr>
+
+                        {{-- Collapse Detail --}}
                         <tr class="collapse bg-light" id="collapse{{ $cart->id }}">
                             <td colspan="5">
                                 <div class="p-3">
-                                    <div class="p-4 border-bottom bg-light">
+                                    <div class="p-3 bg-white border rounded shadow-sm mb-3">
                                         @if($cart->status === 'pending')
-                                            <form action="{{ route('pegawai.permintaan.cancel', $cart->id) }}" method="POST" class="cancel-form">
+                                            <form action="{{ route('pegawai.permintaan.cancel', $cart->id) }}"
+                                                  method="POST"
+                                                  class="cancel-form mb-3">
                                                 @csrf
                                                 <button type="submit" class="btn btn-outline-danger btn-sm">
                                                     <i class="ri-close-line me-1"></i> Batalkan Permintaan
                                                 </button>
                                             </form>
                                         @endif
-                                        <div class="row g-3 mt-1">
+
+                                        <div class="row g-3">
                                             <div class="col-md-6">
                                                 <p class="mb-1 text-muted small">Tanggal Permintaan</p>
                                                 <h6 class="mb-0">{{ $cart->created_at->format('d M Y, H:i') }} WIB</h6>
@@ -83,34 +219,36 @@
                                             </div>
                                         </div>
                                     </div>
+
                                     <table class="table table-sm table-bordered mb-0">
                                         <thead class="table-light">
-                                        <tr class="text-center">
-                                            <th style="width:50px;">No</th>
-                                            <th style="width: 75px;">Gambar</th>
-                                            <th>Nama Produk</th>
-                                            <th style="width:200px;">Kategori</th>
-                                            <th style="width: 80px;">Jumlah</th>
-                                        </tr>
+                                            <tr class="text-center">
+                                                <th style="width:50px;">No</th>
+                                                <th style="width:75px;">Gambar</th>
+                                                <th>Nama Produk</th>
+                                                <th style="width:200px;">Kategori</th>
+                                                <th style="width:80px;">Jumlah</th>
+                                            </tr>
                                         </thead>
                                         <tbody>
-                                        @foreach($cart->cartItems as $j => $item)
-                                            <tr>
-                                            <td class="text-center">{{ $j+1 }}</td>
-                                            <td class="text-center"><img src="{{ asset('storage/' . $item->item->image) }}"
-                                                    class="rounded me-3 shadow-sm"
-                                                    style="width: 75px; height: 75px; object-fit: cover;">
-                                            </td>
-                                            <td>{{ $item->item->name }}</td>
-                                            <td class="text-center">{{ $item->item->category->name ?? '-' }}</td>
-                                            <td class="text-center">{{ $item->quantity }}</td>
-                                            </tr>
-                                        @endforeach
+                                            @foreach($cart->cartItems as $j => $item)
+                                                <tr>
+                                                    <td class="text-center">{{ $j + 1 }}</td>
+                                                    <td class="text-center">
+                                                        <img src="{{ asset('storage/' . $item->item->image) }}"
+                                                             class="rounded shadow-sm"
+                                                             style="width: 70px; height: 70px; object-fit: cover;">
+                                                    </td>
+                                                    <td>{{ $item->item->name }}</td>
+                                                    <td class="text-center">{{ $item->item->category->name ?? '-' }}</td>
+                                                    <td class="text-center">{{ $item->quantity }}</td>
+                                                </tr>
+                                            @endforeach
                                         </tbody>
                                     </table>
                                 </div>
                             </td>
-                            </tr>
+                        </tr>
                     @endforeach
                 </tbody>
             </table>
@@ -118,34 +256,25 @@
     </div>
 </div>
 
-<style>
-    .table-hover tbody tr:hover {
-        background-color: #f9fafc;
-        transition: background-color 0.2s ease;
-    }
-</style>
+{{-- SweetAlert Confirm --}}
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const forms_cancel = document.querySelectorAll('.cancel-form');
-    forms_cancel.forEach(form => {
+    document.querySelectorAll('.cancel-form').forEach(form => {
         form.addEventListener('submit', function (e) {
-            e.preventDefault(); // cegah submit langsung
-
+            e.preventDefault();
             Swal.fire({
-                title: 'Konfirmasi',
-                text: 'Yakin ingin cancel permintaan ini?',
+                title: 'Konfirmasi Pembatalan',
+                text: 'Yakin ingin membatalkan permintaan ini?',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: 'Ya, cancel!',
+                confirmButtonText: 'Ya, Batalkan',
                 cancelButtonText: 'Batal',
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#6c757d',
                 reverseButtons: true
             }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit(); // submit form kalau user setuju
-                }
+                if (result.isConfirmed) form.submit();
             });
         });
     });
