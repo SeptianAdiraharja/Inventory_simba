@@ -1,28 +1,40 @@
 @extends('layouts.index')
 @section('content')
 
-<div class="container-fluid py-4">
+<div class="container-fluid py-4 animate__animated animate__fadeIn">
 
-  <!-- === BREADCRUMB ELEGAN === -->
-  <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap align-items-center justify-content-between animate__animated animate__fadeInDown">
-    <h5 class="fw-bold text-dark mb-0 d-flex align-items-center">
-      <i class="ri-home-4-line text-primary me-2 fs-5"></i> Dashboard Admin
-    </h5>
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item">
-          <a href="{{ route('pegawai.dashboard') }}" class="text-decoration-none text-primary fw-medium">
-            Dashboard
-          </a>
-        </li>
-        <li class="breadcrumb-item active text-secondary fw-normal" aria-current="page">
-          Statistika Permintaan Barang
-        </li>
-      </ol>
-    </nav>
+  {{-- ===================== --}}
+  {{-- 🧭 MODERN BREADCRUMB (UNIVERSAL STYLE) --}}
+  {{-- ===================== --}}
+  <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 animate__animated animate__fadeInDown smooth-fade">
+    <div class="d-flex align-items-center flex-wrap gap-2">
+      <div class="breadcrumb-icon bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-circle"
+           style="width:38px;height:38px;">
+        <i class="bi bi-house-door-fill fs-5"></i>
+      </div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 align-items-center">
+          <li class="breadcrumb-item">
+            <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+              Dashboard
+            </a>
+          </li>
+          <li class="breadcrumb-item active fw-semibold text-dark" aria-current="page">
+            Statistika Permintaan Barang
+          </li>
+        </ol>
+      </nav>
+    </div>
+    <div class="breadcrumb-extra text-end">
+      <small class="text-muted">
+        <i class="bi bi-calendar-check me-1"></i>{{ now()->format('d M Y, H:i') }}
+      </small>
+    </div>
   </div>
 
-  <!-- === RINGKASAN TRANSAKSI === -->
+  {{-- ===================== --}}
+  {{-- 📊 RINGKASAN TRANSAKSI --}}
+  {{-- ===================== --}}
   <div class="mb-4">
     <div class="card border-0 shadow-lg rounded-4 bg-white animate__animated animate__fadeInDown">
       <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between px-4 py-3">
@@ -62,7 +74,9 @@
     </div>
   </div>
 
-  <!-- === DAFTAR TERBARU === -->
+  {{-- ===================== --}}
+  {{-- 🧾 DAFTAR TERBARU --}}
+  {{-- ===================== --}}
   <div class="mb-4">
     <div class="card border-0 shadow-lg rounded-4 bg-white animate__animated animate__fadeInUp">
       <div class="card-body row px-4 py-3">
@@ -84,7 +98,9 @@
     </div>
   </div>
 
-  <!-- === 5 PERMINTAAN TERBANYAK === -->
+  {{-- ===================== --}}
+  {{-- 🏆 TOP 5 PERMINTAAN TERBANYAK --}}
+  {{-- ===================== --}}
   <div class="mb-4">
     <div class="card border-0 shadow-lg rounded-4 bg-white animate__animated animate__fadeInUp animate__delay-1s">
       <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center px-4 py-3">
@@ -129,7 +145,9 @@
     </div>
   </div>
 
-  <!-- === IKHTISAR LALU LINTAS === -->
+  {{-- ===================== --}}
+  {{-- 📈 IKHTISAR LALU LINTAS --}}
+  {{-- ===================== --}}
   <div class="mb-5">
     <div class="card border-0 shadow-lg rounded-4 bg-white animate__animated animate__fadeInUp animate__delay-2s">
       <div class="card-header bg-white border-0 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center px-4 py-3">
@@ -152,54 +170,38 @@
       </div>
     </div>
   </div>
-
 </div>
 
 @endsection
 
 @section('scripts')
 <style>
-/* ======== GLOBAL STYLE ======== */
 body {
   background: #f5f7fb !important;
 }
 
-/* === BREADCRUMB STYLE === */
-.breadcrumb {
-  background: transparent !important;
-  font-size: 0.95rem;
-  margin-bottom: 0;
-}
-
+/* 🧭 Breadcrumb Modern */
 .breadcrumb-item + .breadcrumb-item::before {
-  content: "/";
-  color: #adb5bd;
-  margin: 0 0.5rem;
-  font-weight: 400;
+  content: "›";
+  color: #6c757d;
+  margin: 0 6px;
+}
+.breadcrumb-icon {
+  transition: 0.3s ease;
+}
+.breadcrumb-icon:hover {
+  transform: scale(1.1);
+  background-color: #e8f0fe;
+}
+.smooth-fade {
+  animation: smoothFade 0.8s ease;
+}
+@keyframes smoothFade {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.breadcrumb-item a {
-  color: #0056d6;
-  transition: all 0.2s ease;
-}
-
-.breadcrumb-item a:hover {
-  color: #003e9f;
-  text-decoration: underline;
-}
-
-/* Container styling */
-.bg-white.shadow-sm.rounded-4 {
-  border: 1px solid #f1f3f5;
-  transition: all 0.3s ease;
-}
-
-.bg-white.shadow-sm.rounded-4:hover {
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
-  transform: translateY(-2px);
-}
-
-/* Hover scaling */
+/* Buttons & hover */
 .hover-scale {
   transition: all 0.3s ease-in-out;
 }
@@ -207,13 +209,11 @@ body {
   transform: scale(1.05);
   background-color: #e9f2ff;
 }
-
-/* Button glow */
 .hover-glow:hover {
   box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
 }
 
-/* Card hover effect */
+/* Card hover */
 .hover-card {
   transition: all 0.3s ease;
   background-color: #fafbff;
@@ -224,27 +224,15 @@ body {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* Smooth progress animation */
+/* Progress bar */
 .progress-bar {
   transition: width 0.6s ease-in-out;
 }
 
-/* Chart container */
-canvas {
-  transition: all 0.5s ease;
-}
-
-/* Card transitions */
-.card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.card:hover {
-  transform: translateY(-2px);
-}
-
-/* Header style */
-.card-header h5 i {
-  vertical-align: middle;
+/* Responsive */
+@media (max-width: 768px) {
+  .breadcrumb-extra { display: none; }
+  h5 { font-size: 1rem; }
 }
 </style>
 

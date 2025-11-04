@@ -83,16 +83,12 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('items/{item}/barcode-pdf', [ItemController::class, 'printBarcode'])
             ->name('items.barcode.pdf');
 
-        Route::get('/export', [ExportController::class, 'index'])
-            ->name('export.index');
-
-        // Export Barang Masuk
+        // Export
+        Route::get('/export', [ExportController::class, 'index'])->name('export.index');
         Route::get('/export/barang-masuk/excel', [ExportController::class, 'exportBarangMasukExcel'])
             ->name('exports.barang_masuk.excel');
         Route::get('/export/barang-masuk/pdf', [ExportController::class, 'exportBarangMasukPdf'])
             ->name('exports.barang_masuk.pdf');
-
-        // Export Barang Keluar
         Route::get('/export/barang-keluar/excel', [ExportController::class, 'exportBarangKeluarExcel'])
             ->name('exports.barang_keluar.excel');
         Route::get('/export/barang-keluar/pdf', [ExportController::class, 'exportBarangKeluarPdf'])
@@ -110,17 +106,17 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::resource('kop_surat', KopSuratController::class);
 });
 
-
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->as('admin.')
     ->group(function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Dashboard
-    |--------------------------------------------------------------------------
-    */
+    // Dashboard
     Route::controller(AdminController::class)->group(function () {
         Route::get('/dashboard', 'index')->name('dashboard');
         Route::get('/dashboard/data', 'getChartData');
@@ -128,12 +124,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/dashboard/modal/barang_keluar', 'barangKeluarModal')->name('dashboard.modal.barang_keluar');
     });
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Item Out (Barang Keluar)
-    |--------------------------------------------------------------------------
-    */
+    // Item Out (Barang Keluar)
     Route::controller(ItemoutController::class)->group(function () {
         Route::resource('itemout', ItemoutController::class);
         Route::get('/itemout/{cart}/struk', 'struk')->name('itemout.struk');
@@ -142,62 +133,33 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/itemout/release/{cart}', 'release')->name('itemout.release');
     });
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Requests & Carts
-    |--------------------------------------------------------------------------
-    | Mengelola permintaan pegawai (approval / reject).
-    */
+    // Requests & Carts
     Route::controller(RequestController::class)->group(function () {
         Route::get('/request', 'index')->name('request');
         Route::get('/carts/{id}', 'show')->name('carts.show');
-        Route::patch('/carts/{id}', 'update')->name('carts.update'); // ✅ penting
+        Route::patch('/carts/{id}', 'update')->name('carts.update');
         Route::patch('/carts/item/{id}/approve', 'approveItem')->name('carts.item.approve');
         Route::patch('/carts/item/{id}/reject', 'rejectItem')->name('carts.item.reject');
         Route::post('/carts/{id}/bulk-update', 'bulkUpdate')->name('carts.bulkUpdate');
     });
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Guest Management
-    |--------------------------------------------------------------------------
-    */
+    // Guest Management
     Route::controller(SearchController::class)->group(function () {
         Route::get('/guests/search', 'searchGuests')->name('guests.search');
     });
-
     Route::resource('guests', GuestController::class)->except('show');
 
-
-        /*
-    |--------------------------------------------------------------------------
-    | Pegawai Management
-    |--------------------------------------------------------------------------
-    */
-    Route::controller(SearchController::class)->group(function () {
-        Route::get('/guests/search', 'searchGuests')->name('guests.search');
-    });
-
+    // Pegawai Management
     Route::controller(AdminPegawaiController::class)->group(function () {
         Route::resource('pegawai', AdminPegawaiController::class);
         Route::get('/pegawai/{id}/produk', 'showProduk')->name('pegawai.produk');
-        Route::post('/pegawai/{id}/scan', [AdminPegawaiController::class, 'scan'])->name('pegawai.scan');
-        Route::get('/pegawai/{id}/cart', [AdminPegawaiController::class, 'showCart'])->name('pegawai.cart');
-        Route::delete('/pegawai/{pegawai}/cart/item/{id}', [AdminPegawaiController::class, 'destroyCartItem'])->name('admin.pegawai.cart.item.destroy');
-        Route::post('/pegawai/{id}/cart/save', [AdminPegawaiController::class, 'saveCartToItemOut'])->name('pegawai.cart.save');
-
-
+        Route::post('/pegawai/{id}/scan', 'scan')->name('pegawai.scan');
+        Route::get('/pegawai/{id}/cart', 'showCart')->name('pegawai.cart');
+        Route::delete('/pegawai/{pegawai}/cart/item/{id}', 'destroyCartItem')->name('admin.pegawai.cart.item.destroy');
+        Route::post('/pegawai/{id}/cart/save', 'saveCartToItemOut')->name('pegawai.cart.save');
     });
 
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Produk Guest
-    |--------------------------------------------------------------------------
-    */
+    // Produk Guest
     Route::controller(ProdukController::class)->group(function () {
         Route::get('/produk', 'index')->name('produk.index');
         Route::get('/produk/guest/{id}', 'showByGuest')->name('produk.byGuest');
@@ -208,12 +170,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/produk/guest/{id}/cart/item/{itemId}', 'destroy')->name('produk.cart.remove');
     });
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Export Barang Keluar
-    |--------------------------------------------------------------------------
-    */
+    // Export Barang Keluar
     Route::controller(ExportController::class)->group(function () {
         Route::get('/out', 'exportOut')->name('export.out');
         Route::post('/out/clear', 'clearOutHistory')->name('export.out.clear');
@@ -221,38 +178,22 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/export/barang-keluar/pdf', 'exportBarangKeluarPdfAdmin')->name('barang_keluar.pdf');
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | Data Transaksi & refund
-    |--------------------------------------------------------------------------
-    */
+    // Data Transaksi & Refund
     Route::controller(TransaksiItemOutController::class)->group(function () {
         Route::get('/transaksi', 'index')->name('transaksi.out');
-
         Route::post('/refund', 'refundBarang')->name('pegawai.refund');
         Route::post('/edit-item', 'updateItem')->name('pegawai.updateItem');
-
         Route::post('/guest/refund', 'refundBarangGuest')->name('guest.refund');
         Route::post('/guest/edit-item', 'updateItemGuest')->name('guest.updateItem');
-
     });
 
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Reject Barang
-    |--------------------------------------------------------------------------
-    */
+    // Reject Barang
     Route::controller(RejectController::class)->group(function () {
         Route::get('/rejects', 'index')->name('rejects.index');
         Route::get('/rejects/scan', 'scanPage')->name('rejects.scan');
         Route::post('/rejects/process', 'processScan')->name('rejects.process');
         Route::get('/rejects/check/{barcode}', 'checkBarcode')->name('rejects.check');
     });
-
-
-
 });
 
 /*
@@ -269,9 +210,7 @@ Route::middleware(['auth', 'role:pegawai'])
 
         // Produk & Permintaan
         Route::get('/produk', [PermintaanController::class, 'index'])->name('produk');
-
-        Route::get('/produk/search', [SearchController::class, 'index'])
-            ->name('produk.search');
+        Route::get('/produk/search', [SearchController::class, 'index'])->name('produk.search');
 
         Route::get('/permintaan', [PermintaanController::class, 'permintaan'])->name('permintaan.index');
         Route::get('/permintaan/pending', [PermintaanController::class, 'pendingPermintaan'])->name('permintaan.pending');
@@ -280,14 +219,31 @@ Route::middleware(['auth', 'role:pegawai'])
         Route::post('/permintaan/refund/{id}', [PermintaanController::class, 'refundItem'])->name('permintaan.refund');
         Route::post('/permintaan/cancel/{id}', [PermintaanController::class, 'cancelItem'])->name('permintaan.cancel');
         Route::get('/permintaan/{id}/detail', [PermintaanController::class, 'detailPermintaan'])->name('permintaan.detail');
-
         Route::post('/permintaan/create', [PermintaanController::class, 'createPermintaan'])->name('permintaan.create');
         Route::post('/permintaan/{id}/submit', [PermintaanController::class, 'submitPermintaan'])->name('permintaan.submit');
 
-        Route::get('/notifications/read', [PegawaiController::class, 'readNotifications'])
-        ->name('notifications.read');
-
+        Route::get('/notifications/read', [PegawaiController::class, 'readNotifications'])->name('notifications.read');
 });
+
+/*
+|--------------------------------------------------------------------------
+| 🔗 Dashboard Global Redirect (Fix RouteNotFoundException)
+|--------------------------------------------------------------------------
+|
+| Sekarang route('dashboard') akan otomatis redirect ke dashboard sesuai role.
+|
+*/
+Route::middleware(['auth'])->get('/dashboard', function () {
+    $user = auth()->user();
+    if ($user->role === 'super_admin') {
+        return redirect()->route('super_admin.dashboard');
+    } elseif ($user->role === 'admin') {
+        return redirect()->route('admin.dashboard');
+    } elseif ($user->role === 'pegawai') {
+        return redirect()->route('pegawai.dashboard');
+    }
+    abort(403, 'Unauthorized');
+})->name('dashboard');
 
 /*
 |--------------------------------------------------------------------------

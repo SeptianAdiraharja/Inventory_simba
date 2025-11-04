@@ -1,19 +1,41 @@
 @extends('layouts.index')
 
 @section('content')
-<div class="container py-4 animate__animated animate__fadeIn">
+<div class="container-fluid py-4 animate__animated animate__fadeIn">
 
-  <!-- 🔹 JUDUL -->
-  <h4 class="fw-bold text-danger mb-4 d-flex align-items-center">
-    <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>Scan Barang Rusak / Reject
-  </h4>
+  {{-- ===================== --}}
+  {{-- 🧭 BREADCRUMB --}}
+  {{-- ===================== --}}
+  <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 animate__animated animate__fadeInDown smooth-fade">
+    <div class="d-flex align-items-center flex-wrap gap-2">
+      <div class="bg-danger bg-opacity-10 text-danger rounded-circle p-2 d-flex align-items-center justify-content-center" style="width:38px;height:38px;">
+        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+      </div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item">
+            <a href="{{ route('dashboard') }}" class="fw-semibold text-danger text-decoration-none">Dashboard</a>
+          </li>
+          <li class="breadcrumb-item active fw-semibold text-dark" aria-current="page">
+            Scan Barang Rusak / Reject
+          </li>
+        </ol>
+      </nav>
+    </div>
+    <div class="d-flex align-items-center text-muted small">
+      <i class="bi bi-calendar-check me-2"></i>
+      <span>{{ now()->format('d M Y, H:i') }}</span>
+    </div>
+  </div>
 
-  <!-- 🔶 FORM SCAN -->
+  {{-- ===================== --}}
+  {{-- 🔶 FORM SCAN --}}
+  {{-- ===================== --}}
   <div class="card shadow-lg border-0 rounded-4 mb-4 overflow-hidden">
-    <div class="card-header bg-gradient text-white py-3 px-4"
+    <div class="card-header text-white py-3 px-4"
          style="background: linear-gradient(90deg, #ff4d4d, #ff7676);">
       <h6 class="mb-0 fw-semibold d-flex align-items-center">
-        <i class="bi bi-upc-scan me-2"></i>Form Scan Barang
+        <i class="bi bi-upc-scan me-2"></i>Form Scan Barang Rusak
       </h6>
     </div>
 
@@ -21,7 +43,6 @@
       <form id="scanForm" autocomplete="off">
         @csrf
         <div class="row g-4 align-items-end">
-
           <div class="col-md-4">
             <label class="form-label fw-semibold text-secondary">Scan Barcode Barang</label>
             <input type="text" id="barcode" name="barcode"
@@ -38,8 +59,7 @@
 
           <div class="col-md-3">
             <label class="form-label fw-semibold text-secondary">Kondisi</label>
-            <select id="condition" name="condition"
-                    class="form-select shadow-sm border-0">
+            <select id="condition" name="condition" class="form-select shadow-sm border-0">
               <option value="rusak ringan">Rusak Ringan</option>
               <option value="rusak berat">Rusak Berat</option>
               <option value="tidak bisa digunakan">Tidak Bisa Digunakan</option>
@@ -56,7 +76,9 @@
     </div>
   </div>
 
-  <!-- 🔹 TABEL HASIL SCAN -->
+  {{-- ===================== --}}
+  {{-- 📋 TABEL BARANG RUSAK --}}
+  {{-- ===================== --}}
   <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
     <div class="card-header bg-danger text-white fw-semibold py-3 px-4 d-flex justify-content-between align-items-center">
       <div><i class="bi bi-list-ul me-2"></i>Daftar Barang Rusak (Belum Disimpan)</div>
@@ -67,8 +89,7 @@
 
     <div class="card-body p-0 bg-white">
       <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle" id="rejectTable"
-               style="border-collapse: separate; border-spacing: 0;">
+        <table class="table table-hover mb-0 align-middle" id="rejectTable" style="border-collapse: separate; border-spacing: 0;">
           <thead class="table-danger text-center text-uppercase small">
             <tr>
               <th width="60">No</th>
@@ -76,15 +97,14 @@
               <th>Kode</th>
               <th width="80">Jumlah</th>
               <th>Kondisi</th>
-              <th>Deskripsi (Harus Diisi)</th>
+              <th>Deskripsi (Wajib)</th>
               <th width="100">Aksi</th>
             </tr>
           </thead>
           <tbody id="rejectTableBody" class="text-center">
             <tr>
               <td colspan="7" class="text-muted py-4">
-                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                Belum ada data.
+                <i class="bi bi-inbox fs-4 d-block mb-2"></i> Belum ada data.
               </td>
             </tr>
           </tbody>
@@ -92,14 +112,20 @@
       </div>
     </div>
   </div>
-
-  <!-- 🔹 AREA ALERT -->
-  <div id="alertPlaceholder" class="mt-3"></div>
-
 </div>
 @endsection
 
+@push('styles')
+<style>
+.smooth-fade { animation: fadeDown .7s ease-in-out; }
+@keyframes fadeDown { from { opacity:0; transform:translateY(-10px);} to {opacity:1; transform:translateY(0);} }
+tr.fade-in { animation: fadeIn .5s ease-in; }
+@keyframes fadeIn { from {opacity:0;transform:translateY(-5px);} to {opacity:1;transform:translateY(0);} }
+</style>
+@endpush
+
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("scanForm");
@@ -111,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   barcodeInput.focus();
 
-  // Submit scan form
+  // Tambah data hasil scan
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const barcode = barcodeInput.value.trim();
@@ -121,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const condition = document.getElementById("condition").value;
 
     if (scannedItems.find(i => i.barcode === barcode)) {
-      showAlert("Barang dengan kode ini sudah ada di daftar!", "warning");
+      Swal.fire("Duplikat!", "Barang dengan kode ini sudah ditambahkan.", "warning");
       barcodeInput.value = "";
       barcodeInput.focus();
       return;
@@ -132,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await res.json();
 
       if (!result.success) {
-        showAlert(result.message, "danger");
+        Swal.fire("Gagal!", result.message, "error");
       } else {
         if (rejectBody.querySelector("td.text-muted")) rejectBody.innerHTML = "";
 
@@ -145,31 +171,25 @@ document.addEventListener("DOMContentLoaded", () => {
           description: ""
         });
 
-        const newRow = `
-          <tr data-barcode="${barcode}">
-            <td class="text-center">${counter++}</td>
-            <td class="fw-semibold">${result.item.name}</td>
-            <td>${result.item.code}</td>
-            <td>${quantity}</td>
-            <td class="text-capitalize">${condition}</td>
-            <td>
-              <input type="text" class="form-control form-control-sm description-input rounded-3 shadow-sm"
-                     placeholder="Isi deskripsi..." required>
-            </td>
-            <td>
-              <button class="btn btn-sm btn-outline-danger rounded-circle remove-btn shadow-sm">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>`;
-        rejectBody.insertAdjacentHTML("beforeend", newRow);
+        const newRow = document.createElement("tr");
+        newRow.classList.add("fade-in");
+        newRow.dataset.barcode = barcode;
+        newRow.innerHTML = `
+          <td>${counter++}</td>
+          <td class="fw-semibold">${result.item.name}</td>
+          <td>${result.item.code}</td>
+          <td>${quantity}</td>
+          <td class="text-capitalize">${condition}</td>
+          <td><input type="text" class="form-control form-control-sm description-input" placeholder="Isi deskripsi..." required></td>
+          <td><button class="btn btn-sm btn-outline-danger remove-btn"><i class="bi bi-trash"></i></button></td>
+        `;
+        rejectBody.appendChild(newRow);
         barcodeInput.value = "";
         barcodeInput.focus();
         saveAllBtn.disabled = false;
       }
-    } catch (err) {
-      console.error(err);
-      showAlert("Gagal memeriksa barang. Coba lagi.", "danger");
+    } catch {
+      Swal.fire("Error!", "Gagal memeriksa barang. Coba lagi.", "error");
     }
   });
 
@@ -187,7 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Simpan semua
+  // Simpan semua data
   saveAllBtn.addEventListener("click", async () => {
     const descInputs = document.querySelectorAll(".description-input");
     let valid = true;
@@ -204,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (!valid) {
-      showAlert("Harap isi semua deskripsi sebelum menyimpan!", "warning");
+      Swal.fire("Perhatian!", "Isi semua deskripsi sebelum menyimpan!", "warning");
       return;
     }
 
@@ -220,27 +240,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const result = await res.json();
       if (result.success) {
-        showAlert(result.message, "success");
+        Swal.fire("Berhasil!", result.message, "success");
         scannedItems = [];
         rejectBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4"><i class='bi bi-inbox'></i> Belum ada data.</td></tr>`;
         saveAllBtn.disabled = true;
         counter = 1;
       } else {
-        showAlert(result.message, "danger");
+        Swal.fire("Gagal!", result.message, "error");
       }
     } catch {
-      showAlert("Gagal menyimpan data ke server.", "danger");
+      Swal.fire("Error!", "Gagal menyimpan data ke server.", "error");
     }
   });
-
-  function showAlert(message, type = "info") {
-    const alertBox = document.createElement("div");
-    alertBox.className = `alert alert-${type} alert-dismissible fade show shadow-sm mt-3`;
-    alertBox.innerHTML = `
-      <i class="bi bi-info-circle me-2"></i>${message}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
-    document.getElementById("alertPlaceholder").append(alertBox);
-  }
 });
 </script>
 @endpush
