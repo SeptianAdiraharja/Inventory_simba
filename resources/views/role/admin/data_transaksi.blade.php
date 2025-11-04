@@ -118,7 +118,8 @@
 
                             {{-- Edit --}}
                             <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#editModal"
-                              data-cart-item-id="{{ $item->id }}" data-item-id="{{ $item->item->id }}" data-qty="{{ $item->quantity }}">
+                              data-cart-item-id="{{ $item->id }}" data-item-name="{{ $item->item->name }}"
+                              data-item-id="{{ $item->item->id }}" data-qty="{{ $item->quantity }}">
                               <i class="bi bi-pencil-square"></i> Edit
                             </button>
                           </td>
@@ -202,7 +203,8 @@
                             </button>
                             <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal"
                               data-bs-target="#editModalGuest" data-guest-cart-item-id="{{ $item->id }}"
-                              data-item-id="{{ $item->item->id }}" data-qty="{{ $item->quantity }}">
+                              data-item-name="{{ $item->item->name }}" data-item-id="{{ $item->item->id }}"
+                              data-qty="{{ $item->quantity }}">
                               <i class="bi bi-pencil-square"></i> Edit
                             </button>
                           </td>
@@ -228,7 +230,7 @@
 </div>
 
 {{-- ===================== --}}
-{{-- MODAL REFUND --}}
+{{-- MODAL REFUND PEGAWAI --}}
 {{-- ===================== --}}
 <div class="modal fade" id="refundModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -248,11 +250,128 @@
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Jumlah Refund</label>
-            <input type="number" name="qty" id="refundQty" class="form-control" min="1" required>
+            <input type="number" name="qty" id="refundQty" class="form-control" min="1" value="1" required>
+            <small class="text-muted">Maksimal: <span id="maxRefundQty">0</span> barang</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Scan Kode Barang</label>
+            <input type="text" name="code" class="form-control" placeholder="Scan barcode barang" required>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-warning fw-bold"><i class="bi bi-check-circle me-1"></i> Proses</button>
+          <button type="submit" class="btn btn-warning fw-bold"><i class="bi bi-check-circle me-1"></i> Proses Refund</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i> Batal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{-- ===================== --}}
+{{-- MODAL EDIT PEGAWAI --}}
+{{-- ===================== --}}
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <form action="{{ route('admin.pegawai.updateItem') }}" method="POST">
+        @csrf
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Edit Barang</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="cart_item_id" id="editCartItemId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nama Barang</label>
+            <input type="text" class="form-control" id="editItemName" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Jumlah Barang</label>
+            <input type="number" name="qty" id="editQty" class="form-control" min="1" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Scan Kode Barang Baru</label>
+            <input type="text" name="code" class="form-control" placeholder="Scan barcode barang baru" required>
+          </div>
+          <input type="hidden" name="item_id" id="editItemId">
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-info text-white fw-bold"><i class="bi bi-check-circle me-1"></i> Update</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i> Batal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{-- ===================== --}}
+{{-- MODAL REFUND GUEST --}}
+{{-- ===================== --}}
+<div class="modal fade" id="refundModalGuest" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <form action="{{ route('admin.guest.refund') }}" method="POST">
+        @csrf
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title fw-bold"><i class="bi bi-arrow-counterclockwise me-2"></i>Refund Barang Tamu</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="guest_cart_item_id" id="refundGuestCartItemId">
+          <input type="hidden" name="item_id" id="refundGuestItemId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nama Barang</label>
+            <input type="text" class="form-control" id="refundGuestItemName" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Jumlah Refund</label>
+            <input type="number" name="qty" id="refundGuestQty" class="form-control" min="1" value="1" required>
+            <small class="text-muted">Maksimal: <span id="maxRefundGuestQty">0</span> barang</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Scan Kode Barang</label>
+            <input type="text" name="code" class="form-control" placeholder="Scan barcode barang" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-warning fw-bold"><i class="bi bi-check-circle me-1"></i> Proses Refund</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i> Batal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{-- ===================== --}}
+{{-- MODAL EDIT GUEST --}}
+{{-- ===================== --}}
+<div class="modal fade" id="editModalGuest" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <form action="{{ route('admin.guest.updateItem') }}" method="POST">
+        @csrf
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Edit Barang Tamu</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="guest_cart_item_id" id="editGuestCartItemId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nama Barang</label>
+            <input type="text" class="form-control" id="editGuestItemName" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Jumlah Barang</label>
+            <input type="number" name="qty" id="editGuestQty" class="form-control" min="1" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Scan Kode Barang Baru</label>
+            <input type="text" name="code" class="form-control" placeholder="Scan barcode barang baru" required>
+          </div>
+          <input type="hidden" name="item_id" id="editGuestItemId">
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-info text-white fw-bold"><i class="bi bi-check-circle me-1"></i> Update</button>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i> Batal</button>
         </div>
       </form>
@@ -275,19 +394,49 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('refundCartItemId').value = btn.getAttribute('data-cart-item-id');
       document.getElementById('refundItemId').value = btn.getAttribute('data-item-id');
       document.getElementById('refundItemName').value = btn.getAttribute('data-item-name');
-      document.getElementById('refundQty').setAttribute('max', btn.getAttribute('data-max-qty'));
+
+      const maxQty = btn.getAttribute('data-max-qty');
+      document.getElementById('refundQty').setAttribute('max', maxQty);
+      document.getElementById('maxRefundQty').textContent = maxQty;
     });
   }
 
-  // 🔹 Edit Modal Pegawai
+  // 🔹 Modal Edit Pegawai
   const editModal = document.getElementById('editModal');
   if (editModal) {
     editModal.addEventListener('show.bs.modal', function (event) {
       const btn = event.relatedTarget;
-      editModal.querySelector('#editItemId').value = btn.getAttribute('data-cart-item-id');
-      editModal.querySelector('#editItemSelect').value = btn.getAttribute('data-item-id');
-      editModal.querySelector('#editQty').value = btn.getAttribute('data-qty');
-      editModal.querySelector('#editcode').value = '';
+      document.getElementById('editCartItemId').value = btn.getAttribute('data-cart-item-id');
+      document.getElementById('editItemId').value = btn.getAttribute('data-item-id');
+      document.getElementById('editItemName').value = btn.getAttribute('data-item-name');
+      document.getElementById('editQty').value = btn.getAttribute('data-qty');
+    });
+  }
+
+  // 🔹 Modal Refund Guest
+  const refundModalGuest = document.getElementById('refundModalGuest');
+  if (refundModalGuest) {
+    refundModalGuest.addEventListener('show.bs.modal', function (event) {
+      const btn = event.relatedTarget;
+      document.getElementById('refundGuestCartItemId').value = btn.getAttribute('data-cart-item-id');
+      document.getElementById('refundGuestItemId').value = btn.getAttribute('data-item-id');
+      document.getElementById('refundGuestItemName').value = btn.getAttribute('data-item-name');
+
+      const maxQty = btn.getAttribute('data-max-qty');
+      document.getElementById('refundGuestQty').setAttribute('max', maxQty);
+      document.getElementById('maxRefundGuestQty').textContent = maxQty;
+    });
+  }
+
+  // 🔹 Modal Edit Guest
+  const editModalGuest = document.getElementById('editModalGuest');
+  if (editModalGuest) {
+    editModalGuest.addEventListener('show.bs.modal', function (event) {
+      const btn = event.relatedTarget;
+      document.getElementById('editGuestCartItemId').value = btn.getAttribute('data-guest-cart-item-id');
+      document.getElementById('editGuestItemId').value = btn.getAttribute('data-item-id');
+      document.getElementById('editGuestItemName').value = btn.getAttribute('data-item-name');
+      document.getElementById('editGuestQty').value = btn.getAttribute('data-qty');
     });
   }
 

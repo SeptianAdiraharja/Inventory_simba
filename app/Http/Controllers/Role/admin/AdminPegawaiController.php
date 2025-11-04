@@ -8,7 +8,8 @@ use App\Models\{
     CartItem,
     Item,
     Item_out,
-    User
+    User,
+    Category
 };
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,7 +40,7 @@ class AdminPegawaiController extends Controller
     /* =======================================================
        🔍 SEARCH – Method untuk pencarian pegawai
     ======================================================== *
-    
+
     /**
      * Show the form for creating a new resource.
      */
@@ -59,17 +60,43 @@ class AdminPegawaiController extends Controller
     /**
      * Display the specified resource.
      */
-    public function showProduk($id)
+    public function showProduk(Request $request, $id)
     {
         // Ambil data pegawai berdasarkan ID
         $pegawai = User::findOrFail($id);
 
-        // Ambil semua produk (atau filter jika mau khusus)
-        $items = Item::with('category')->get();
+        // Query untuk produk dengan fitur search
+        $itemsQuery = Item::with('category');
+
+        // Filter berdasarkan pencarian
+        if ($request->has('q') && !empty($request->q)) {
+            $searchTerm = $request->q;
+            $itemsQuery->where(function($query) use ($searchTerm) {
+                $query->where('name', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('code', 'LIKE', "%{$searchTerm}%")
+                    ->orWhereHas('category', function($categoryQuery) use ($searchTerm) {
+                        $categoryQuery->where('name', 'LIKE', "%{$searchTerm}%");
+                    });
+            });
+        }
+
+        // Filter berdasarkan kategori
+        if ($request->has('kategori') && $request->kategori != 'none') {
+            $itemsQuery->whereHas('category', function($query) use ($request) {
+                $query->where('name', $request->kategori);
+            });
+        }
+
+        // Ambil semua kategori untuk dropdown
+        $categories = Category::all();
+
+        // Pagination
+        $items = $itemsQuery->paginate(12);
 
         // Tampilkan ke view produk pegawai
-        return view('role.admin.produk_pegawai', compact('pegawai', 'items'));
+        return view('role.admin.produk_pegawai', compact('pegawai', 'items', 'categories'));
     }
+
 
 
     public function scan(Request $request, $pegawaiId)

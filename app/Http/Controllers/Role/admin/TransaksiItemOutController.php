@@ -84,7 +84,7 @@ class TransaksiItemOutController extends Controller
         DB::beginTransaction();
         try {
             // Ambil cart item yang benar
-            $cartItem = CartItem::findOrFail($request->cart_item_id);
+            $cartItem = CartItem::with('item')->findOrFail($request->cart_item_id);
 
             // Cek bahwa cartItem terkait dengan item_id yang dikirim
             if ($cartItem->item_id != $request->item_id) {
@@ -106,7 +106,12 @@ class TransaksiItemOutController extends Controller
             $itemId = $cartItem->item_id;
             $refundQty = (int) $request->qty;
 
-            // Cari Item_out terkait berdasarkan cart_id + item_id (lebih spesifik)
+            // Validasi jumlah refund
+            if ($refundQty > $cartItem->quantity) {
+                return back()->with('error', 'Jumlah refund melebihi jumlah pada cart.');
+            }
+
+            // Cari Item_out terkait
             $itemOut = Item_out::where('cart_id', $cartId)
                 ->where('item_id', $itemId)
                 ->orderByDesc('created_at')
@@ -116,13 +121,8 @@ class TransaksiItemOutController extends Controller
                 return back()->with('error', 'Data transaksi barang keluar tidak ditemukan untuk cart ini.');
             }
 
-            // Validasi jumlah refund terhadap item_out dan cart_item
             if ($refundQty > $itemOut->quantity) {
                 return back()->with('error', 'Jumlah refund melebihi jumlah barang yang tercatat di transaksi keluar.');
-            }
-
-            if ($refundQty > $cartItem->quantity) {
-                return back()->with('error', 'Jumlah refund melebihi jumlah pada cart.');
             }
 
             // Kurangi quantity di item_out
@@ -163,7 +163,10 @@ class TransaksiItemOutController extends Controller
     /**
      * 🔹 Proses Edit Barang dan Qty
      */
-    public function updateItem(Request $request)
+    /**
+     * 🔹 Proses Edit Barang dan Qty Pegawai
+     */
+     public function updateItem(Request $request)
     {
         $request->validate([
             'cart_item_id' => 'required|exists:cart_items,id',
@@ -174,7 +177,7 @@ class TransaksiItemOutController extends Controller
 
         try {
             DB::transaction(function () use ($request) {
-                $cartItem = CartItem::findOrFail($request->cart_item_id);
+                $cartItem = CartItem::with('item')->findOrFail($request->cart_item_id);
 
                 // ✅ Cari barang berdasarkan code
                 $scannedItem = Item::where('code', $request->code)->first();
@@ -188,22 +191,25 @@ class TransaksiItemOutController extends Controller
                     throw new \Exception("Code tidak cocok dengan barang yang dipilih.");
                 }
 
+                $oldQty = $cartItem->quantity;
+                $newQty = $request->qty;
+
                 // ✅ Jika barang diganti dengan barang lain
                 if ($cartItem->item_id != $request->item_id) {
                     $oldItem = Item::find($cartItem->item_id);
-                    $oldItem->increment('stock', $cartItem->quantity); // Kembalikan stok lama
+                    $oldItem->increment('stock', $oldQty); // Kembalikan stok lama
 
                     $newItem = Item::find($request->item_id);
-                    if ($newItem->stock < $request->qty) {
+                    if ($newItem->stock < $newQty) {
                         throw new \Exception("Stok barang baru tidak mencukupi.");
                     }
 
-                    $newItem->decrement('stock', $request->qty);
+                    $newItem->decrement('stock', $newQty);
                     $cartItem->item_id = $request->item_id;
-                    $cartItem->quantity = $request->qty;
+                    $cartItem->quantity = $newQty;
                 } else {
                     // ✅ Barang sama → cek selisih
-                    $diff = $request->qty - $cartItem->quantity;
+                    $diff = $newQty - $oldQty;
 
                     if ($diff > 0) {
                         // Tambah qty → kurangi stok
@@ -216,10 +222,21 @@ class TransaksiItemOutController extends Controller
                         $cartItem->item->increment('stock', abs($diff));
                     }
 
-                    $cartItem->quantity = $request->qty;
+                    $cartItem->quantity = $newQty;
                 }
 
                 $cartItem->save();
+
+                // Update juga di item_out
+                $itemOut = Item_out::where('cart_id', $cartItem->cart_id)
+                    ->where('item_id', $cartItem->item_id)
+                    ->orderByDesc('created_at')
+                    ->first();
+
+                if ($itemOut) {
+                    $itemOut->quantity = $newQty;
+                    $itemOut->save();
+                }
             });
 
             return back()->with('success', 'Barang berhasil diperbarui.');

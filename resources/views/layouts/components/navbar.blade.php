@@ -193,6 +193,201 @@
 
 
 <!-- ========== Navbar ========== -->
+@auth
+    @if(Auth::user()->role === 'pegawai' || Auth::user()->role === 'admin')
+        @php
+            $cartsitems = \App\Models\Cart::where('user_id', Auth::id())
+                ->where('status', 'active')
+                ->with('cartItems.item')
+                ->first();
+
+            $categories = \App\Models\Category::all();
+            $cartexceptactive = \App\Models\Cart::withCount('cartItems')
+                ->where('user_id', Auth::id())
+                ->where('status', '!=', 'active');
+            $notifications = \App\Models\Notification::where('user_id', Auth::id())
+                ->where('status', 'unread')
+                ->latest()
+                ->take(5)
+                ->get();
+
+            $notifCount = $notifications->count();
+        @endphp
+        <style>
+            /* Override default offcanvas supaya lebih seperti floating panel */
+            /* Styling offcanvas biar tampil floating */
+            #offcanvasCart {
+                position: fixed !important;
+                right: 25px;
+                bottom: 100px; /* biar ada jarak dari tombol cart */
+                width: 400px;
+                top: 200px;
+                max-height: 85vh;
+                border-radius: 20px;
+                background-color: #fff;
+                border: 1px solid #ddd;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+                overflow: hidden;
+                transition: all 0.25s ease-in-out;
+                z-index: 1055; /* pastikan di atas navbar */
+                backdrop-filter: blur(6px);
+            }
+
+            /* Hilangkan backdrop biar gak gelapin layar */
+            .offcanvas-backdrop.show {
+                display: none !important;
+            }
+
+            /* Animasi halus */
+            .offcanvas-end {
+                transform: translateX(100%) !important;
+                opacity: 0;
+            }
+            .offcanvas-end.show {
+                transform: translateX(0) !important;
+                opacity: 1;
+            }
+
+        </style>
+
+        <!-- ========== Offcanvas Cart ========== -->
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCart" aria-labelledby="offcanvasCartLabel">
+            <div class="offcanvas-header justify-content-between">
+                <h5 id="offcanvasCartLabel">Keranjang</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+
+            <div class="offcanvas-body">
+                @php
+                    // cek user login dulu
+                    $countThisWeek = 0;
+                    if (\Illuminate\Support\Facades\Auth::check()) {
+                        $now = \Carbon\Carbon::now('Asia/Jakarta');
+
+                        // awal minggu = Senin
+                        $daysToSubtract = ($now->dayOfWeek === \Carbon\Carbon::SUNDAY) ? 6 : $now->dayOfWeek - 1;
+                        $startOfWeek = $now->copy()->subDays($daysToSubtract)->startOfDay();
+                        $endOfWeek   = $startOfWeek->copy()->addDays(6)->endOfDay();
+
+                        $countThisWeek = \App\Models\Cart::where('user_id', \Illuminate\Support\Facades\Auth::id())
+                            ->whereIn('status', ['pending', 'approved'])
+                            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                            ->count();
+                    }
+
+                    $maxLimit = 5;
+                    $progress = ($maxLimit > 0) ? ($countThisWeek / $maxLimit) * 100 : 0;
+                    $isLimitReached = $countThisWeek >= $maxLimit;
+                @endphp
+
+                <div class="p-3 border rounded-3 mb-3 bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 fw-semibold text-primary">
+                            <i class="ri-calendar-line me-2"></i>Pengajuan Minggu Ini
+                        </h6>
+                        <span class="fw-bold text-primary">{{ $countThisWeek }}/5 kali</span>
+                    </div>
+
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar {{ $isLimitReached ? 'bg-danger' : 'bg-primary' }}"
+                            role="progressbar"
+                            style="width: {{ $progress }}%;"
+                            aria-valuenow="{{ $progress }}"
+                            aria-valuemin="0"
+                            aria-valuemax="100">
+                        </div>
+                    </div>
+
+                    @if($isLimitReached)
+                        <div class="alert alert-danger alert-dismissible fade show mt-3 py-2 px-3" role="alert">
+                            <i class="ri-error-warning-line me-2"></i>
+                            Anda telah mencapai batas maksimal 5 pengajuan minggu ini.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+                </div>
+                <h4 class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-primary">Keranjang</span>
+                    <span class="badge bg-primary rounded-pill">
+                        {{ $cartsitems ? $cartsitems->cartItems->count() : 0 }}
+                    </span>
+                </h4>
+
+                <ul class="list-group mb-3">
+                    @if($cartsitems && $cartsitems->cartItems->count() > 0)
+                        @foreach($cartsitems->cartItems as $item)
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ $item->item->name }}</h6>
+                                        <small class="text-muted">Kategori: {{ $item->item->category->name ?? '-' }}</small>
+                                    </div>
+
+                                    {{-- Edit Quantity --}}
+                                    <form action="{{ route('pegawai.permintaan.update', $item->id) }}"
+                                        method="POST"
+                                        class="d-flex align-items-center ms-2 qty-form" style="gap: 6px;">
+                                        @csrf
+                                        @method('PUT')
+                                        <input
+                                            type="number"
+                                            name="quantity"
+                                            value="{{ $item->quantity }}"
+                                            data-original="{{ $item->quantity }}"
+                                            min="1"
+                                            class="form-control form-control-sm text-center qty-input"
+                                            style="width: 80px;" required
+                                        >
+                                        <button type="submit" class="btn btn-sm btn-outline-success btn-qty-check" style="display:none;">
+                                            <i class="ri-check-line"></i>
+                                        </button>
+                                    </form>
+
+
+
+                                    {{-- Hapus Item --}}
+                                    <form action="{{ route('pegawai.cart.destroy', $item->id) }}" method="POST" class="ms-2 confirm-delete-form" data-item-name="{{ $item->item->name }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" >
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </li>
+                        @endforeach
+                    @else
+                        <li class="list-group-item text-center py-3 text-muted">
+                            Keranjang Anda kosong
+                        </li>
+                    @endif
+                </ul>
+
+                @if($cartsitems && $cartsitems->cartItems->count() > 0)
+                    @if($isLimitReached)
+                        <button type="button" class="btn btn-secondary" disabled>
+                            <i class="ri-error-warning-line me-1"></i> Batas Pengajuan Tercapai
+                        </button>
+                    @else
+                        <form action="{{ route('pegawai.permintaan.submit', $cartsitems->id ?? 0) }}" method="POST" class=" confirm-form">
+                            @csrf
+                            <button type="submit" class="w-100 btn btn-primary btn-lg">
+                                Ajukan Permintaan
+                            </button>
+                        </form>
+                    @endif
+                @else
+                    <a href="{{ route('pegawai.produk') }}" class="w-100 btn btn-outline-primary btn-lg">
+                        Lanjutkan Belanja
+                    </a>
+                @endif
+            </div>
+        </div>
+    @endif
+@endauth
+
+
+<!-- ========== Navbar ========== -->
 <nav class="layout-navbar container-xxl navbar navbar-expand-xl align-items-center bg-navbar-theme" id="layout-navbar">
     <!-- Mobile Menu Toggle -->
     <div class="layout-menu-toggle navbar-nav align-items-xl-center me-4 d-xl-none">
@@ -246,7 +441,7 @@
         @auth
             @if(Auth::user()->role === 'pegawai' || Auth::user()->role === 'admin')
                 @php
-                    // Logika untuk menentukan tampilan search
+                    // Logika untuk menentukan tampilan search dan kategori
                     $showSearch = false;
                     $showCategoryDropdown = false;
 
@@ -255,19 +450,30 @@
                         $showSearch = request()->is('pegawai/produk*');
                         $showCategoryDropdown = $showSearch;
                     } elseif (Auth::user()->role === 'admin') {
-                        // Admin: cek halaman yang tidak boleh menampilkan search
-                        $isExportPage = request()->is('admin/out*') || request()->is('admin/export/barang-keluar*');
-                        $isRejectPage = request()->is('admin/rejects*');
-                        $isDashboardPage = request()->is('admin/dashboard*');
-                        $hideSearch = $isExportPage || $isRejectPage || $isDashboardPage;
+                        // Admin: search hanya di halaman tertentu
+                        $showSearchPages = [
+                            'admin/request*',
+                            'admin/itemout*',
+                            'admin/guests*',
+                            'admin/pegawai*',
+                            'admin/rejects*',
+                            'admin/produk*'
+                        ];
 
-                        $showSearch = !$hideSearch;
+                        $showSearch = false;
+                        foreach ($showSearchPages as $pattern) {
+                            if (request()->is($pattern)) {
+                                $showSearch = true;
+                                break;
+                            }
+                        }
 
-                        // Admin: dropdown kategori hanya di halaman produk guest dan produk pegawai
+                        // Admin: dropdown kategori hanya di halaman produk guest, produk pegawai, dan produk
                         $showCategoryDropdown = request()->is('admin/produk*') || request()->is('admin/pegawai/*/produk');
                     }
                 @endphp
 
+                @if($showSearch)
                     <!-- ============================= -->
                     <!-- 🔍 SEARCH BAR (CENTERED) -->
                     <!-- ============================= -->
@@ -283,17 +489,18 @@
                                 } elseif (request()->is('admin/produk*')) {
                                     $actionUrl = route('admin.produk.index');
                                 } elseif (request()->is('admin/pegawai/*/produk')) {
-                                    // Rute ini akan di-handle oleh JavaScript (tetap gunakan '#')
-                                    $actionUrl = '#';
+                                    // Rute untuk produk pegawai - ambil ID dari URL
+                                    $pegawaiId = request()->segment(3); // segment ke-3 adalah ID pegawai
+                                    $actionUrl = url("admin/pegawai/{$pegawaiId}/produk");
                                 } elseif (request()->is('admin/request*')) {
                                     $actionUrl = route('admin.request.search');
                                 } elseif (request()->is('admin/itemout*')) {
                                     $actionUrl = route('admin.itemout.search');
                                 } elseif (request()->is('admin/pegawai*')) {
                                     $actionUrl = route('admin.pegawai.index');
-                                } elseif (request ()->is('admin/rejects*')){
+                                } elseif (request()->is('admin/rejects*')) {
                                     $actionUrl = route('admin.rejects.search');
-                                }  else {
+                                } else {
                                     // Fallback untuk admin jika tidak ada yang cocok
                                     $actionUrl = '#';
                                 }
@@ -307,8 +514,7 @@
                             style="max-width: 600px; width: 100%; transition: all 0.2s ease;"
                             id="search-form"
                         >
-
-                            @if($showCategoryDropdown)
+                            @if($showCategoryDropdown && isset($categories) && $categories->count() > 0)
                                 {{-- Dropdown kategori --}}
                                 <select name="kategori"
                                         class="form-select border-0 bg-transparent text-secondary fw-medium"
@@ -331,32 +537,36 @@
                             <input type="text"
                                 name="q"
                                 class="form-control border-0 bg-transparent shadow-none text-secondary"
-                                placeholder="Cari"
+                                placeholder="Cari produk..."
                                 aria-label="Search..."
                                 style="font-size: 14px;"
                                 value="{{ request('q') }}" />
+
+                            {{-- Tombol submit tersembunyi untuk kategori dropdown --}}
+                            <button type="submit" style="display: none;"></button>
                         </form>
                     </div>
 
                     @if(Auth::user()->role === 'admin' && (request()->is('admin/pegawai/*/produk') || request()->is('admin/request*') || request()->is('admin/itemout*') || request()->is('admin/pegawai*') || request()->is('admin/transaksi*') || request()->is('admin/rejects*')))
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const searchForm = document.getElementById('search-form');
-        if (searchForm) {
-            // Untuk halaman produk pegawai, request, itemout, pegawai, transaksi, dan rejects, form dihandle oleh JavaScript
-            searchForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const currentUrl = window.location.href;
-                const formData = new FormData(searchForm);
-                const searchParams = new URLSearchParams(formData);
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const searchForm = document.getElementById('search-form');
+                                if (searchForm) {
+                                    // Untuk halaman produk pegawai, request, itemout, pegawai, transaksi, dan rejects, form dihandle oleh JavaScript
+                                    searchForm.addEventListener('submit', function(e) {
+                                        e.preventDefault();
+                                        const currentUrl = window.location.href;
+                                        const formData = new FormData(searchForm);
+                                        const searchParams = new URLSearchParams(formData);
 
-                // Redirect ke URL yang sama dengan parameter pencarian
-                window.location.href = currentUrl.split('?')[0] + '?' + searchParams.toString();
-            });
-        }
-    });
-</script>
-@endif
+                                        // Redirect ke URL yang sama dengan parameter pencarian
+                                        window.location.href = currentUrl.split('?')[0] + '?' + searchParams.toString();
+                                    });
+                                }
+                            });
+                        </script>
+                    @endif
+                @endif
             @endif
         @endauth
 

@@ -3,6 +3,13 @@
 @section('content')
 <div class="container-fluid py-3 animate__animated animate__fadeIn">
 
+  @if(isset($search) && $search)
+      <div class="alert alert-info">
+          Menampilkan hasil pencarian untuk: "<strong>{{ $search }}</strong>"
+          <a href="{{ route('admin.pegawai.produk') }}" class="float-end">Tampilkan semua</a>
+      </div>
+  @endif
+
   {{-- Header --}}
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold text-primary mb-0">
