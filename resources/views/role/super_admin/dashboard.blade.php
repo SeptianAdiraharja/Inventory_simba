@@ -2,38 +2,6 @@
 @section('content')
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
-<<<<<<< HEAD
-                  <!-- Grafik -->
-                  <div class="col-xl-9 col-md-12">
-                    <div class="card shadow-sm border-0 rounded-3 h-100 overflow-hidden">
-                      <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <div>
-                          <h6 class="text-muted mb-1">Ringkasan Barang Masuk dan Barang Keluar</h6>
-                          <h5 class="fw-bold mb-0">Statistik Barang</h5>
-                        </div>
-                      </div>
-                      <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                          <span class="text-muted">
-                            <i class="bi bi-graph-up-arrow me-2 text-primary"></i> Grafik berdasarkan periode
-                          </span>
-                          <div class="btn-group" id="chartFilterGroup">
-                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" data-period="daily">Harian</button>
-                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 active" data-period="weekly">Mingguan</button>
-                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" data-period="monthly">Bulanan</button>
-                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" data-period="triwulan">Triwulan</button>
-                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" data-period="semester">Semester</button>
-                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" data-period="yearly">Tahunan</button>
-                          </div>
-                        </div>
-                        <div class="chart-container flex-grow-1 d-flex align-items-stretch" style="height: 100%; min-height: 380px;">
-                          <canvas id="overviewChart" style="width: 100%; height: 100%;"></canvas>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <!-- /Grafik -->
-=======
   {{-- ======================== --}}
   {{-- 🧭 MODERN BREADCRUMB --}}
   {{-- ======================== --}}
@@ -53,7 +21,6 @@
       </button>
     </div>
   </div>
->>>>>>> origin/server_time
 
   {{-- ======================== --}}
   {{-- 📊 RINGKASAN GRAFIK --}}
