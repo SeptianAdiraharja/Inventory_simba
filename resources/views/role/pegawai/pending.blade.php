@@ -9,24 +9,22 @@
         background-color: #f7f9fb !important;
     }
 
-    /* ===== Breadcrumb ===== */
-    .breadcrumb-wrapper {
-        margin-bottom: 1.8rem;
-        background: #ffffff;
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    /* ===== Modern Breadcrumb ===== */
+    .breadcrumb-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(78, 115, 223, 0.1);
+        color: #4e73df;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        flex-wrap: wrap;
+        justify-content: center;
     }
 
-    .breadcrumb {
-        background: transparent !important;
-        margin-bottom: 0;
-        padding: 0;
-        font-size: 0.92rem;
+    .breadcrumb a {
+        color: #4e73df;
+        text-decoration: none;
+        font-weight: 500;
     }
 
     .breadcrumb-item + .breadcrumb-item::before {
@@ -35,21 +33,9 @@
         padding: 0 0.5rem;
     }
 
-    .breadcrumb-item a {
-        color: #4e73df;
-        text-decoration: none;
-    }
-
     .breadcrumb-item.active {
-        color: #6c757d;
-        font-weight: 500;
-    }
-
-    .page-title {
-        font-size: 1.2rem;
+        color: #1e293b;
         font-weight: 600;
-        color: #1d3557;
-        margin: 0;
     }
 
     /* ===== Card & Table ===== */
@@ -110,7 +96,6 @@
         border-radius: 8px !important;
     }
 
-    /* ===== Responsiveness ===== */
     @media (max-width: 768px) {
         .card-header {
             flex-direction: column;
@@ -120,22 +105,41 @@
     }
 </style>
 
-{{-- 🧭 Breadcrumb --}}
-<div class="breadcrumb-wrapper">
-    <h4 class="page-title"><i class="bx bx-time-five me-2 text-primary"></i> Permintaan Pending</h4>
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('pegawai.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Permintaan Pending</li>
-        </ol>
-    </nav>
+{{-- ======================== --}}
+{{-- 🧭 MODERN BREADCRUMB --}}
+{{-- ======================== --}}
+<div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 animate__animated animate__fadeInDown smooth-fade">
+    {{-- Left Section --}}
+    <div class="d-flex align-items-center flex-wrap gap-2">
+        <div class="breadcrumb-icon bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-circle"
+             style="width:40px; height:40px;">
+            <i class="bi bi-clock fs-5"></i>
+        </div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 align-items-center">
+                <li class="breadcrumb-item">
+                    <a href="{{ route('pegawai.dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+                        Dashboard
+                    </a>
+                </li>
+                <li class="breadcrumb-item active fw-semibold text-dark" aria-current="page">
+                    Permintaan Pending
+                </li>
+            </ol>
+        </nav>
+    </div>
+
+    {{-- Right Section (Date) --}}
+    <div class="text-end small text-muted">
+        <i class="bi bi-calendar-check me-1"></i>{{ now()->format('d M Y, H:i') }}
+    </div>
 </div>
 
 {{-- 🧾 Konten Utama --}}
 <div class="card border-0 shadow-sm rounded-3">
     <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center flex-wrap">
         <h5 class="mb-0 text-primary fw-semibold">
-            <i class="ri-time-line me-2"></i> Permintaan Pending
+            <i class="bi bi-hourglass-split me-2"></i> Permintaan Pending
         </h5>
         <span class="badge bg-warning-subtle text-warning fw-semibold px-3 py-2">
             {{ $carts->count() }} Pending
@@ -145,7 +149,7 @@
     <div class="table-responsive text-nowrap">
         @if($carts->isEmpty())
             <div class="text-center text-muted py-5">
-                <i class="ri-inbox-line fs-1 mb-2 d-block"></i>
+                <i class="bi bi-inbox fs-1 mb-2 d-block"></i>
                 <p class="mb-0">Belum ada permintaan yang pending.</p>
                 <small class="text-secondary">Permintaan baru akan muncul di sini setelah diajukan.</small>
             </div>
@@ -166,18 +170,18 @@
                         <tr>
                             <td class="text-center">{{ $loop->iteration }}</td>
                             <td>
-                                <i class="ri-calendar-line me-1 text-secondary"></i>
+                                <i class="bi bi-calendar-event me-1 text-secondary"></i>
                                 {{ $cart->created_at->format('d M Y') }}
                                 <br>
                                 <small class="text-muted">{{ $cart->created_at->format('H:i') }} WIB</small>
                             </td>
                             <td>
-                                <i class="ri-archive-2-line me-1 text-secondary"></i>
+                                <i class="bi bi-box-seam me-1 text-secondary"></i>
                                 {{ $cart->cart_items_count }} Barang
                             </td>
                             <td>
                                 <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
-                                    <i class="ri-time-line me-1"></i> Pending
+                                    <i class="bi bi-hourglass-split me-1"></i> Pending
                                 </span>
                             </td>
                             <td>
@@ -203,7 +207,7 @@
                                                   class="cancel-form mb-3">
                                                 @csrf
                                                 <button type="submit" class="btn btn-outline-danger btn-sm">
-                                                    <i class="ri-close-line me-1"></i> Batalkan Permintaan
+                                                    <i class="bi bi-x-circle me-1"></i> Batalkan Permintaan
                                                 </button>
                                             </form>
                                         @endif

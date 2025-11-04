@@ -9,24 +9,22 @@
         background-color: #f7f9fb !important;
     }
 
-    /* ===== Breadcrumb ===== */
-    .breadcrumb-wrapper {
-        margin-bottom: 1.8rem;
-        background: #ffffff;
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    /* ===== Modern Breadcrumb ===== */
+    .breadcrumb-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(78, 115, 223, 0.1);
+        color: #4e73df;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        flex-wrap: wrap;
+        justify-content: center;
     }
 
-    .breadcrumb {
-        background: transparent !important;
-        margin-bottom: 0;
-        padding: 0;
-        font-size: 0.92rem;
+    .breadcrumb a {
+        color: #4e73df;
+        text-decoration: none;
+        font-weight: 500;
     }
 
     .breadcrumb-item + .breadcrumb-item::before {
@@ -35,21 +33,9 @@
         padding: 0 0.5rem;
     }
 
-    .breadcrumb-item a {
-        color: #4e73df;
-        text-decoration: none;
-    }
-
     .breadcrumb-item.active {
-        color: #6c757d;
-        font-weight: 500;
-    }
-
-    .page-title {
-        font-size: 1.2rem;
+        color: #1e293b;
         font-weight: 600;
-        color: #1d3557;
-        margin: 0;
     }
 
     /* ===== Card Produk ===== */
@@ -101,21 +87,11 @@
         font-weight: 600;
     }
 
-    /* ===== Flash Message ===== */
     .alert {
         border: none;
         border-radius: 10px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         font-size: 0.9rem;
-    }
-
-    /* ===== Responsiveness ===== */
-    @media (max-width: 992px) {
-        .breadcrumb-wrapper {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.5rem;
-        }
     }
 
     @media (max-width: 768px) {
@@ -129,38 +105,53 @@
     }
 
     @media (max-width: 576px) {
-        .page-title {
-            font-size: 1.05rem;
-        }
-
         .product-card h5 {
             font-size: 0.95rem;
         }
     }
 </style>
 
-{{-- 🧭 Breadcrumb --}}
-<div class="breadcrumb-wrapper">
-    <h4 class="page-title"><i class="bx bx-store me-2 text-primary"></i> Daftar Barang</h4>
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('pegawai.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Daftar Barang</li>
-        </ol>
-    </nav>
+{{-- ======================== --}}
+{{-- 🧭 MODERN BREADCRUMB --}}
+{{-- ======================== --}}
+<div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 animate__animated animate__fadeInDown smooth-fade">
+    {{-- Left Section --}}
+    <div class="d-flex align-items-center flex-wrap gap-2">
+        <div class="breadcrumb-icon bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-circle"
+             style="width:40px; height:40px;">
+            <i class="bi bi-cart fs-5"></i>
+        </div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 align-items-center">
+                <li class="breadcrumb-item">
+                    <a href="{{ route('pegawai.dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+                        Dashboard
+                    </a>
+                </li>
+                <li class="breadcrumb-item active fw-semibold text-dark" aria-current="page">
+                    Daftar Barang
+                </li>
+            </ol>
+        </nav>
+    </div>
+
+    {{-- Right Section (Date) --}}
+    <div class="text-end small text-muted">
+        <i class="bi bi-calendar-check me-1"></i>{{ now()->format('d M Y, H:i') }}
+    </div>
 </div>
 
 {{-- 🔔 Flash Message --}}
 @if (session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="ri-check-line me-2"></i> {{ session('success') }}
+        <i class="bi bi-check-circle me-2"></i> {{ session('success') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 @endif
 
 @if (session('error'))
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="ri-error-warning-line me-2"></i> {{ session('error') }}
+        <i class="bi bi-exclamation-triangle me-2"></i> {{ session('error') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 @endif
@@ -168,7 +159,7 @@
 {{-- 🔍 Hasil Pencarian --}}
 @if(isset($search) && $search)
     <div class="alert alert-info border-0 shadow-sm py-2 mb-4">
-        <i class="ri-search-line me-2"></i> Hasil pencarian untuk:
+        <i class="bi bi-search me-2"></i> Hasil pencarian untuk:
         <strong class="text-dark">{{ $search }}</strong>
     </div>
 @endif
@@ -183,7 +174,6 @@
     @forelse ($items as $item)
         <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
             <div class="card product-card position-relative">
-
                 {{-- Gambar Produk --}}
                 <div class="position-relative">
                     <img src="{{ asset('storage/' . $item->image) }}" alt="{{ $item->name }}">
@@ -200,12 +190,12 @@
                 <div class="card-body">
                     <h5 class="card-title text-truncate">{{ $item->name }}</h5>
                     <p class="text-muted small mb-1">
-                        <i class="ri-price-tag-3-line me-1"></i> Kategori:
+                        <i class="bi bi-tag me-1"></i> Kategori:
                         <span class="fw-semibold">{{ $item->category->name ?? '-' }}</span>
                     </p>
 
                     <p class="small mb-3">
-                        <i class="ri-archive-line me-1"></i> Stok Tersisa:
+                        <i class="bi bi-box me-1"></i> Stok Tersisa:
                         <span class="fw-semibold">{{ $item->stock }}</span>
                     </p>
 
@@ -226,7 +216,7 @@
                             <button type="submit"
                                 class="btn btn-sm btn-primary ms-2 d-flex align-items-center"
                                 {{ $item->stock == 0 ? 'disabled' : '' }}>
-                                <i class="ri-shopping-cart-2-line me-1"></i> Ajukan
+                                <i class="bi bi-cart-plus me-1"></i> Ajukan
                             </button>
                         </div>
                     </form>
@@ -235,7 +225,7 @@
         </div>
     @empty
         <div class="col-12 text-center py-5">
-            <i class="ri-inbox-line fs-1 text-muted d-block mb-2"></i>
+            <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
             <p class="text-muted mb-0">Tidak ada produk ditemukan.</p>
         </div>
     @endforelse

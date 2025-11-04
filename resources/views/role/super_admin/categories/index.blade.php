@@ -1,62 +1,202 @@
 @extends('layouts.index')
 @section('content')
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h4 class="fw-bold text-primary mb-0">Daftar Kategori</h4>
-        <a href="{{ route('super_admin.categories.create') }}" class="btn btn-sm btn-primary">
-            <i class="ri ri-add-line me-1"></i> Tambah
+<div class="container-fluid py-4 animate__animated animate__fadeIn">
+
+  {{-- ======================== --}}
+  {{-- 🧭 BREADCRUMB MODERN PURPLE --}}
+  {{-- ======================== --}}
+  <div class="breadcrumb-modern bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center smooth-fade">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      {{-- Icon Gradient --}}
+      <div class="icon-wrapper d-flex align-items-center justify-content-center rounded-circle shadow-sm">
+        <i class="ri-price-tag-3-line fs-5 text-white"></i>
+      </div>
+
+      {{-- Breadcrumb Link --}}
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <a href="{{ route('super_admin.dashboard') }}" class="breadcrumb-link fw-semibold text-primary text-decoration-none">
+          Dashboard
         </a>
+        <span class="text-muted">/</span>
+        <span class="fw-semibold text-dark">Daftar Kategori</span>
+      </div>
     </div>
+
+    {{-- Tanggal Otomatis --}}
+    <div class="text-muted small d-flex align-items-center gap-2">
+      <i class="ri-calendar-line"></i>
+      {{ \Carbon\Carbon::now()->format('d M Y, H:i') }}
+    </div>
+  </div>
+
+  {{-- ======================== --}}
+  {{-- 📋 DAFTAR KATEGORI --}}
+  {{-- ======================== --}}
+  <div class="card shadow-sm border-0 rounded-4 smooth-fade">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3 px-4 flex-wrap">
+      <h5 class="fw-bold text-primary mb-0 d-flex align-items-center gap-2">
+        <i class="ri ri-price-tag-3-line"></i> Daftar Kategori
+      </h5>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <button id="refreshBtn" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium shadow-sm hover-glow d-flex align-items-center gap-2">
+          <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+        <a href="{{ route('super_admin.categories.create') }}" class="btn btn-sm btn-primary rounded-pill shadow-sm d-flex align-items-center gap-2 hover-glow">
+          <i class="ri ri-add-line"></i> Tambah
+        </a>
+      </div>
+    </div>
+
+    {{-- Tabel Daftar Kategori --}}
     <div class="table-responsive text-nowrap">
-        <table class="table table-hover align-middle">
-            <thead class="table-light text-center">
-                <tr>
-                    <th>Nama Kategori</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            @forelse($categories as $category)
-            <tbody class="table-border-bottom-0">
-                <tr>
-                    <td>
-                        <i class="icon-base ri ri-price-tag-3-line icon-22px text-info me-3"></i>
-                        <span>{{ $category->name }}</span>
-                    </td>
-                    <td>
-                        <div class="dropdown">
-                            <button
-                                type="button"
-                                class="btn p-0 dropdown-toggle hide-arrow shadow-none"
-                                data-bs-toggle="dropdown">
-                                <i class="icon-base ri ri-more-2-line icon-18px"></i>
-                            </button>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item" href="{{ route('super_admin.categories.edit', $category->id) }}">
-                                    <i class="icon-base ri ri-pencil-line icon-18px me-1"></i>
-                                    Edit
-                                </a>
-                                <form action="{{ route('super_admin.categories.destroy', $category->id) }}" method="POST">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="dropdown-item" onclick="return confirm('Yakin hapus kategori ini?')">
-                                        <i class="icon-base ri ri-delete-bin-6-line icon-18px me-1"></i>
-                                        Delete
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="5" class="text-center text-muted py-4">
-                        <i class="ri-information-line me-1"></i>
-                        Belum Ada Data
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light text-center">
+          <tr>
+            <th class="text-start ps-4">Nama Kategori</th>
+            <th width="120">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($categories as $category)
+          <tr class="align-middle text-start table-row-hover">
+            <td class="ps-4">
+              <i class="ri-price-tag-3-line text-primary me-2 fs-5"></i>
+              <span class="fw-semibold">{{ $category->name }}</span>
+            </td>
+            <td class="text-center">
+              <div class="dropdown">
+                <button type="button" class="btn p-0 dropdown-toggle hide-arrow shadow-none" data-bs-toggle="dropdown">
+                  <i class="ri-more-2-line fs-5 text-muted"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end shadow-sm rounded-3">
+                  <a href="{{ route('super_admin.categories.edit', $category->id) }}" class="dropdown-item d-flex align-items-center gap-2">
+                    <i class="ri-pencil-line text-primary"></i> Edit
+                  </a>
+                  <form action="{{ route('super_admin.categories.destroy', $category->id) }}" method="POST" class="m-0 p-0">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="dropdown-item text-danger d-flex align-items-center gap-2"
+                            onclick="return confirm('Yakin hapus kategori ini?')">
+                      <i class="ri-delete-bin-6-line"></i> Hapus
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="2" class="text-center text-muted py-4">
+              <i class="ri-information-line me-1"></i> Belum Ada Data Kategori
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
     </div>
+  </div>
 </div>
+
+{{-- ======================== --}}
+{{-- 💅 STYLE --}}
+{{-- ======================== --}}
+<style>
+/* ===== Smooth Fade ===== */
+.smooth-fade { animation: fadeIn 0.6s ease-in-out; }
+@keyframes fadeIn { from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: translateY(0);} }
+
+/* ===== Modern Breadcrumb ===== */
+.breadcrumb-modern {
+  transition: all 0.3s ease-in-out;
+  background-color: #fff;
+  border: none;
+}
+.icon-wrapper {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #7d0dfd, #b76cf1);
+}
+.breadcrumb-link {
+  position: relative;
+  color: #7d0dfd;
+  transition: all 0.25s ease;
+}
+.breadcrumb-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #7d0dfd;
+  transition: width 0.25s ease;
+}
+.breadcrumb-link:hover::after {
+  width: 100%;
+}
+.breadcrumb-link:hover {
+  color: #5c16a9 !important;
+}
+
+/* ===== Hover & Button ===== */
+.hover-glow { transition: all 0.25s ease; }
+.hover-glow:hover {
+  background-color: #7d0dfd !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px rgba(125, 13, 253, 0.4);
+}
+
+/* ===== Table Style ===== */
+.table-hover tbody tr:hover {
+  background-color: #f8f5ff !important;
+  transition: 0.25s ease;
+}
+.table thead th {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #555;
+}
+.table-row-hover {
+  transition: background-color 0.25s ease, transform 0.15s ease;
+}
+.table-row-hover:hover {
+  background-color: #f8f9fc !important;
+  transform: translateX(3px);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .breadcrumb-modern {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .icon-wrapper {
+    width: 36px;
+    height: 36px;
+  }
+  .card-header h5 {
+    font-size: 1rem;
+  }
+  .btn {
+    font-size: 0.85rem;
+  }
+}
+</style>
+
+{{-- ======================== --}}
+{{-- ⚙️ SCRIPT REFRESH BUTTON --}}
+{{-- ======================== --}}
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const refreshBtn = document.getElementById('refreshBtn');
+  refreshBtn.addEventListener('click', () => {
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Memuat...`;
+    setTimeout(() => window.location.reload(), 1000);
+  });
+});
+</script>
+@endpush
 @endsection

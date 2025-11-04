@@ -12,11 +12,41 @@
   @endif
 
   {{-- ===================== --}}
+  {{-- 🧭 MODERN BREADCRUMB (SAMA DESAIN SEMUA HALAMAN) --}}
+  {{-- ===================== --}}
+  <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 animate__animated animate__fadeInDown smooth-fade">
+    <div class="d-flex align-items-center flex-wrap gap-2">
+      <div class="breadcrumb-icon bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-circle"
+           style="width:38px;height:38px;">
+        <i class="bi bi-house-door-fill fs-5"></i>
+      </div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0 align-items-center">
+          <li class="breadcrumb-item">
+            <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+              Dashboard
+            </a>
+          </li>
+          <li class="breadcrumb-item active fw-semibold text-dark" aria-current="page">
+            Daftar Permintaan Barang
+          </li>
+        </ol>
+      </nav>
+    </div>
+    <div class="breadcrumb-extra text-end">
+      <small class="text-muted">
+        <i class="bi bi-calendar-check me-1"></i>{{ now()->format('d M Y, H:i') }}
+      </small>
+    </div>
+  </div>
+
+
+  {{-- ===================== --}}
   {{-- 📦 DAFTAR PERMINTAAN --}}
   {{-- ===================== --}}
-  <div class="card shadow-sm border-0 rounded-3">
-    <div class="card-header bg-primary border-0 d-flex justify-content-between align-items-center px-4 py-3">
-      <h5 class="m-0 text-primary fw-semibold text-white">
+  <div class="card shadow-sm border-0 rounded-4 smooth-card animate__animated animate__fadeInUp">
+    <div class="card-header bg-primary border-0 d-flex justify-content-between align-items-center px-4 py-3 rounded-top-4">
+      <h5 class="m-0 fw-semibold text-white">
         <i class="bi bi-list-check me-2"></i> Daftar Permintaan Barang
       </h5>
       <button class="btn btn-sm btn-outline-light rounded-pill px-3 text-white" onclick="location.reload()">
@@ -39,7 +69,6 @@
 
         <tbody>
           @forelse($requests as $index => $req)
-          {{-- === ROW UTAMA === --}}
           <tr id="cart-row-{{ $req->cart_id }}">
             <td class="text-center text-muted">{{ $requests->firstItem() + $index }}</td>
 
@@ -109,7 +138,7 @@
             </td>
           </tr>
 
-          {{-- === ROW DETAIL (AJAX CONTAINER) === --}}
+          {{-- DETAIL ROW --}}
           <tr class="collapse-row">
             <td colspan="7" class="p-0">
               <div id="detail-content-{{ $req->cart_id }}"
@@ -137,16 +166,13 @@
     </div>
   </div>
 
-  {{-- PAGINATION --}}
   <div class="mt-4 d-flex justify-content-center">
     {{ $requests->links('pagination::bootstrap-5') }}
   </div>
 </div>
 
 
-{{-- ===================== --}}
 {{-- 🟥 MODAL: TOLAK BARANG --}}
-{{-- ===================== --}}
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow rounded-3">
@@ -182,71 +208,60 @@
   </div>
 </div>
 
-
-{{-- ===================== --}}
-{{-- 📜 SCRIPT --}}
-{{-- ===================== --}}
+{{-- SCRIPT --}}
 @push('scripts')
 <script src="{{ asset('js/admin-request.js') }}"></script>
 @endpush
 
-{{-- TOAST & SNACKBAR --}}
-<div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index:1080;"></div>
-<div id="snackbar"></div>
-
+{{-- STYLE --}}
+@push('styles')
 <style>
-/* Snackbar */
-#snackbar {
-  visibility: hidden;
-  min-width: 280px;
-  background-color: #323232;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 12px 18px;
-  position: fixed;
-  z-index: 1080;
-  left: 50%;
-  bottom: 30px;
-  transform: translateX(-50%);
-  font-size: 15px;
-  opacity: 0;
-  transition: opacity 0.3s, bottom 0.3s;
-}
-#snackbar.show {
-  visibility: visible;
-  opacity: 1;
-  bottom: 50px;
-}
+  body {
+    background-color: #f4f6f9;
+  }
 
-/* Table enhancements */
-.table th {
-  font-weight: 600;
-  color: #5f6368;
-}
-.table td {
-  vertical-align: middle;
-  font-size: 15px;
-}
-.table-hover tbody tr:hover {
-  background-color: #f8fafc !important;
-}
+  .smooth-fade {
+    animation: smoothFade 0.8s ease;
+  }
 
-/* Dropdown */
-.dropdown-menu a {
-  font-size: 14px;
-  padding: 8px 14px;
-}
-.dropdown-menu a:hover {
-  background-color: #eef5ff;
-  color: #0d6efd;
-}
+  @keyframes smoothFade {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-/* Animasi hover ringan */
-.btn-outline-primary:hover {
-  background-color: #0d6efd;
-  color: #fff;
-  transition: 0.3s;
-}
+  .breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    color: #6c757d;
+    margin: 0 6px;
+  }
+
+  .breadcrumb-icon:hover {
+    transform: scale(1.1);
+    background-color: #e8f0fe;
+    transition: 0.3s ease;
+  }
+
+  .smooth-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: #f0f8ff !important;
+  }
+
+  .btn-outline-primary:hover {
+    background-color: #0d6efd;
+    color: #fff;
+    transition: 0.3s;
+  }
+
+  @media (max-width: 768px) {
+    .breadcrumb-extra { display: none; }
+    h5 { font-size: 1.05rem; }
+    .table { font-size: 0.9rem; }
+  }
 </style>
+@endpush
 @endsection
