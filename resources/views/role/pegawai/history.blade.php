@@ -244,15 +244,6 @@ body {
                                         <i class="bi bi-eye me-1"></i> Detail
                                     </button>
 
-                                    @if($cart->status == 'approved')
-                                        <form action="{{ route('pegawai.permintaan.refund', $cart->id) }}" method="POST" class="refund-form">
-                                            @csrf
-                                            <button type="submit" class="btn btn-outline-danger btn-sm px-3">
-                                                <i class="ri-refund-line me-1"></i> Refund
-                                            </button>
-                                        </form>
-                                    @endif
-
                                     @if($cart->status === 'pending')
                                         <form action="{{ route('pegawai.permintaan.cancel', $cart->id) }}" method="POST" class="cancel-form">
                                             @csrf

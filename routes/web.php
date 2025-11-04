@@ -135,6 +135,7 @@ Route::middleware(['auth', 'role:admin'])
     |--------------------------------------------------------------------------
     */
     Route::controller(ItemoutController::class)->group(function () {
+        Route::get('/itemout/search', 'search')->name('itemout.search');
         Route::resource('itemout', ItemoutController::class);
         Route::get('/itemout/{cart}/struk', 'struk')->name('itemout.struk');
         Route::post('/itemout/scan/{cart}', 'scan')->name('itemout.scan');
@@ -151,6 +152,7 @@ Route::middleware(['auth', 'role:admin'])
     */
     Route::controller(RequestController::class)->group(function () {
         Route::get('/request', 'index')->name('request');
+        Route::get('/request/search', 'search')->name('request.search');
         Route::get('/carts/{id}', 'show')->name('carts.show');
         Route::patch('/carts/{id}', 'update')->name('carts.update'); // ✅ penting
         Route::patch('/carts/item/{id}/approve', 'approveItem')->name('carts.item.approve');
@@ -166,6 +168,7 @@ Route::middleware(['auth', 'role:admin'])
     */
     Route::controller(SearchController::class)->group(function () {
         Route::get('/guests/search', 'searchGuests')->name('guests.search');
+        Route::get('/pegawai/search', 'pegawaiSearch')->name('pegawai.search');
     });
 
     Route::resource('guests', GuestController::class)->except('show');
@@ -176,10 +179,6 @@ Route::middleware(['auth', 'role:admin'])
     | Pegawai Management
     |--------------------------------------------------------------------------
     */
-    Route::controller(SearchController::class)->group(function () {
-        Route::get('/guests/search', 'searchGuests')->name('guests.search');
-    });
-
     Route::controller(AdminPegawaiController::class)->group(function () {
         Route::resource('pegawai', AdminPegawaiController::class);
         Route::get('/pegawai/{id}/produk', 'showProduk')->name('pegawai.produk');
@@ -187,8 +186,6 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/pegawai/{id}/cart', [AdminPegawaiController::class, 'showCart'])->name('pegawai.cart');
         Route::delete('/pegawai/{pegawai}/cart/item/{id}', [AdminPegawaiController::class, 'destroyCartItem'])->name('admin.pegawai.cart.item.destroy');
         Route::post('/pegawai/{id}/cart/save', [AdminPegawaiController::class, 'saveCartToItemOut'])->name('pegawai.cart.save');
-
-
     });
 
 
@@ -228,6 +225,7 @@ Route::middleware(['auth', 'role:admin'])
     */
     Route::controller(TransaksiItemOutController::class)->group(function () {
         Route::get('/transaksi', 'index')->name('transaksi.out');
+        Route::get('/transaksi/search', 'search')->name('transaksi.search');
 
         Route::post('/refund', 'refundBarang')->name('pegawai.refund');
         Route::post('/edit-item', 'updateItem')->name('pegawai.updateItem');
@@ -245,6 +243,7 @@ Route::middleware(['auth', 'role:admin'])
     |--------------------------------------------------------------------------
     */
     Route::controller(RejectController::class)->group(function () {
+        Route::get('/rejects/search', 'search')->name('rejects.search'); // ✅ Route search baru
         Route::get('/rejects', 'index')->name('rejects.index');
         Route::get('/rejects/scan', 'scanPage')->name('rejects.scan');
         Route::post('/rejects/process', 'processScan')->name('rejects.process');

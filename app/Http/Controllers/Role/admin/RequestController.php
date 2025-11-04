@@ -16,7 +16,7 @@ class RequestController extends Controller
     public function index(Request $request)
     {
         // =========================================================
-        // 🧹 Hapus otomatis cart_items dari cart yang sudah final > 3 hari
+        // 🧹 Auto Cleanup – Hapus cart_items dari cart yang final > 3 hari
         // =========================================================
         DB::table('cart_items')
             ->whereIn('cart_id', function ($q) {
@@ -28,9 +28,10 @@ class RequestController extends Controller
             ->delete();
 
         // =========================================================
-        // 🔍 Filter cart
+        // 🔍 Filter dan Pencarian
         // =========================================================
         $status = $request->get('status');
+        $search = $request->get('q');
         $recent = now()->subDays(3);
 
         $requests = DB::table('carts')
@@ -47,7 +48,7 @@ class RequestController extends Controller
                 DB::raw('COALESCE(SUM(cart_items.quantity), 0) as total_quantity')
             )
             // =========================================================
-            // 🚫 Hanya tampilkan cart yang masih aktif atau final < 3 hari
+            // 🚫 Hanya tampilkan cart aktif atau final < 3 hari
             // =========================================================
             ->where(function ($query) use ($recent) {
                 $query->where('carts.status', 'pending')
@@ -58,7 +59,16 @@ class RequestController extends Controller
                     });
             })
             // =========================================================
-            // 🎯 Filter tambahan berdasarkan parameter "status" dari request
+            // 🔍 Pencarian (dari search bar)
+            // =========================================================
+            ->when($search, function ($query) use ($search) {
+                return $query->where(function ($q) use ($search) {
+                    $q->where('users.name', 'like', "%{$search}%")
+                    ->orWhere('users.email', 'like', "%{$search}%");
+                });
+            })
+            // =========================================================
+            // 🎯 Filter tambahan berdasarkan status (dropdown/tab)
             // =========================================================
             ->when($status, function ($query) use ($status, $recent) {
                 return match ($status) {
@@ -74,9 +84,13 @@ class RequestController extends Controller
                 'carts.status', 'carts.created_at', 'carts.updated_at'
             )
             ->orderByDesc('carts.created_at')
-            ->paginate(10);
+            ->paginate(10)
+            ->appends(['q' => $search, 'status' => $status]);
 
-        return view('role.admin.request', compact('requests', 'status'));
+        // =========================================================
+        // 📄 Kirim ke view
+        // =========================================================
+        return view('role.admin.request', compact('requests', 'status', 'search'));
     }
 
     /* =======================================================
@@ -112,6 +126,7 @@ class RequestController extends Controller
 
         return view('role.admin.partials.cart-detail', compact('cart', 'cartItems', 'scan_status'));
     }
+
 
     /* =======================================================
        ✅ UPDATE – Approve/Reject Semua Item

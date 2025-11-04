@@ -138,14 +138,14 @@
         <li class="menu-item {{ Route::is('admin.guests.index') ? 'active' : '' }}">
             <a href="{{ route('admin.guests.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-user-line me-2"></i>
-                <span>Guest</span>
+                <span>List Guest</span>
             </a>
         </li>
 
         <li class="menu-item {{ Route::is('admin.pegawai.index') ? 'active' : '' }}">
             <a href="{{ route('admin.pegawai.index') }}" class="menu-link d-flex align-items-center text-white">
                 <i class="ri ri-user-line me-2"></i>
-                <span>Pegawai</span>
+                <span>List Pegawai</span>
             </a>
         </li>
 

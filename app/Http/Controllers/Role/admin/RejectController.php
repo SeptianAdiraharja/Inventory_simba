@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 use App\Models\Item;
 use App\Models\Reject;
@@ -35,6 +36,8 @@ class RejectController extends Controller
             'item' => $item
         ]);
     }
+
+
 
     public function processScan(Request $request)
     {
@@ -68,20 +71,63 @@ class RejectController extends Controller
     }
 
 
-  public function index(Request $request)
-    {
+ public function index(Request $request)
+{
+    try {
+        // Ambil parameter pencarian & filter
+        $search = $request->get('q');
+        $condition = $request->get('condition', 'all');
+
+        Log::info('Rejects Index (with search/filter)', [
+            'search_term' => $search,
+            'condition' => $condition
+        ]);
+
+        // Query dasar
         $query = Reject::with('item')->latest();
 
-        // Filter berdasarkan kondisi jika ada parameter condition
-        if ($request->has('condition') && $request->condition !== 'all') {
-            $query->where('condition', $request->condition);
+        // Filter berdasarkan kondisi
+        if ($condition !== 'all') {
+            $query->where('condition', $condition);
         }
 
-        $rejects = $query->get();
+        // Pencarian multi-kriteria (jika ada input search)
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('condition', 'like', "%{$search}%")
+                    ->orWhereHas('item', function ($itemQuery) use ($search) {
+                        $itemQuery->where('code', 'like', "%{$search}%")
+                                ->orWhere('name', 'like', "%{$search}%");
+                    });
+            });
+        }
 
+        // Pagination dengan parameter tetap
+        $rejects = $query->paginate(10)->appends([
+            'q' => $search,
+            'condition' => $condition
+        ]);
+
+        Log::info('Rejects Index Results', ['count' => $rejects->count()]);
+
+        // Tampilkan ke view
         return view('role.admin.rejects.index', compact('rejects'))
-            ->with('selectedCondition', $request->condition ?? 'all');
+            ->with('selectedCondition', $condition)
+            ->with('search', $search);
+
+    } catch (\Exception $e) {
+        Log::error('Rejects Index Error', [
+            'error' => $e->getMessage(),
+            'search_term' => $request->get('q'),
+        ]);
+
+        return redirect()->route('admin.rejects.index')
+            ->with('error', 'Terjadi kesalahan saat memuat data: ' . $e->getMessage());
     }
+}
+
 
     /**
      * Show the form for creating a new resource.

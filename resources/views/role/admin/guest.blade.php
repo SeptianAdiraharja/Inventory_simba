@@ -1,6 +1,14 @@
 @extends('layouts.index')
 
 @section('content')
+
+@if(request('q'))
+    <div class="alert alert-info rounded-3 mb-3">
+        Hasil pencarian untuk: <strong>{{ request('q') }}</strong>
+    </div>
+@endif
+
+
 <div class="card shadow-sm border-0 rounded-3">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3 px-4 rounded-top-3">
         <h4 class="card-title mb-0 fw-semibold">👥 Daftar Guest</h4>

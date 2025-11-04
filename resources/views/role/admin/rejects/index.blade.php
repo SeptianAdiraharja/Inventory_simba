@@ -3,27 +3,42 @@
 @section('content')
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
+  @if(isset($search) && $search)
+      <div class="alert alert-info">
+          Menampilkan hasil pencarian untuk: "<strong>{{ $search }}</strong>"
+          <a href="{{ route('admin.rejects.index') }}" class="float-end">Tampilkan semua</a>
+      </div>
+  @endif
+
   <!-- 🔶 CARD UTAMA -->
   <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white">
 
     <!-- 🔹 HEADER -->
+     <!-- 🔹 HEADER -->
     <div class="card-header bg-gradient d-flex flex-wrap justify-content-between align-items-center py-3 px-4"
          style="background: linear-gradient(90deg, #f8b400, #ffd369);">
       <h5 class="mb-0 fw-semibold text-dark d-flex align-items-center">
         <i class="ri-close-circle-line me-2 fs-4 text-danger"></i>Data Barang Rusak / Reject
       </h5>
 
-      <!-- 🔽 FILTER -->
+      <!-- 🔽 FILTER + REFRESH -->
       <form method="GET" action="{{ route('admin.rejects.index') }}" class="d-flex align-items-center gap-2">
         <label for="condition" class="form-label text-dark mb-0 fw-semibold">Filter:</label>
         <select id="condition" name="condition"
                 class="form-select form-select-sm border-0 shadow-sm text-dark rounded-pill px-3"
-                style="min-width: 200px; background-color: #fff;" onchange="this.form.submit()">
+                style="min-width: 200px; background-color: #fff;"
+                onchange="this.form.submit()">
           <option value="all" {{ $selectedCondition === 'all' ? 'selected' : '' }}>Semua Kondisi</option>
           <option value="rusak ringan" {{ $selectedCondition === 'rusak ringan' ? 'selected' : '' }}>Rusak Ringan</option>
           <option value="rusak berat" {{ $selectedCondition === 'rusak berat' ? 'selected' : '' }}>Rusak Berat</option>
           <option value="tidak bisa digunakan" {{ $selectedCondition === 'tidak bisa digunakan' ? 'selected' : '' }}>Tidak Bisa Digunakan</option>
         </select>
+
+        <!-- 🔁 TOMBOL REFRESH -->
+        <a href="{{ route('admin.rejects.index') }}" class="btn btn-light border-0 shadow-sm rounded-circle"
+           title="Refresh Data" style="width: 36px; height: 36px;">
+          <i class="ri-refresh-line text-primary fs-5"></i>
+        </a>
       </form>
     </div>
 

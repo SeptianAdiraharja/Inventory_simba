@@ -17,9 +17,9 @@ class PermintaanController extends Controller
         $categories = Category::all();
         $items = Item::with('category')
             ->withSum('cartItems as total_dibeli', 'quantity')
-            ->orderByRaw('CASE WHEN stock > 0 THEN 0 ELSE 1 END') // logic stock 0/ habis
+            ->orderByRaw('CASE WHEN stock > 0 THEN 0 ELSE 1 END')
             ->orderByDesc('total_dibeli')
-            ->orderByDesc('created_at') // misal kalau sama ambil yang baru dibuat
+            ->orderByDesc('created_at')
             ->paginate(12);
 
         return view('role.pegawai.produk', compact('categories', 'items'));
@@ -36,19 +36,11 @@ class PermintaanController extends Controller
             DB::transaction(function () use ($request) {
                 $userId = Auth::id();
 
-                // 🔹 Ambil cart aktif (jika ada), kalau tidak buat baru
-                $cart = Cart::where('user_id', $userId)
-                            ->where('status', 'active')
-                            ->first();
+                $cart = Cart::firstOrCreate([
+                    'user_id' => $userId,
+                    'status' => 'active',
+                ]);
 
-                if (! $cart) {
-                    $cart = Cart::create([
-                        'user_id' => $userId,
-                        'status' => 'active',
-                    ]);
-                }
-
-                // 🔹 Tambahkan item ke keranjang
                 foreach ($request->items as $itemData) {
                     $item = Item::lockForUpdate()->findOrFail($itemData['item_id']);
 
@@ -60,10 +52,8 @@ class PermintaanController extends Controller
                         throw new \Exception("Jumlah melebihi stok {$item->name} (tersisa {$item->stock}).");
                     }
 
-                    // Kurangi stok terlebih dahulu
                     $item->decrement('stock', $itemData['quantity']);
 
-                    // Tambahkan item ke cart_items
                     $cartItem = CartItem::firstOrNew([
                         'cart_id' => $cart->id,
                         'item_id' => $item->id,
@@ -74,24 +64,10 @@ class PermintaanController extends Controller
                 }
             });
 
-            $itemName = Item::find($request->items[0]['item_id'])->name;
-            $qty = $request->items[0]['quantity'];
-
-            return redirect()->route('pegawai.produk')->with([
-                'swal' => [
-                    'icon' => 'success',
-                    'title' => 'Sukses!',
-                    'text' => "$qty x $itemName berhasil ditambahkan ke keranjang!",
-                ]
-            ]);
+            // 🔹 Gunakan flash message biasa (bukan SweetAlert)
+            return redirect()->route('pegawai.produk')->with('success', 'Barang berhasil dimasukkan ke keranjang!');
         } catch (\Exception $e) {
-            return redirect()->back()->with([
-                'swal' => [
-                    'icon' => 'error',
-                    'title' => 'Gagal',
-                    'text' => $e->getMessage(),
-                ]
-            ]);
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
@@ -114,8 +90,7 @@ class PermintaanController extends Controller
     }
 
     /**
-     * Saat tombol "Ajukan Permintaan" ditekan.
-     * Mengubah status keranjang dari active → pending.
+     * 🔸 Hanya di sini SweetAlert muncul
      */
     public function submitPermintaan($id)
     {
@@ -125,25 +100,21 @@ class PermintaanController extends Controller
             ->with('cartItems.item')
             ->firstOrFail();
 
-        DB::transaction(function () use ($cart) {
-            // Ubah status menjadi pending
-            $cart->status = 'pending';
-            $cart->save();
-        });
-
         if ($cart->cartItems->isEmpty()) {
-            throw new \Exception('Keranjang masih kosong.');
+            return redirect()->back()->with('error', 'Keranjang masih kosong.');
         }
 
-        return redirect()
-            ->back()
-            ->with([
-                'swal' => [
-                    'icon' => 'success',
-                    'title' => 'Sukses!',
-                    'text' => "Permintaan berhasil diajukan, menunggu persetujuan admin."
-                ]
-            ]);
+        DB::transaction(function () use ($cart) {
+            $cart->update(['status' => 'pending']);
+        });
+
+        return redirect()->back()->with([
+            'swal' => [
+                'icon' => 'success',
+                'title' => 'Sukses!',
+                'text' => 'Permintaan berhasil diajukan, menunggu persetujuan admin.'
+            ]
+        ]);
     }
 
     public function historyPermintaan()
@@ -194,55 +165,32 @@ class PermintaanController extends Controller
                 $cartItem = CartItem::findOrFail($id);
                 $cart = $cartItem->cart;
 
-                // Cek kepemilikan keranjang
                 if ($cart->user_id !== Auth::id()) {
                     throw new \Exception('Akses tidak sah untuk keranjang ini.');
                 }
 
-                // Hanya boleh ubah keranjang aktif
                 if ($cart->status !== 'active') {
                     throw new \Exception('Hanya bisa mengubah keranjang yang masih aktif.');
                 }
 
                 $item = $cartItem->item;
-                $oldQty = $cartItem->quantity;
-                $newQty = $validated['quantity'];
-                $diff = $newQty - $oldQty;
+                $diff = $validated['quantity'] - $cartItem->quantity;
 
-                // Kalau nambah quantity
-                if ($diff > 0) {
-                    if ($item->stock < $diff) {
-                        throw new \Exception("Stok tidak mencukupi! Sisa stok: {$item->stock}");
-                    }
-                    $item->decrement('stock', $diff);
-                }
-                // Kalau ngurangin quantity
-                elseif ($diff < 0) {
-                    $item->increment('stock', abs($diff));
+                if ($diff > 0 && $item->stock < $diff) {
+                    throw new \Exception("Stok tidak mencukupi! Sisa stok: {$item->stock}");
                 }
 
-                $cartItem->quantity = $newQty;
-                $cartItem->save();
+                $item->decrement('stock', max($diff, 0));
+                $item->increment('stock', max(-$diff, 0));
+
+                $cartItem->update(['quantity' => $validated['quantity']]);
             });
 
-            return redirect()->back()->with([
-                'swal' => [
-                    'icon' => 'success',
-                    'title' => 'Sukses!',
-                    'text' => 'Jumlah barang berhasil diubah.'
-                ]
-            ]);
+            return redirect()->back()->with('success', 'Jumlah barang berhasil diubah.');
         } catch (\Exception $e) {
-            return redirect()->back()->with([
-                'swal' => [
-                    'icon' => 'error',
-                    'title' => 'Gagal!',
-                    'text' => $e->getMessage()
-                ]
-            ]);
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
-
 
     public function removeItem(Request $request)
     {
@@ -253,7 +201,7 @@ class PermintaanController extends Controller
         try {
             DB::transaction(function () use ($request) {
                 $cartItem = CartItem::findOrFail($request->cart_item_id);
-                $cart = Cart::findOrFail($cartItem->cart_id);
+                $cart = $cartItem->cart;
 
                 if ($cart->user_id !== Auth::id()) {
                     throw new \Exception('Akses tidak sah untuk keranjang ini.');
@@ -263,9 +211,7 @@ class PermintaanController extends Controller
                     throw new \Exception('Hanya bisa ubah keranjang aktif.');
                 }
 
-                $item = Item::findOrFail($cartItem->item_id);
-                $item->increment('stock', $cartItem->quantity);
-
+                $cartItem->item->increment('stock', $cartItem->quantity);
                 $cartItem->delete();
 
                 if ($cart->cartItems()->count() === 0) {
@@ -279,79 +225,63 @@ class PermintaanController extends Controller
         }
     }
 
-    public function refundItem(string $id){
-        {
-            try {
-                DB::transaction(function () use ($id) {
-                    $cart = Cart::with('cartItems.item')->findOrFail($id);
+    public function refundItem(string $id)
+    {
+        try {
+            DB::transaction(function () use ($id) {
+                $cart = Cart::with('cartItems.item')->findOrFail($id);
 
-                    if ($cart->user_id !== Auth::id()) {
-                        throw new \Exception('Akses tidak sah untuk keranjang ini.');
-                    }
+                if ($cart->user_id !== Auth::id()) {
+                    throw new \Exception('Akses tidak sah untuk keranjang ini.');
+                }
 
-                    foreach ($cart->cartItems as $cartItem) {
-                        $item = $cartItem->item;
-                        $item->increment('stock', $cartItem->quantity);
-                    }
+                foreach ($cart->cartItems as $cartItem) {
+                    $cartItem->item->increment('stock', $cartItem->quantity);
+                }
 
-                    $cart->update(['status' => 'rejected']);
-                });
+                $cart->update(['status' => 'rejected']);
+            });
 
-                return redirect()->back()->with([
-                    'swal' => [
-                        'icon' => 'success',
-                        'title' => 'Berhasil!',
-                        'text' => 'Permintaan berhasil di-refund dan stok dikembalikan.'
-                    ]
-                ]);
-            } catch (\Exception $e) {
-                return redirect()->back()->with([
-                    'swal' => [
-                        'icon' => 'error',
-                        'title' => 'Gagal!',
-                        'text' => $e->getMessage()
-                    ]
-                ]);
-            }
+            return redirect()->back()->with('success', 'Permintaan berhasil di-refund dan stok dikembalikan.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
         }
-
     }
 
-    public function cancelItem(string $id){
-        {
-            try {
-                DB::transaction(function () use ($id) {
-                    $cart = Cart::with('cartItems.item')->findOrFail($id);
+    public function cancelItem(string $id)
+    {
+        try {
+            DB::transaction(function () use ($id) {
+                $cart = Cart::with('cartItems.item')->findOrFail($id);
 
-                    if ($cart->user_id !== Auth::id()) {
-                        throw new \Exception('Akses tidak sah untuk keranjang ini.');
-                    }
+                // Pastikan user hanya bisa cancel miliknya sendiri
+                if ($cart->user_id !== Auth::id()) {
+                    throw new \Exception('Akses tidak sah untuk keranjang ini.');
+                }
 
-                    foreach ($cart->cartItems as $cartItem) {
-                        $item = $cartItem->item;
-                        $item->increment('stock', $cartItem->quantity);
-                    }
+                // Loop setiap item dalam cart
+                foreach ($cart->cartItems as $cartItem) {
+                    // Kembalikan stok item
+                    $cartItem->item->increment('stock', $cartItem->quantity);
 
-                    $cart->update(['status' => 'rejected']);
-                });
+                    // Update status cart_item jadi rejected
+                    $cartItem->update([
+                        'status' => 'rejected',
+                        'rejection_reason' => 'Dibatalkan oleh pengguna pada ' . now()->format('d-m-Y H:i'),
+                        'updated_at' => now(),
+                    ]);
+                }
 
-                return redirect()->back()->with([
-                    'swal' => [
-                        'icon' => 'success',
-                        'title' => 'Berhasil!',
-                        'text' => 'Permintaan berhasil di-cancel dan stok dikembalikan.'
-                    ]
+                // Update status cart utama
+                $cart->update([
+                    'status' => 'rejected',
+                    'updated_at' => now(),
                 ]);
-            } catch (\Exception $e) {
-                return redirect()->back()->with([
-                    'swal' => [
-                        'icon' => 'error',
-                        'title' => 'Gagal!',
-                        'text' => $e->getMessage()
-                    ]
-                ]);
-            }
+            });
+
+            return redirect()->back()->with('success', 'Permintaan berhasil di-cancel dan stok dikembalikan.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
         }
-
     }
 }

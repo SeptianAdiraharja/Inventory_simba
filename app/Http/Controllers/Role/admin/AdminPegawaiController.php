@@ -13,6 +13,7 @@ use App\Models\{
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 
 class AdminPegawaiController extends Controller
@@ -20,16 +21,25 @@ class AdminPegawaiController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $query = $request->input('q');
          // Ambil data user yang role-nya 'pegawai'
-        $pegawai = User::where('role', 'pegawai')->get();
+        $pegawai = User::where('role', 'pegawai')
+            ->when($query, function ($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                ->orWhere('email', 'like', "%{$query}%");
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return view('role.admin.pegawai', compact('pegawai'));
     }
 
-
-
+    /* =======================================================
+       🔍 SEARCH – Method untuk pencarian pegawai
+    ======================================================== *
+    
     /**
      * Show the form for creating a new resource.
      */

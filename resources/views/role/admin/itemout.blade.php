@@ -1,6 +1,13 @@
 @extends('layouts.index')
 @section('content')
 
+@if(request('q'))
+    <div class="alert alert-info rounded-3 mb-3">
+        Hasil pencarian untuk: <strong>{{ request('q') }}</strong>
+    </div>
+@endif
+
+
 <!-- ======================== -->
 <!-- 🔹 HEADER & FILTER -->
 <!-- ======================== -->

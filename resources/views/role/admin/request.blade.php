@@ -3,6 +3,14 @@
 @section('content')
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
+  {{-- Di bagian atas view request.blade.php --}}
+  @if(isset($search) && $search)
+      <div class="alert alert-info">
+          Menampilkan hasil pencarian untuk: "<strong>{{ $search }}</strong>"
+          <a href="{{ route('admin.request') }}" class="float-end">Tampilkan semua</a>
+      </div>
+  @endif
+
   {{-- ===================== --}}
   {{-- 📦 DAFTAR PERMINTAAN --}}
   {{-- ===================== --}}

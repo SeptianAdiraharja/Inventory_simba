@@ -241,59 +241,122 @@
         </nav>
     </div>
 
-
     <div class="navbar-nav-right d-flex align-items-center justify-content-end" id="navbar-collapse">
 
         @auth
             @if(Auth::user()->role === 'pegawai' || Auth::user()->role === 'admin')
-            @if (request()->is('pegawai/produk*') || request()->is('admin/produk/guest*'))
-                <!-- Search Bar -->
-                <!-- ============================= -->
-                <!-- 🔍 SEARCH BAR (CENTERED) -->
-                <!-- ============================= -->
-                <div class="flex-grow-1 d-flex justify-content-center align-items-center">
-                    <form
-                        action="{{ request()->is('admin/guests*')
-                            ? route('admin.guests.index')
-                            : (request()->is('admin/produk*')
-                                ? route('admin.produk.index')
-                                : (request()->is('pegawai/*')
-                                    ? route('pegawai.produk.search')
-                                    : route('pegawai.produk.search'))) }}"
-                        method="GET"
-                        class="d-flex align-items-center px-3 py-1 border border-secondary-subtle bg-white bg-opacity-75 rounded-pill shadow-sm"
-                        style="max-width: 600px; width: 100%; transition: all 0.2s ease;"
-                    >
+                @php
+                    // Logika untuk menentukan tampilan search
+                    $showSearch = false;
+                    $showCategoryDropdown = false;
 
-                        {{-- Dropdown kategori --}}
-                        <select name="kategori"
-                                class="form-select border-0 bg-transparent text-secondary fw-medium"
-                                style="width: 150px; font-size: 14px; outline: none; box-shadow: none;"
-                                onchange="this.form.submit()">
-                            <option value="none">Pilih Kategori</option>
-                            <option value="none">Semua</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->name }}" {{ request('kategori') == $category->name ? 'selected' : '' }}>
-                                    {{ $category->name }}
-                                </option>
-                            @endforeach
-                        </select>
+                    if (Auth::user()->role === 'pegawai') {
+                        // Pegawai: search hanya di halaman produk
+                        $showSearch = request()->is('pegawai/produk*');
+                        $showCategoryDropdown = $showSearch;
+                    } elseif (Auth::user()->role === 'admin') {
+                        // Admin: cek halaman yang tidak boleh menampilkan search
+                        $isExportPage = request()->is('admin/out*') || request()->is('admin/export/barang-keluar*');
+                        $isRejectPage = request()->is('admin/rejects*');
+                        $isDashboardPage = request()->is('admin/dashboard*');
+                        $hideSearch = $isExportPage || $isRejectPage || $isDashboardPage;
 
-                        {{-- Icon search --}}
-                        <i class="ri ri-search-line icon-lg lh-0 me-2 text-secondary opacity-75"></i>
+                        $showSearch = !$hideSearch;
 
-                        {{-- Input pencarian --}}
-                        <input type="text"
-                            name="q"
-                            class="form-control border-0 bg-transparent shadow-none text-secondary"
-                            placeholder="Cari produk..."
-                            aria-label="Search..."
-                            style="font-size: 14px;"
-                            value="{{ request('q') }}" />
-                    </form>
-                </div>
+                        // Admin: dropdown kategori hanya di halaman produk guest dan produk pegawai
+                        $showCategoryDropdown = request()->is('admin/produk*') || request()->is('admin/pegawai/*/produk');
+                    }
+                @endphp
 
-                @endif
+                    <!-- ============================= -->
+                    <!-- 🔍 SEARCH BAR (CENTERED) -->
+                    <!-- ============================= -->
+                    <div class="flex-grow-1 d-flex justify-content-center align-items-center">
+                        @php
+                            // 1. Tentukan URL Aksi default
+                            $actionUrl = route('pegawai.produk.search');
+
+                            // 2. Jika user adalah 'admin', cek rute spesifik
+                            if (Auth::user()->role === 'admin') {
+                                if (request()->is('admin/guests*')) {
+                                    $actionUrl = route('admin.guests.index');
+                                } elseif (request()->is('admin/produk*')) {
+                                    $actionUrl = route('admin.produk.index');
+                                } elseif (request()->is('admin/pegawai/*/produk')) {
+                                    // Rute ini akan di-handle oleh JavaScript (tetap gunakan '#')
+                                    $actionUrl = '#';
+                                } elseif (request()->is('admin/request*')) {
+                                    $actionUrl = route('admin.request.search');
+                                } elseif (request()->is('admin/itemout*')) {
+                                    $actionUrl = route('admin.itemout.search');
+                                } elseif (request()->is('admin/pegawai*')) {
+                                    $actionUrl = route('admin.pegawai.index');
+                                } elseif (request ()->is('admin/rejects*')){
+                                    $actionUrl = route('admin.rejects.search');
+                                }  else {
+                                    // Fallback untuk admin jika tidak ada yang cocok
+                                    $actionUrl = '#';
+                                }
+                            }
+                        @endphp
+
+                        <form
+                            action="{{ $actionUrl }}"
+                            method="GET"
+                            class="d-flex align-items-center px-3 py-1 border border-secondary-subtle bg-white bg-opacity-75 rounded-pill shadow-sm"
+                            style="max-width: 600px; width: 100%; transition: all 0.2s ease;"
+                            id="search-form"
+                        >
+
+                            @if($showCategoryDropdown)
+                                {{-- Dropdown kategori --}}
+                                <select name="kategori"
+                                        class="form-select border-0 bg-transparent text-secondary fw-medium"
+                                        style="width: 150px; font-size: 14px; outline: none; box-shadow: none;"
+                                        onchange="this.form.submit()">
+                                    <option value="none">Pilih Kategori</option>
+                                    <option value="none" {{ request('kategori') == 'none' ? 'selected' : '' }}>Semua</option>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->name }}" {{ request('kategori') == $category->name ? 'selected' : '' }}>
+                                            {{ $category->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @endif
+
+                            {{-- Icon search --}}
+                            <i class="ri ri-search-line icon-lg lh-0 me-2 text-secondary opacity-75"></i>
+
+                            {{-- Input pencarian --}}
+                            <input type="text"
+                                name="q"
+                                class="form-control border-0 bg-transparent shadow-none text-secondary"
+                                placeholder="Cari"
+                                aria-label="Search..."
+                                style="font-size: 14px;"
+                                value="{{ request('q') }}" />
+                        </form>
+                    </div>
+
+                    @if(Auth::user()->role === 'admin' && (request()->is('admin/pegawai/*/produk') || request()->is('admin/request*') || request()->is('admin/itemout*') || request()->is('admin/pegawai*') || request()->is('admin/transaksi*') || request()->is('admin/rejects*')))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchForm = document.getElementById('search-form');
+        if (searchForm) {
+            // Untuk halaman produk pegawai, request, itemout, pegawai, transaksi, dan rejects, form dihandle oleh JavaScript
+            searchForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const currentUrl = window.location.href;
+                const formData = new FormData(searchForm);
+                const searchParams = new URLSearchParams(formData);
+
+                // Redirect ke URL yang sama dengan parameter pencarian
+                window.location.href = currentUrl.split('?')[0] + '?' + searchParams.toString();
+            });
+        }
+    });
+</script>
+@endif
             @endif
         @endauth
 
