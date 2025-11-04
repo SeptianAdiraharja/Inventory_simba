@@ -396,46 +396,6 @@
         </a>
     </div>
 
-    <!-- Breadcrumb Section -->
-    <div class="d-flex align-items-center">
-        <nav aria-label="breadcrumb" class="ms-2">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item">
-                    <a href="{{ url('/' . (Auth::user()->role === 'admin' ? 'admin/dashboard' : 'pegawai/dashboard')) }}"
-                    class="text-decoration-none text-secondary fw-semibold">
-                        <i class="ri-home-4-line me-1"></i>Dashboard
-                    </a>
-                </li>
-
-                @php
-                    // ambil URL segment untuk menentukan posisi breadcrumb
-                    $segments = request()->segments();
-                @endphp
-
-                @foreach($segments as $index => $segment)
-                    @if($index > 0)
-                        @php
-                            $url = url(implode('/', array_slice($segments, 0, $index + 1)));
-                            $isLast = $index === count($segments) - 1;
-                        @endphp
-
-                        @if(!$isLast)
-                            <li class="breadcrumb-item">
-                                <a href="{{ $url }}" class="text-decoration-none text-secondary">
-                                    {{ ucfirst($segment) }}
-                                </a>
-                            </li>
-                        @else
-                            <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">
-                                {{ ucfirst($segment) }}
-                            </li>
-                        @endif
-                    @endif
-                @endforeach
-            </ol>
-        </nav>
-    </div>
-
     <div class="navbar-nav-right d-flex align-items-center justify-content-end" id="navbar-collapse">
 
         @auth
