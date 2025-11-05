@@ -119,7 +119,7 @@
         <!-- / Menu -->
 
         <!-- Layout container -->
-        <div class="layout-page">
+        <div class="layout-page ">
           <!-- Navbar -->
 
           @include('layouts.components.navbar')
