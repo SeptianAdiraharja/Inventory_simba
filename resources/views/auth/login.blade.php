@@ -1,6 +1,6 @@
 <x-guest-layout>
     <head>
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Poppins:wght@400;500&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Poppins:wght@400;500&display=swap" rel="stylesheet">
     </head>
 
     <div id="mainContainer"
@@ -13,12 +13,13 @@
             style="background-image: url('{{ asset('assets/img/backgrounds/Login.png') }}');">
 
             <!-- Overlay -->
-            <div class="absolute inset-0 bg-gradient-to-br from-[#6a00f4]/70 via-[#7d0dfd]/60 to-[#9b4dff]/50 z-0 transition-all duration-700 ease-in-out"></div>
+            <div class="absolute inset-0 bg-gradient-to-br from-[#ff7a00]/70 via-[#ff9a00]/60 to-[#ffd24d]/50 z-0 transition-all duration-700 ease-in-out"></div>
 
             <!-- Konten -->
             <div class="relative z-10 text-center max-w-lg flex flex-col justify-center h-full space-y-8 sm:space-y-10 py-10">
                 <div class="transition-all duration-700 ease-out">
-                    <h1 class="text-[clamp(2.5rem,5vw,4.5rem)] font-extrabold tracking-wide text-white simba-title animate-glow">
+                    <!-- Judul SIMBA -->
+                    <h1 class="text-[clamp(2.5rem,5vw,4.5rem)] simba-title">
                         SIMBA
                     </h1>
                     <p class="text-[clamp(1rem,1.5vw,1.25rem)] text-gray-100 mt-2 font-medium">
@@ -50,8 +51,8 @@
 
                 <!-- Tombol -->
                 <button id="openLoginBtn"
-                    class="px-8 py-3 bg-[#7d0dfd] hover:bg-[#6f00fc] text-white font-semibold text-lg rounded-lg shadow-lg
-                           hover:shadow-[0_0_25px_rgba(125,13,253,0.7)] transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[#7d0dfd]/40">
+                    class="px-8 py-3 bg-[#ff7a00] hover:bg-[#ff9500] text-white font-semibold text-lg rounded-lg shadow-lg
+                           hover:shadow-[0_0_20px_rgba(255,122,0,0.4)] transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[#ff9500]/30">
                     ✨ Buka Halaman Login
                 </button>
             </div>
@@ -62,14 +63,14 @@
             class="relative flex flex-col justify-center items-center bg-white text-gray-800 w-full lg:w-[40%]
                    transition-all duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-visible py-16">
 
-            <!-- Logo UPELKES -->
+            <!-- Logo -->
             <div id="upelkesLogo"
                 class="flex flex-col justify-center items-center relative w-full py-10 transition-all duration-[1200ms] ease-out">
                 <div class="relative flex justify-center items-center">
-                    <div class="absolute w-[400px] h-[400px] bg-[#7d0dfd]/10 blur-3xl rounded-full hidden sm:block animate-pulse-slow"></div>
+                    <div class="absolute w-[400px] h-[400px] bg-[#ff9500]/10 blur-3xl rounded-full hidden sm:block animate-pulse-slow"></div>
                     <img src="{{ asset('assets/img/icons/upelkes.png') }}"
                          alt="Logo UPELKES"
-                         class="relative w-[clamp(180px,30vw,350px)] h-auto object-contain drop-shadow-[0_0_35px_rgba(125,13,253,0.4)] animate-float-smooth">
+                         class="relative w-[clamp(180px,30vw,350px)] h-auto object-contain drop-shadow-[0_0_35px_rgba(255,122,0,0.4)] animate-float-smooth">
                 </div>
             </div>
 
@@ -78,12 +79,12 @@
                 class="max-w-md w-full space-y-8 text-center opacity-0 scale-90 hidden translate-y-10 transition-all duration-[1400ms] ease-[cubic-bezier(0.4,0,0.2,1)] px-6 sm:px-8 pb-10">
                 <div class="flex justify-center">
                     <img src="{{ asset('assets/img/icons/simba.jpg') }}" alt="SIMBA Logo"
-                        class="w-20 h-20 sm:w-24 sm:h-24 rounded-full shadow-[0_0_30px_rgba(125,13,253,0.6)]">
+                        class="w-20 h-20 sm:w-24 sm:h-24 rounded-full shadow-[0_0_25px_rgba(255,122,0,0.5)]">
                 </div>
 
-                <h2 class="text-3xl font-extrabold text-[#7d0dfd] mt-4"
-                    style="text-shadow:0 0 10px rgba(125,13,253,0.6);">
-                    Selamat Datang di <span class="text-[#6f42c1]">SIMBA</span>
+                <h2 class="text-3xl font-extrabold text-[#ff7a00] mt-4"
+                    style="text-shadow:0 0 6px rgba(255,122,0,0.4);">
+                    Selamat Datang di <span class="text-[#ff9500]">SIMBA</span>
                 </h2>
                 <p class="text-center text-gray-500 -mt-4 mb-4 text-sm">
                     Akses sistem pendataan barang dan aset UPELKES
@@ -95,31 +96,31 @@
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                         <input id="email" type="email" name="email" required autofocus
                             placeholder="contoh: user@upelkes.go.id"
-                            class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 focus:ring-2 focus:ring-[#7d0dfd] focus:outline-none text-gray-800 transition-all duration-300 ease-in-out">
+                            class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 focus:ring-2 focus:ring-[#ff7a00] focus:outline-none text-gray-800 transition-all duration-300 ease-in-out">
                     </div>
 
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                         <input id="password" type="password" name="password" required minlength="8"
                             placeholder="Minimal 8 karakter"
-                            class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 focus:ring-2 focus:ring-[#7d0dfd] focus:outline-none text-gray-800 transition-all duration-300 ease-in-out">
+                            class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 focus:ring-2 focus:ring-[#ff7a00] focus:outline-none text-gray-800 transition-all duration-300 ease-in-out">
                     </div>
 
                     <div class="flex items-center justify-between text-sm">
                         <label class="flex items-center space-x-2">
-                            <input type="checkbox" name="remember" class="rounded text-[#7d0dfd] focus:ring-[#7d0dfd]">
+                            <input type="checkbox" name="remember" class="rounded text-[#ff7a00] focus:ring-[#ff7a00]">
                             <span class="text-gray-700">Ingat saya</span>
                         </label>
                         @if (Route::has('password.request'))
-                            <a href="{{ route('password.request') }}" class="text-[#7d0dfd] hover:underline font-medium">
+                            <a href="{{ route('password.request') }}" class="text-[#ff7a00] hover:underline font-medium">
                                 Lupa password?
                             </a>
                         @endif
                     </div>
 
                     <button type="submit"
-                        class="w-full bg-[#7d0dfd] text-white font-semibold py-3 rounded-lg hover:bg-[#6f00fc]
-                               shadow-md hover:shadow-[0_0_20px_rgba(125,13,253,0.6)] transition-all duration-500 ease-in-out transform hover:scale-[1.02]">
+                        class="w-full bg-[#ff7a00] text-white font-semibold py-3 rounded-lg hover:bg-[#ff9500]
+                               shadow-md hover:shadow-[0_0_15px_rgba(255,122,0,0.4)] transition-all duration-500 ease-in-out transform hover:scale-[1.02]">
                         LOGIN
                     </button>
                 </form>
@@ -159,22 +160,31 @@
             font-family: 'Poppins', sans-serif;
         }
 
+        /* 🧱 SIMBA PUTIH TEBAL & ELEGAN TANPA GLOW BERLEBIHAN */
         .simba-title {
             font-family: 'Montserrat', sans-serif;
-            text-shadow: 0 0 12px rgba(125, 13, 253, 0.6),
-                         0 0 24px rgba(155, 77, 255, 0.4),
-                         0 0 36px rgba(155, 77, 255, 0.3);
+            font-weight: 900;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-shadow:
+                0 2px 4px rgba(0,0,0,0.25),
+                0 0 8px rgba(255,255,255,0.25);
         }
 
-        @keyframes glowPulse {
-            0%, 100% { text-shadow: 0 0 12px rgba(125,13,253,0.6), 0 0 25px rgba(155,77,255,0.4); }
-            50% { text-shadow: 0 0 30px rgba(125,13,253,0.8), 0 0 50px rgba(155,77,255,0.6); }
+        .simba-title::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: url("https://www.transparenttextures.com/patterns/brushed-alum.png");
+            opacity: 0.15;
+            mix-blend-mode: overlay;
+            pointer-events: none;
         }
-        .animate-glow { animation: glowPulse 3s ease-in-out infinite; }
 
         @keyframes floatSmooth {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-12px); }
+            50% { transform: translateY(-10px); }
         }
         .animate-float-smooth { animation: floatSmooth 5s ease-in-out infinite; }
 
@@ -182,19 +192,15 @@
             0%, 100% { opacity: 0.3; transform: scale(1); }
             50% { opacity: 0.6; transform: scale(1.05); }
         }
-        .animate-pulse-slow { animation: pulseSlow 6s ease-in-out infinite; }
+        .animate-pulse-slow { animation: pulseSlow 7s ease-in-out infinite; }
 
-        /* Responsif */
         @media (max-width: 1024px) {
             #mainContainer { flex-direction: column; overflow-y: auto; }
             #leftPanel, #rightPanel { width: 100%; height: auto; padding: 3rem 1.5rem; }
-            #upelkesLogo { padding: 2rem 0; }
-            #upelkesLogo img { width: 180px; }
         }
 
         @media (max-width: 640px) {
             .simba-title { font-size: 2.2rem; }
-            #upelkesLogo img { width: 150px; }
         }
     </style>
 </x-guest-layout>

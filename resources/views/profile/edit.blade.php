@@ -1,9 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 class="font-bold text-2xl text-[#7d0dfd] tracking-tight flex items-center gap-2">
+            <h2 class="font-bold text-2xl text-[#f39c12] tracking-tight flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                     stroke-width="1.8" stroke="currentColor" class="w-7 h-7 text-[#7d0dfd]">
+                     stroke-width="1.8" stroke="currentColor" class="w-7 h-7 text-[#f39c12]">
                     <path stroke-linecap="round" stroke-linejoin="round"
                           d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/>
                 </svg>
@@ -22,7 +22,7 @@
 
             @if(isset($dashboardRoutes[$role]))
                 <a href="{{ route($dashboardRoutes[$role]) }}"
-                   class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#7d0dfd] to-[#9b4dff] text-white font-semibold rounded-lg shadow-md hover:shadow-[0_0_20px_rgba(125,13,253,0.4)] transition-all duration-300">
+                   class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#f39c12] to-[#e67e22] text-white font-semibold rounded-lg shadow-md hover:shadow-[0_0_20px_rgba(243,156,18,0.4)] transition-all duration-300">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2"
                          viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
@@ -46,7 +46,7 @@
             x-transition:leave-end="opacity-0 scale-95 translate-y-[-10px]"
             x-init="setTimeout(() => show = false, 3000)"
             class="fixed top-6 right-6 z-50 px-6 py-4 rounded-xl text-white text-sm font-semibold shadow-lg
-                   bg-gradient-to-r from-[#7d0dfd] to-[#9b4dff] backdrop-blur-lg border border-white/20">
+                   bg-gradient-to-r from-[#f39c12] to-[#e67e22] backdrop-blur-lg border border-white/20">
             <div class="flex items-center space-x-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
@@ -67,13 +67,13 @@
     @endif
 
     <!-- BODY -->
-    <div class="py-12 bg-gradient-to-br from-white via-[#f9f5ff] to-[#f2eaff] min-h-screen">
+    <div class="py-12 bg-gradient-to-br from-white via-[#fff7ec] to-[#fff3e0] min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
 
             <!-- Update Profile Card -->
-            <div class="relative group bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#7d0dfd]/10 p-6 sm:p-10 transition-all duration-300 hover:shadow-[0_5px_20px_rgba(125,13,253,0.2)]">
+            <div class="relative group bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#f39c12]/20 p-6 sm:p-10 transition-all duration-300 hover:shadow-[0_5px_20px_rgba(243,156,18,0.25)]">
                 <div class="flex items-center mb-6">
-                    <div class="w-12 h-12 bg-[#7d0dfd]/10 text-[#7d0dfd] flex justify-center items-center rounded-full mr-4">
+                    <div class="w-12 h-12 bg-[#f39c12]/10 text-[#f39c12] flex justify-center items-center rounded-full mr-4">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                              stroke-width="1.7" stroke="currentColor" class="w-6 h-6">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -89,9 +89,9 @@
             </div>
 
             <!-- Update Password Card -->
-            <div class="relative group bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#7d0dfd]/10 p-6 sm:p-10 transition-all duration-300 hover:shadow-[0_5px_20px_rgba(125,13,253,0.2)]">
+            <div class="relative group bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl border border-[#e67e22]/20 p-6 sm:p-10 transition-all duration-300 hover:shadow-[0_5px_20px_rgba(243,156,18,0.25)]">
                 <div class="flex items-center mb-6">
-                    <div class="w-12 h-12 bg-[#9b4dff]/10 text-[#9b4dff] flex justify-center items-center rounded-full mr-4">
+                    <div class="w-12 h-12 bg-[#f8c471]/20 text-[#e67e22] flex justify-center items-center rounded-full mr-4">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                              stroke-width="1.7" stroke="currentColor" class="w-6 h-6">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -110,7 +110,7 @@
                         <div>
                             <x-input-label for="current_password" :value="__('Kata Sandi Saat Ini')" />
                             <x-text-input id="current_password" name="current_password" type="password"
-                                class="mt-1 block w-full rounded-lg border-gray-300 focus:border-[#7d0dfd] focus:ring-[#7d0dfd]"
+                                class="mt-1 block w-full rounded-lg border-gray-300 focus:border-[#f39c12] focus:ring-[#f39c12]"
                                 autocomplete="current-password" placeholder="Masukkan kata sandi saat ini" />
                             <x-input-error :messages="$errors->updatePassword->get('current_password')" class="mt-2" />
                         </div>
@@ -119,7 +119,7 @@
                         <div>
                             <x-input-label for="password" :value="__('Kata Sandi Baru')" />
                             <x-text-input id="password" name="password" type="password"
-                                class="mt-1 block w-full rounded-lg border-gray-300 focus:border-[#7d0dfd] focus:ring-[#7d0dfd]"
+                                class="mt-1 block w-full rounded-lg border-gray-300 focus:border-[#f39c12] focus:ring-[#f39c12]"
                                 autocomplete="new-password" placeholder="Minimal 8 karakter" />
                             <x-input-error :messages="$errors->updatePassword->get('password')" class="mt-2" />
                         </div>
@@ -128,14 +128,14 @@
                         <div>
                             <x-input-label for="password_confirmation" :value="__('Konfirmasi Kata Sandi')" />
                             <x-text-input id="password_confirmation" name="password_confirmation" type="password"
-                                class="mt-1 block w-full rounded-lg border-gray-300 focus:border-[#7d0dfd] focus:ring-[#7d0dfd]"
+                                class="mt-1 block w-full rounded-lg border-gray-300 focus:border-[#f39c12] focus:ring-[#f39c12]"
                                 autocomplete="new-password" placeholder="Ulangi kata sandi baru" />
                             <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" class="mt-2" />
                         </div>
 
                         <div class="flex items-center gap-4">
                             <x-primary-button
-                                class="bg-gradient-to-r from-[#7d0dfd] to-[#9b4dff] hover:shadow-[0_0_10px_rgba(125,13,253,0.5)] transition-all duration-300 rounded-lg text-white font-semibold">
+                                class="bg-gradient-to-r from-[#f39c12] to-[#e67e22] hover:shadow-[0_0_10px_rgba(243,156,18,0.4)] transition-all duration-300 rounded-lg text-white font-semibold">
                                 {{ __('Simpan') }}
                             </x-primary-button>
 
@@ -155,8 +155,8 @@
 
     <style>
         input::placeholder {
-            color: #a78bfa;
-            opacity: 0.9;
+            color: #f5b041;
+            opacity: 0.85;
         }
 
         input, select, textarea {
@@ -164,8 +164,8 @@
         }
 
         input:focus, select:focus, textarea:focus {
-            border-color: #7d0dfd !important;
-            box-shadow: 0 0 0 3px rgba(125, 13, 253, 0.2);
+            border-color: #f39c12 !important;
+            box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.25);
         }
 
         button {
@@ -173,7 +173,7 @@
         }
 
         button:hover {
-            transform: scale(1.02);
+            transform: scale(1.03);
         }
     </style>
 </x-app-layout>

@@ -3,10 +3,10 @@
 @section('content')
 <style>
     /* =============================
-       ✨ UI/UX Styling for Produk Page ✨
+       ✨ UI/UX Styling for Produk Page (Orange–Yellow Palette) ✨
        ============================= */
     body {
-        background-color: #f7f9fb !important;
+        background-color: #ffffff !important;
     }
 
     /* ===== Modern Breadcrumb ===== */
@@ -14,27 +14,27 @@
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: rgba(78, 115, 223, 0.1);
-        color: #4e73df;
+        background: rgba(255, 165, 0, 0.1); /* Oranye lembut */
+        color: #ff9800; /* Oranye cerah */
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
     .breadcrumb a {
-        color: #4e73df;
+        color: #ff9800;
         text-decoration: none;
         font-weight: 500;
     }
 
     .breadcrumb-item + .breadcrumb-item::before {
-        color: #6c757d;
+        color: #c0a000;
         content: "/";
         padding: 0 0.5rem;
     }
 
     .breadcrumb-item.active {
-        color: #1e293b;
+        color: #333;
         font-weight: 600;
     }
 
@@ -42,7 +42,7 @@
     .product-card {
         border: none;
         border-radius: 14px;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 3px 10px rgba(255, 160, 0, 0.1);
         overflow: hidden;
         transition: all 0.25s ease-in-out;
         background-color: #fff;
@@ -50,14 +50,14 @@
 
     .product-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 6px 18px rgba(255, 193, 7, 0.2);
     }
 
     .product-card img {
         height: 200px;
         width: 100%;
         object-fit: cover;
-        border-bottom: 1px solid #f1f1f1;
+        border-bottom: 1px solid #ffe082;
     }
 
     .product-card .card-body {
@@ -87,11 +87,55 @@
         font-weight: 600;
     }
 
+    /* Warna status */
+    .badge-status.bg-danger {
+        background-color: #f44336 !important; /* Merah lembut */
+    }
+
+    .badge-status.bg-warning {
+        background-color: #ffeb3b !important; /* Kuning terang */
+        color: #212529 !important;
+    }
+
+    /* ===== Alert Styling ===== */
     .alert {
         border: none;
         border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 10px rgba(255, 160, 0, 0.1);
         font-size: 0.9rem;
+    }
+
+    .alert-success {
+        background-color: #ffecb3 !important;
+        color: #8c6d1f !important;
+    }
+
+    .alert-danger {
+        background-color: #ffe0b2 !important;
+        color: #b71c1c !important;
+    }
+
+    .alert-info {
+        background-color: #fff9c4 !important;
+        color: #795548 !important;
+    }
+
+    /* ===== Button & Input ===== */
+    .btn-primary {
+        background-color: #ffa000 !important;
+        border: none;
+        color: #fff;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .btn-primary:hover {
+        background-color: #ffb300 !important;
+        color: #fff;
+    }
+
+    .form-control:focus {
+        border-color: #ffca28;
+        box-shadow: 0 0 0 0.15rem rgba(255, 193, 7, 0.25);
     }
 
     @media (max-width: 768px) {
@@ -117,14 +161,14 @@
 <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 animate__animated animate__fadeInDown smooth-fade">
     {{-- Left Section --}}
     <div class="d-flex align-items-center flex-wrap gap-2">
-        <div class="breadcrumb-icon bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-circle"
+        <div class="breadcrumb-icon d-flex align-items-center justify-content-center rounded-circle"
              style="width:40px; height:40px;">
             <i class="bi bi-cart fs-5"></i>
         </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0 align-items-center">
                 <li class="breadcrumb-item">
-                    <a href="{{ route('pegawai.dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+                    <a href="{{ route('pegawai.dashboard') }}" class="text-decoration-none fw-semibold">
                         Dashboard
                     </a>
                 </li>
@@ -167,18 +211,15 @@
 {{-- 🛒 Grid Produk --}}
 <div class="row gy-4">
     @php
-        // Urutkan produk berdasarkan stok
         $items = $items->sortByDesc(fn($i) => $i->stock > 0)->sortByDesc(fn($i) => $i->stock);
     @endphp
 
     @forelse ($items as $item)
         <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
             <div class="card product-card position-relative">
-                {{-- Gambar Produk --}}
                 <div class="position-relative">
                     <img src="{{ asset('storage/' . $item->image) }}" alt="{{ $item->name }}">
 
-                    {{-- Badge Stok --}}
                     @if ($item->stock == 0)
                         <span class="badge-status bg-danger text-white">Habis</span>
                     @elseif ($item->stock < 5)
@@ -186,7 +227,6 @@
                     @endif
                 </div>
 
-                {{-- Informasi Produk --}}
                 <div class="card-body">
                     <h5 class="card-title text-truncate">{{ $item->name }}</h5>
                     <p class="text-muted small mb-1">
@@ -199,7 +239,6 @@
                         <span class="fw-semibold">{{ $item->stock }}</span>
                     </p>
 
-                    {{-- Form Permintaan --}}
                     <form action="{{ route('pegawai.permintaan.create') }}" method="POST" class="mt-auto">
                         @csrf
                         <input type="hidden" name="items[0][item_id]" value="{{ $item->id }}">

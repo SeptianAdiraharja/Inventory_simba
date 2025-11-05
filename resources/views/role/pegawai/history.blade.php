@@ -3,7 +3,7 @@
 @section('content')
 <style>
 /* =============================
-   💜 Compact Modern Purple UI (Match Screenshot Style)
+   🍊 Compact Modern Orange UI (Soft Warm Theme)
    ============================= */
 body {
   background-color: #f8f9fc !important;
@@ -29,8 +29,8 @@ body {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: rgba(111, 66, 193, 0.1);
-  color: #6f42c1;
+  background: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -50,11 +50,11 @@ body {
 }
 
 .breadcrumb-item a {
-  color: #6f42c1;
+  color: #f39c12;
   font-weight: 500;
   text-decoration: none;
 }
-.breadcrumb-item a:hover { color: #5a32b3; }
+.breadcrumb-item a:hover { color: #e67e22; }
 .breadcrumb-item.active { color: #333; font-weight: 600; }
 
 .breadcrumb-modern .text-muted {
@@ -78,7 +78,7 @@ body {
 .card-header h5 {
   font-size: 1rem;
   font-weight: 600;
-  color: #6f42c1;
+  color: #f39c12;
   margin: 0;
   display: flex;
   align-items: center;
@@ -92,20 +92,20 @@ body {
   font-size: 0.9rem;
   border: none;
   background: #fff;
-  color: #6f42c1;
+  color: #f39c12;
   padding: 0.45rem 1rem;
   min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.25s ease;
-  box-shadow: 0 2px 6px rgba(111, 66, 193, 0.05);
+  box-shadow: 0 2px 6px rgba(243, 156, 18, 0.05);
 }
 
 .nav-pills .nav-link.active {
-  background-color: #6f42c1 !important;
+  background-color: #f39c12 !important;
   color: #fff !important;
-  box-shadow: 0 3px 10px rgba(111, 66, 193, 0.25);
+  box-shadow: 0 3px 10px rgba(243, 156, 18, 0.25);
 }
 
 .nav-pills .nav-link .badge {
@@ -113,8 +113,8 @@ body {
   font-weight: 600;
   margin-left: 0.4rem;
   border-radius: 50px;
-  background: rgba(111, 66, 193, 0.1);
-  color: #6f42c1;
+  background: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
 }
 
 .nav-pills .nav-link.active .badge {
@@ -125,19 +125,20 @@ body {
 /* ===== Hover Card ===== */
 .hover-card {
   background: #fff;
-  border: 1px solid #f1ecfb;
+  border: 1px solid #fff3e0;
   border-radius: 12px;
   padding: 0.9rem 1.1rem;
   transition: all 0.25s ease;
 }
 .hover-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 16px rgba(111, 66, 193, 0.08);
+  box-shadow: 0 5px 16px rgba(243, 156, 18, 0.08);
 }
 
 .hover-card h6 {
   font-size: 0.95rem;
   font-weight: 600;
+  color: #444;
 }
 
 .hover-card small {
@@ -153,11 +154,11 @@ body {
 }
 
 .btn-outline-primary {
-  border: 1px solid #c7b3f4;
-  color: #6f42c1;
+  border: 1px solid #ffd599;
+  color: #f39c12;
 }
 .btn-outline-primary:hover {
-  background: #6f42c1;
+  background: #f39c12;
   color: #fff;
 }
 
@@ -168,13 +169,56 @@ body {
   font-weight: 600;
 }
 
+.badge.bg-success {
+  background-color: #2ecc71 !important;
+}
+
+.badge.bg-warning {
+  background-color: #f8c471 !important;
+  color: #664d03 !important;
+}
+
+.badge.bg-danger {
+  background-color: #e74c3c !important;
+}
+
+/* ===== Pagination Custom ===== */
+.pagination .page-link {
+  border: none;
+  color: #f39c12;
+  font-weight: 500;
+  border-radius: 50px;
+  margin: 0 3px;
+  padding: 0.45rem 0.75rem;
+  box-shadow: 0 2px 5px rgba(243, 156, 18, 0.1);
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.pagination .page-item.active .page-link {
+  background: #f39c12;
+  color: #fff;
+  box-shadow: 0 3px 8px rgba(243, 156, 18, 0.25);
+}
+
+.pagination .page-link:hover {
+  background: rgba(243, 156, 18, 0.1);
+  color: #e67e22;
+}
+
+.pagination .page-item.disabled .page-link {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 /* ===== Modal ===== */
 .modal-content {
   border-radius: 16px;
   border: none;
-  box-shadow: 0 5px 18px rgba(111, 66, 193, 0.25);
+  box-shadow: 0 5px 18px rgba(243, 156, 18, 0.25);
 }
-.modal-body { background: #faf7ff; }
+.modal-body { background: #fffaf2; }
 
 /* ===== Responsive ===== */
 @media (max-width:768px){
@@ -183,6 +227,7 @@ body {
   .hover-card{padding:0.8rem 1rem;}
 }
 </style>
+
 {{-- ======================== --}}
 {{-- 🧭 MODERN BREADCRUMB --}}
 {{-- ======================== --}}
@@ -253,7 +298,7 @@ body {
                   <small><i class="bi bi-clock me-1"></i>{{ $cart->created_at->format('H:i') }} WIB</small>
                 </div>
                 <span class="badge {{ $cart->status == 'approved' ? 'bg-success' :
-                      ($cart->status == 'pending' ? 'bg-warning text-dark' : 'bg-danger') }}">
+                      ($cart->status == 'pending' ? 'bg-warning' : 'bg-danger') }}">
                   {{ ucfirst($cart->status) }}
                 </span>
               </div>
@@ -271,9 +316,43 @@ body {
             </div>
           @endforeach
         </div>
-        <div class="mt-4 d-flex justify-content-center">
-          {{ $carts->links() }}
-        </div>
+
+        {{-- ✅ Pagination Custom dengan Filter Tetap --}}
+        @if ($carts->hasPages())
+          <nav class="mt-4 d-flex justify-content-center">
+            <ul class="pagination pagination-sm mb-0">
+              {{-- Previous --}}
+              @if ($carts->onFirstPage())
+                <li class="page-item disabled"><span class="page-link">‹</span></li>
+              @else
+                <li class="page-item">
+                  <a class="page-link"
+                     href="{{ $carts->previousPageUrl() . '&status=' . request('status', 'all') }}"
+                     rel="prev">‹</a>
+                </li>
+              @endif
+
+              {{-- Numbers --}}
+              @foreach ($carts->getUrlRange(1, $carts->lastPage()) as $page => $url)
+                <li class="page-item {{ $page == $carts->currentPage() ? 'active' : '' }}">
+                  <a class="page-link"
+                     href="{{ $url . '&status=' . request('status', 'all') }}">{{ $page }}</a>
+                </li>
+              @endforeach
+
+              {{-- Next --}}
+              @if ($carts->hasMorePages())
+                <li class="page-item">
+                  <a class="page-link"
+                     href="{{ $carts->nextPageUrl() . '&status=' . request('status', 'all') }}"
+                     rel="next">›</a>
+                </li>
+              @else
+                <li class="page-item disabled"><span class="page-link">›</span></li>
+              @endif
+            </ul>
+          </nav>
+        @endif
       @endif
     </div>
   </div>
