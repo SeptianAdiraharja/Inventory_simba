@@ -3,7 +3,7 @@
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
   {{-- ======================== --}}
-  {{-- 🧭 BREADCRUMB MODERN PURPLE --}}
+  {{-- 🧭 BREADCRUMB MODERN ORANGE --}}
   {{-- ======================== --}}
   <div class="breadcrumb-modern bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center smooth-fade">
     <div class="d-flex align-items-center gap-3 flex-wrap">
@@ -14,7 +14,7 @@
 
       {{-- Breadcrumb Link --}}
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <a href="{{ route('super_admin.dashboard') }}" class="breadcrumb-link fw-semibold text-primary text-decoration-none">
+        <a href="{{ route('super_admin.dashboard') }}" class="breadcrumb-link fw-semibold text-decoration-none">
           Dashboard
         </a>
         <span class="text-muted">/</span>
@@ -34,14 +34,14 @@
   {{-- ======================== --}}
   <div class="card shadow-sm border-0 rounded-4 smooth-fade">
     <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3 px-4 flex-wrap">
-      <h5 class="fw-bold text-primary mb-0 d-flex align-items-center gap-2">
+      <h5 class="fw-bold text-warning mb-0 d-flex align-items-center gap-2">
         <i class="ri ri-price-tag-3-line"></i> Daftar Kategori
       </h5>
       <div class="d-flex gap-2 align-items-center flex-wrap">
-        <button id="refreshBtn" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium shadow-sm hover-glow d-flex align-items-center gap-2">
+        <button id="refreshBtn" class="btn btn-sm btn-outline-warning rounded-pill px-3 fw-medium shadow-sm hover-glow d-flex align-items-center gap-2">
           <i class="bi bi-arrow-clockwise"></i> Refresh
         </button>
-        <a href="{{ route('super_admin.categories.create') }}" class="btn btn-sm btn-primary rounded-pill shadow-sm d-flex align-items-center gap-2 hover-glow">
+        <a href="{{ route('super_admin.categories.create') }}" class="btn btn-sm btn-warning text-white rounded-pill shadow-sm d-flex align-items-center gap-2 hover-glow">
           <i class="ri ri-add-line"></i> Tambah
         </a>
       </div>
@@ -60,7 +60,7 @@
           @forelse($categories as $category)
           <tr class="align-middle text-start table-row-hover">
             <td class="ps-4">
-              <i class="ri-price-tag-3-line text-primary me-2 fs-5"></i>
+              <i class="ri-price-tag-3-line text-warning me-2 fs-5"></i>
               <span class="fw-semibold">{{ $category->name }}</span>
             </td>
             <td class="text-center">
@@ -70,7 +70,7 @@
                 </button>
                 <div class="dropdown-menu dropdown-menu-end shadow-sm rounded-3">
                   <a href="{{ route('super_admin.categories.edit', $category->id) }}" class="dropdown-item d-flex align-items-center gap-2">
-                    <i class="ri-pencil-line text-primary"></i> Edit
+                    <i class="ri-pencil-line text-warning"></i> Edit
                   </a>
                   <form action="{{ route('super_admin.categories.destroy', $category->id) }}" method="POST" class="m-0 p-0">
                     @csrf
@@ -114,11 +114,11 @@
 .icon-wrapper {
   width: 42px;
   height: 42px;
-  background: linear-gradient(135deg, #7d0dfd, #b76cf1);
+  background: linear-gradient(135deg, #FF9800, #FFC300);
 }
 .breadcrumb-link {
   position: relative;
-  color: #7d0dfd;
+  color: #FF9800;
   transition: all 0.25s ease;
 }
 .breadcrumb-link::after {
@@ -128,27 +128,27 @@
   left: 0;
   width: 0;
   height: 2px;
-  background: #7d0dfd;
+  background: #FF9800;
   transition: width 0.25s ease;
 }
 .breadcrumb-link:hover::after {
   width: 100%;
 }
 .breadcrumb-link:hover {
-  color: #5c16a9 !important;
+  color: #e67e22 !important;
 }
 
 /* ===== Hover & Button ===== */
 .hover-glow { transition: all 0.25s ease; }
 .hover-glow:hover {
-  background-color: #7d0dfd !important;
+  background-color: #FF9800 !important;
   color: #fff !important;
-  box-shadow: 0 0 12px rgba(125, 13, 253, 0.4);
+  box-shadow: 0 0 12px rgba(255, 152, 0, 0.4);
 }
 
 /* ===== Table Style ===== */
 .table-hover tbody tr:hover {
-  background-color: #f8f5ff !important;
+  background-color: #FFF9E6 !important;
   transition: 0.25s ease;
 }
 .table thead th {
@@ -160,7 +160,7 @@
   transition: background-color 0.25s ease, transform 0.15s ease;
 }
 .table-row-hover:hover {
-  background-color: #f8f9fc !important;
+  background-color: #FFFBEA !important;
   transform: translateX(3px);
 }
 

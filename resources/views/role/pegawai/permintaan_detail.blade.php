@@ -1,14 +1,14 @@
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden animate__animated animate__fadeIn">
     {{-- Header --}}
     <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center flex-wrap py-3 px-4">
-        <h5 class="mb-0 text-primary fw-semibold d-flex align-items-center gap-2">
+        <h5 class="mb-0 text-orange fw-semibold d-flex align-items-center gap-2">
             <i class="ri-file-list-line fs-5"></i> Detail Permintaan
         </h5>
 
         {{-- Status Badge Dinamis --}}
         <span class="badge rounded-pill px-3 py-2 fw-semibold fs-6
             {{ $cart->status === 'pending' ? 'bg-warning text-dark' :
-               ($cart->status === 'approved' ? 'bg-success text-white' :
+               ($cart->status === 'approved' ? 'bg-orange text-white' :
                ($cart->status === 'rejected' ? 'bg-danger text-white' : 'bg-secondary text-white')) }}">
             <i class="{{ $cart->status === 'pending' ? 'ri-time-line' :
                        ($cart->status === 'approved' ? 'ri-check-line' :
@@ -45,8 +45,8 @@
             </div>
         @else
             <table class="table align-middle mb-0">
-                <thead class="table-light">
-                    <tr class="fw-semibold text-secondary">
+                <thead class="table-orange text-white">
+                    <tr class="fw-semibold">
                         <th class="ps-4">Produk</th>
                         <th class="text-center" style="width: 15%;">Jumlah</th>
                     </tr>
@@ -59,7 +59,7 @@
                                     <div class="me-3 flex-shrink-0">
                                         <img src="{{ asset('storage/' . $item->item->image) }}"
                                              alt="{{ $item->item->name }}"
-                                             class="rounded shadow-sm"
+                                             class="rounded shadow-sm border border-light"
                                              style="width: 60px; height: 60px; object-fit: cover;">
                                     </div>
                                     <div class="flex-grow-1">
@@ -84,31 +84,47 @@
     </div>
 </div>
 
-{{-- ===== Style Tambahan ===== --}}
+{{-- ===== Style Tambahan (Tema Oranye Modern) ===== --}}
 <style>
+    :root {
+        --orange-main: #ff7f32;
+        --orange-soft: #ffe6d1;
+    }
+
+    .text-orange {
+        color: var(--orange-main) !important;
+    }
+
+    .bg-orange {
+        background-color: var(--orange-main) !important;
+    }
+
     .card {
         background-color: #fff;
         transition: all 0.3s ease;
     }
 
     .card:hover {
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+        box-shadow: 0 6px 18px rgba(255, 127, 50, 0.15);
+    }
+
+    .table-orange {
+        background-color: var(--orange-main) !important;
     }
 
     .table thead th {
-        background-color: #f8f9fc !important;
-        color: #495057 !important;
-        border-bottom: 2px solid #e2e6ea !important;
         font-size: 0.92rem;
+        vertical-align: middle;
     }
 
     .table tbody tr:hover {
-        background-color: #f9fbff !important;
-        transition: background-color 0.2s ease;
+        background-color: var(--orange-soft) !important;
+        transition: background-color 0.25s ease;
     }
 
     .badge {
         font-size: 0.85rem;
+        letter-spacing: 0.3px;
     }
 
     .animate__animated {
