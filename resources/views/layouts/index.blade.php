@@ -79,6 +79,8 @@
     <script src="{{ asset('js/dashboard.js') }}"></script>
     <script src="{{ asset('js/dashboard-modal.js') }}"></script>
 
+    @yield('styles')
+
     <style>
       #snackbar {
           visibility: hidden;
