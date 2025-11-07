@@ -2,25 +2,24 @@
 @section('content')
 
 @if(request('q'))
-    <div class="alert alert-info rounded-3 mb-3">
-        Hasil pencarian untuk: <strong>{{ request('q') }}</strong>
-    </div>
+  <div class="alert alert-warning border-0 shadow-sm rounded-3 mb-3">
+    <i class="bi bi-search me-2"></i> Hasil pencarian untuk: <strong>{{ request('q') }}</strong>
+  </div>
 @endif
-
 
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
-  {{-- 🧭 BREADCRUMB MODERN (SAMA SEPERTI HALAMAN LAIN) --}}
+  {{-- 🧭 BREADCRUMB ORANYE --}}
   <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 animate__animated animate__fadeInDown smooth-fade">
     <div class="d-flex align-items-center flex-wrap gap-2">
-      <div class="breadcrumb-icon bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-circle"
-           style="width:38px;height:38px;">
+      <div class="breadcrumb-icon d-flex align-items-center justify-content-center rounded-circle"
+           style="width:38px;height:38px;background:#FFF3E0;color:#FF9800;">
         <i class="bi bi-house-door-fill fs-5"></i>
       </div>
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0 align-items-center">
           <li class="breadcrumb-item">
-            <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+            <a href="{{ route('dashboard') }}" class="text-decoration-none fw-semibold" style="color:#FF9800;">
               Dashboard
             </a>
           </li>
@@ -39,16 +38,17 @@
 
   {{-- 📋 CARD DAFTAR PEGAWAI --}}
   <div class="card shadow-lg border-0 rounded-4 animate__animated animate__fadeInUp smooth-card">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3 px-4 rounded-top-4">
+    <div class="card-header text-white d-flex justify-content-between align-items-center py-3 px-4 rounded-top-4"
+         style="background-color:#FF9800;">
       <h5 class="card-title mb-0 fw-semibold d-flex align-items-center">
-        <i class="bi bi-people-fill me-2 text-warning"></i> Daftar Pegawai
+        <i class="bi bi-people-fill me-2 text-white"></i> Daftar Pegawai
       </h5>
     </div>
 
     <div class="card-body bg-light p-4">
       <div class="table-responsive rounded-4 overflow-hidden">
         <table class="table table-hover align-middle bg-white shadow-sm mb-0">
-          <thead class="text-center fw-semibold" style="background-color: #e9f2ff; color: #374151;">
+          <thead class="text-center fw-semibold" style="background-color:#FFF3E0;color:#5d4037;">
             <tr>
               <th style="width: 60px;">No</th>
               <th>Nama</th>
@@ -66,7 +66,8 @@
                 <td class="text-secondary">{{ $p->created_at->format('d-m-Y H:i') }}</td>
                 <td>
                   <a href="{{ route('admin.pegawai.produk', $p->id) }}"
-                     class="btn btn-sm btn-outline-primary px-3 rounded-pill fw-semibold smooth-btn">
+                     class="btn btn-sm text-white px-3 rounded-pill fw-semibold smooth-btn"
+                     style="background-color:#FF9800;">
                     🛍️ Pilih Produk
                   </a>
                 </td>
@@ -75,7 +76,7 @@
               <tr>
                 <td colspan="6" class="text-center py-4">
                   <div class="text-muted fs-5">
-                    <i class="bi bi-info-circle fs-4 text-primary"></i>
+                    <i class="bi bi-info-circle fs-4" style="color:#FF9800;"></i>
                     <br>Belum ada data pegawai
                   </div>
                 </td>
@@ -88,17 +89,17 @@
   </div>
 </div>
 
-{{-- 🎨 STYLE (DISESUAIKAN DENGAN HALAMAN LAIN) --}}
+{{-- 🎨 STYLE ORANYE ELEGAN --}}
 @push('styles')
 <style>
   body {
-    background-color: #f4f6f9 !important;
+    background-color: #fffaf4 !important;
   }
 
-  /* 🔹 Breadcrumb Consistent Style */
+  /* 🔸 Breadcrumb */
   .breadcrumb-item + .breadcrumb-item::before {
     content: "›";
-    color: #6c757d;
+    color: #ffb74d;
     margin: 0 6px;
   }
 
@@ -108,9 +109,10 @@
 
   .breadcrumb-icon:hover {
     transform: scale(1.1);
-    background-color: #e8f0fe;
+    background-color: #ffecb3;
   }
 
+  /* ✨ Animasi Halus */
   .smooth-fade {
     animation: smoothFade 0.8s ease;
   }
@@ -120,41 +122,38 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ✨ Card Hover */
+  /* 🟠 Card Hover */
   .smooth-card {
     transition: all 0.3s ease;
   }
 
   .smooth-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 25px rgba(255, 152, 0, 0.25);
   }
 
-  /* 📊 Table Hover */
+  /* 🟠 Table Hover */
   .table-row-smooth {
     transition: all 0.25s ease;
   }
 
   .table-row-smooth:hover {
-    background-color: #f0f8ff !important;
+    background-color: #fff3e0 !important;
     transform: scale(1.01);
   }
 
-  /* 🔘 Button Smooth */
+  /* 🔘 Tombol (Sama Seperti Halaman Lain) */
   .smooth-btn {
-    transition: all 0.3s ease;
-    border-color: #0d6efd;
-    color: #0d6efd;
+    transition: all 0.3s ease-in-out;
   }
 
   .smooth-btn:hover {
-    background-color: #0d6efd;
-    color: white !important;
     transform: scale(1.05);
-    box-shadow: 0 3px 10px rgba(13, 110, 253, 0.3);
+    box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3);
+    background-color: #fb8c00 !important;
   }
 
-  /* 📱 Responsiveness */
+  /* 📱 Responsif */
   @media (max-width: 768px) {
     .breadcrumb-extra { display: none; }
     h5, h6 { font-size: 1rem; }

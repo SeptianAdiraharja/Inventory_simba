@@ -69,7 +69,7 @@
 
                             {{-- ✅ STATUS ITEM --}}
                             <td class="item-status-cell">
-                                <span class="badge rounded-pill px-3 py-2 shadow-sm
+                                <span class="badge rounded-pill px-3 py-2 shadow-sm status-badge
                                     @if($item->status == 'pending') bg-warning text-dark
                                     @elseif($item->status == 'approved') bg-success
                                     @elseif($item->status == 'rejected') bg-danger
@@ -94,12 +94,10 @@
                                             title="Tolak Item">
                                         <i class="bi bi-x-lg me-1"></i> Tolak
                                     </button>
-
                                 @elseif($item->status == 'approved')
                                     <span class="text-success fw-semibold">
                                         <i class="bi bi-check-circle me-1"></i> Approved
                                     </span>
-
                                 @elseif($item->status == 'rejected')
                                     <span class="text-danger fw-semibold">
                                         <i class="bi bi-x-octagon me-1"></i> Rejected
@@ -128,16 +126,94 @@
             <i class="bi bi-x-circle me-1"></i> Batal
         </button>
 
-        @php
-            $disableSave = in_array($cart->status, ['approved', 'approved_partially', 'rejected']);
-        @endphp
-
+        {{-- Tombol Simpan dengan Spinner --}}
         <button type="button"
-                class="btn btn-primary rounded-pill px-4 shadow-sm cart-detail-save-btn {{ $disableSave ? 'disabled opacity-50' : '' }}"
-                @if($disableSave) disabled aria-disabled="true" @endif>
-            <i class="bi bi-save me-1"></i> Simpan Perubahan
+                class="btn btn-primary rounded-pill px-4 shadow-sm cart-detail-save-btn d-inline-flex align-items-center gap-2">
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            <i class="bi bi-save"></i> <span>Simpan Perubahan</span>
         </button>
     </div>
 </div>
 
+{{-- ============================= --}}
+{{-- 💡 SCRIPT UNTUK SIMPAN SEBAGIAN DENGAN SPINNER --}}
+{{-- ============================= --}}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const saveBtn = document.querySelector('.cart-detail-save-btn');
+    const spinner = saveBtn.querySelector('.spinner-border');
+    const btnText = saveBtn.querySelector('span:last-child');
+
+    saveBtn.addEventListener('click', function() {
+        const cartId = document.querySelector('.detail-content-wrapper').dataset.cartId;
+        const updatedItems = [];
+
+        document.querySelectorAll('tr[data-item-id]').forEach(row => {
+            const id = row.dataset.itemId;
+            const status = row.querySelector('.status-badge')?.textContent.trim().toLowerCase();
+            if (status !== 'pending') {
+                updatedItems.push({ id, status });
+            }
+        });
+
+        if (updatedItems.length === 0) {
+            alert('Tidak ada perubahan yang perlu disimpan.');
+            return;
+        }
+
+        // Aktifkan spinner
+        saveBtn.disabled = true;
+        spinner.classList.remove('d-none');
+        btnText.textContent = 'Menyimpan...';
+
+        fetch(`/cart/${cartId}/save-partial`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ items: updatedItems })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                btnText.textContent = 'Tersimpan!';
+                saveBtn.classList.replace('btn-primary', 'btn-success');
+                setTimeout(() => {
+                    btnText.textContent = 'Simpan Perubahan';
+                    saveBtn.classList.replace('btn-success', 'btn-primary');
+                }, 2000);
+            } else {
+                alert('Gagal menyimpan perubahan.');
+            }
+        })
+        .catch(() => alert('Terjadi kesalahan server.'))
+        .finally(() => {
+            // Kembalikan tombol ke kondisi normal
+            spinner.classList.add('d-none');
+            saveBtn.disabled = false;
+            btnText.textContent = 'Simpan Perubahan';
+        });
+    });
+
+    // Event klik untuk approve/reject
+    document.querySelectorAll('.item-approve-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const row = this.closest('tr');
+            const badge = row.querySelector('.status-badge');
+            badge.textContent = 'Approved';
+            badge.className = 'badge rounded-pill px-3 py-2 shadow-sm status-badge bg-success';
+        });
+    });
+
+    document.querySelectorAll('.item-reject-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const row = this.closest('tr');
+            const badge = row.querySelector('.status-badge');
+            badge.textContent = 'Rejected';
+            badge.className = 'badge rounded-pill px-3 py-2 shadow-sm status-badge bg-danger';
+        });
+    });
+});
+</script>
 @endsection

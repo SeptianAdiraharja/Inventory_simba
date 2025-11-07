@@ -1,5 +1,5 @@
 <aside id="layout-menu" class="layout-menu menu-vertical bg-dark d-flex flex-column">
-    <!-- Logo & Brand -->
+    <!-- 🔶 Logo & Brand -->
     <div class="app-brand demo py-3 d-flex align-items-center">
         <a href="index.html" class="app-brand-link d-flex align-items-center">
             <img src="{{ asset('assets/img/icons/simba.jpg') }}" alt="Logo" class="rounded-circle shadow-glow" width="50" height="50">
@@ -11,7 +11,7 @@
     <div class="menu-inner-shadow"></div>
 
     <ul class="menu-inner py-2 text-white flex-grow-1">
-        <!-- Semua menu kamu tetap sama -->
+        <!-- SUPER ADMIN -->
         @if (auth()->user()->role === 'super_admin')
         <li class="menu-item {{ Route::is('super_admin.dashboard') ? 'active' : '' }}">
             <a href="{{ route('super_admin.dashboard') }}" class="menu-link d-flex align-items-center text-white">
@@ -21,6 +21,7 @@
         </li>
         @endif
 
+        <!-- ADMIN -->
         @if (auth()->user()->role === 'admin')
         <li class="menu-item {{ Route::is('admin.dashboard') ? 'active' : '' }}">
             <a href="{{ route('admin.dashboard') }}" class="menu-link d-flex align-items-center text-white">
@@ -40,6 +41,7 @@
                 ->count();
         @endphp
 
+        <!-- PEGAWAI -->
         @if (auth()->user()->role === 'pegawai')
         <li class="menu-item {{ Route::is('pegawai.dashboard') ? 'active' : '' }}">
             <a href="{{ route('pegawai.dashboard') }}" class="menu-link d-flex align-items-center text-white">
@@ -67,6 +69,7 @@
         </li>
         @endif
 
+        <!-- SUPER ADMIN MENU -->
         @if (auth()->user()->role === 'super_admin')
         <li class="menu-header mt-4 text-uppercase small fw-bold text-secondary">Super Admin</li>
         <li class="menu-item {{ Route::is('super_admin.categories.*') ? 'active' : '' }}">
@@ -113,8 +116,10 @@
         </li>
         @endif
 
+        <!-- ADMIN MENU -->
         @if (auth()->user()->role === 'admin')
         <li class="menu-header mt-4 text-uppercase small fw-bold text-secondary">Admin</li>
+
         <li class="menu-item {{ Route::is('admin.request') ? 'active' : '' }}">
             <a href="{{ route('admin.request') }}" class="menu-link d-flex align-items-center text-white position-relative">
                 <i class="ri ri-file-list-3-line me-2"></i>
@@ -179,61 +184,107 @@
         @endif
     </ul>
 
-    <!-- Waktu Server -->
+    <!-- 🕒 Waktu Server -->
     <div class="text-center py-3 text-white border-top border-secondary fw-bold">
         <i class="ri ri-time-line me-1"></i>
         <span id="server-time">Memuat waktu...</span>
     </div>
 </aside>
 
-<!-- CSS Glow & Animasi -->
+<!-- 🧡 CSS Tema Gelap + Efek Gradient Oranye -->
 <style>
+    .bg-dark {
+        background-color: #1a1a1a !important;
+    }
+
     .menu-link {
-        color: #fff !important;
+        color: #f4f4f4 !important;
         padding: 10px 15px;
         border-radius: 8px;
         transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
+
+    /* Gradient efek hover */
     .menu-link:hover {
-        background-color: #fff !important;
-        color: #000 !important;
+        background: linear-gradient(90deg, #FF8400 0%, #FFA500 100%) !important;
+        color: #1a1a1a !important;
+        transform: translateX(5px);
+        box-shadow: 0 0 15px rgba(255, 132, 0, 0.5);
     }
-    .menu-link:hover i {
-        color: #000 !important;
+
+    /* Active state dengan gradient */
+    .menu-item.active > .menu-link,
+    .menu-item.active .menu-link {
+        background: linear-gradient(90deg, #FF8400 0%, #FFB84D 100%) !important;
+        color: #1a1a1a !important;
+        font-weight: 600;
+        box-shadow: 0 0 18px rgba(255, 132, 0, 0.6);
+        border-left: 4px solid #FFD699;
+        transform: translateX(5px);
     }
-    .menu-item.active > .menu-link {
-        background-color: #0d6efd !important;
-        color: #fff !important;
-        box-shadow: 0 0 10px #0d6efd;
+
+    .menu-header {
+        color: #FFB74D !important;
+        letter-spacing: 0.5px;
     }
-    .text-glow {
-        text-shadow: 0 0 8px rgba(0, 136, 255, 0.8);
-    }
+
     .shadow-glow {
-        box-shadow: 0 0 15px rgba(0, 136, 255, 0.6);
+        box-shadow: 0 0 10px rgba(255, 132, 0, 0.6);
+    }
+
+    .text-glow {
+        text-shadow: 0 0 6px rgba(255, 132, 0, 0.8);
+    }
+
+    .text-light, .text-white {
+        color: #f4f4f4 !important;
+    }
+
+    .border-secondary {
+        border-color: #FF8400 !important;
     }
 </style>
 
-<!-- JS Waktu Server Real-Time -->
+<!-- 🕐 Super Realtime Clock (Anti-Delay, Auto Sync) -->
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const serverTime = new Date("{{ now()->format('Y-m-d H:i:s') }}");
-        const timeDisplay = document.getElementById("server-time");
+document.addEventListener("DOMContentLoaded", function() {
+    const serverTime = new Date("{{ now()->format('Y-m-d H:i:s') }}");
+    const timeDisplay = document.getElementById("server-time");
+    let baseTimestamp = serverTime.getTime();
+    let baseLocal = Date.now();
 
-        setInterval(() => {
-            serverTime.setSeconds(serverTime.getSeconds() + 1);
-            const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    // Fungsi render waktu
+    function renderTime() {
+        const now = Date.now();
+        const diff = now - baseLocal;
+        const current = new Date(baseTimestamp + diff);
 
-            const dayName = days[serverTime.getDay()];
-            const day = serverTime.getDate().toString().padStart(2, '0');
-            const month = months[serverTime.getMonth()];
-            const year = serverTime.getFullYear();
-            const hours = serverTime.getHours().toString().padStart(2, '0');
-            const minutes = serverTime.getMinutes().toString().padStart(2, '0');
-            const seconds = serverTime.getSeconds().toString().padStart(2, '0');
+        const days = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+        const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
 
-            timeDisplay.textContent = `${dayName}, ${day} ${month} ${year} - ${hours}:${minutes}:${seconds}`;
-        }, 1000);
+        const d = days[current.getDay()];
+        const day = current.getDate().toString().padStart(2,'0');
+        const month = months[current.getMonth()];
+        const year = current.getFullYear();
+        const h = current.getHours().toString().padStart(2,'0');
+        const m = current.getMinutes().toString().padStart(2,'0');
+        const s = current.getSeconds().toString().padStart(2,'0');
+
+        timeDisplay.textContent = `${d}, ${day} ${month} ${year} - ${h}:${m}:${s}`;
+        requestAnimationFrame(renderTime); // jalankan terus secara halus
+    }
+
+    // Auto resync jika tab kembali aktif
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+            const newServerTime = new Date("{{ now()->format('Y-m-d H:i:s') }}");
+            baseTimestamp = newServerTime.getTime();
+            baseLocal = Date.now();
+        }
     });
+
+    renderTime(); // mulai
+});
 </script>

@@ -3,19 +3,17 @@
 
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
-  {{-- ===================== --}}
-  {{-- 🧭 MODERN BREADCRUMB (UNIVERSAL STYLE) --}}
-  {{-- ===================== --}}
-  <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 animate__animated animate__fadeInDown smooth-fade">
+  {{-- 🧭 BREADCRUMB MODERN --}}
+  <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 smooth-fade">
     <div class="d-flex align-items-center flex-wrap gap-2">
-      <div class="breadcrumb-icon bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-circle"
-           style="width:38px;height:38px;">
+      <div class="breadcrumb-icon d-flex align-items-center justify-content-center rounded-circle"
+           style="width:38px;height:38px;background:#FFF3E0;color:#FF9800;">
         <i class="bi bi-house-door-fill fs-5"></i>
       </div>
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0 align-items-center">
           <li class="breadcrumb-item">
-            <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+            <a href="{{ route('dashboard') }}" class="text-decoration-none fw-semibold" style="color:#FF9800;">
               Dashboard
             </a>
           </li>
@@ -32,16 +30,15 @@
     </div>
   </div>
 
-  {{-- ===================== --}}
   {{-- 📊 RINGKASAN TRANSAKSI --}}
-  {{-- ===================== --}}
   <div class="mb-4">
-    <div class="card border-0 shadow-lg rounded-4 bg-white animate__animated animate__fadeInDown">
+    <div class="card border-0 shadow-sm rounded-4 bg-white">
       <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between px-4 py-3">
-        <h5 class="m-0 text-primary fw-bold d-flex align-items-center">
+        <h5 class="m-0 fw-bold d-flex align-items-center" style="color:#FF9800;">
           <i class="ri-bar-chart-grouped-line me-2 fs-4"></i> Ringkasan Transaksi
         </h5>
-        <button class="btn btn-sm btn-light border-primary text-primary fw-semibold rounded-pill shadow-sm px-3 hover-glow" onclick="location.reload()">
+        <button class="btn btn-sm rounded-pill shadow-sm px-3 fw-semibold hover-glow"
+                style="background-color:#FF9800;color:white;" onclick="location.reload()">
           <i class="ri-refresh-line me-1"></i> Muat Ulang
         </button>
       </div>
@@ -51,7 +48,7 @@
           title="Barang Keluar"
           :value="$totalBarangKeluar"
           icon="ri-pie-chart-2-line"
-          color="primary"
+          color="warning"
           link="{{ route('admin.itemout.index') }}"
         />
 
@@ -59,7 +56,7 @@
           title="Tamu Terdaftar"
           :value="$totalGuest"
           icon="ri-group-line"
-          color="warning"
+          color="info"
           link="{{ route('admin.guests.index') }}"
         />
 
@@ -74,11 +71,9 @@
     </div>
   </div>
 
-  {{-- ===================== --}}
   {{-- 🧾 DAFTAR TERBARU --}}
-  {{-- ===================== --}}
   <div class="mb-4">
-    <div class="card border-0 shadow-lg rounded-4 bg-white animate__animated animate__fadeInUp">
+    <div class="card border-0 shadow-sm rounded-4 bg-white">
       <div class="card-body row px-4 py-3">
         <div class="col-md-6 border-end-md border-light">
           <x-dashboard-list-card
@@ -98,13 +93,11 @@
     </div>
   </div>
 
-  {{-- ===================== --}}
-  {{-- 🏆 TOP 5 PERMINTAAN TERBANYAK --}}
-  {{-- ===================== --}}
+  {{-- 🏆 TOP 5 USER TERBANYAK --}}
   <div class="mb-4">
-    <div class="card border-0 shadow-lg rounded-4 bg-white animate__animated animate__fadeInUp animate__delay-1s">
+    <div class="card border-0 shadow-sm rounded-4 bg-white">
       <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center px-4 py-3">
-        <h5 class="m-0 text-primary fw-bold">
+        <h5 class="m-0 fw-bold" style="color:#FF9800;">
           <i class="ri-award-line me-2"></i>Top 5 User & Guest dengan Permintaan Terbanyak
         </h5>
         <span class="text-muted small">Data diperbarui otomatis</span>
@@ -116,22 +109,21 @@
             <div class="d-flex justify-content-between align-items-center">
               <div>
                 @if($r['role'] === 'Guest')
-                  <i class="ri-user-smile-line text-warning me-2 fs-5" title="Guest"></i>
+                  <i class="ri-user-smile-line text-warning me-2 fs-5"></i>
                 @else
-                  <i class="ri-user-2-fill text-success me-2 fs-5" title="Pegawai"></i>
+                  <i class="ri-user-2-fill text-success me-2 fs-5"></i>
                 @endif
                 <strong>{{ $index + 1 }}. {{ $r['name'] }}</strong>
                 <div class="text-muted small">{{ $r['email'] }}</div>
               </div>
-              <span class="badge {{ $r['role'] === 'Guest' ? 'bg-warning text-dark' : 'bg-success' }}">
+              <span class="badge rounded-pill px-3 py-2" style="background:#FF9800;color:white;">
                 {{ $r['role'] }}
               </span>
             </div>
-            <div class="progress mt-2 rounded-pill" style="height: 10px;">
-              <div
-                class="progress-bar progress-bar-striped {{ $r['role'] === 'Guest' ? 'bg-warning' : 'bg-success' }}"
-                role="progressbar"
-                style="width: {{ ($r['total_requests'] / max($topRequesters[0]['total_requests'], 1)) * 100 }}%">
+            <div class="progress mt-2 rounded-pill" style="height:10px;background:#FFE0B2;">
+              <div class="progress-bar progress-bar-striped"
+                   role="progressbar"
+                   style="width: {{ ($r['total_requests'] / max($topRequesters[0]['total_requests'], 1)) * 100 }}%;background:#FF9800;">
               </div>
             </div>
             <small class="text-muted">{{ $r['total_requests'] }} permintaan</small>
@@ -145,22 +137,20 @@
     </div>
   </div>
 
-  {{-- ===================== --}}
   {{-- 📈 IKHTISAR LALU LINTAS --}}
-  {{-- ===================== --}}
   <div class="mb-5">
-    <div class="card border-0 shadow-lg rounded-4 bg-white animate__animated animate__fadeInUp animate__delay-2s">
+    <div class="card border-0 shadow-sm rounded-4 bg-white">
       <div class="card-header bg-white border-0 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center px-4 py-3">
         <div>
-          <h5 class="m-0 text-primary fw-bold">
+          <h5 class="m-0 fw-bold" style="color:#FF9800;">
             <i class="ri-line-chart-line me-2"></i>Ikhtisar Lalu Lintas Barang
           </h5>
           <p class="small text-muted mb-0">Perbandingan barang masuk dan keluar berdasarkan waktu</p>
         </div>
         <div class="btn-group btn-group-sm mt-2 mt-md-0">
-          <button class="btn btn-outline-primary hover-scale active" onclick="updateChart('week')">1 Minggu</button>
-          <button class="btn btn-outline-primary hover-scale" onclick="updateChart('month')">1 Bulan</button>
-          <button class="btn btn-outline-primary hover-scale" onclick="updateChart('year')">1 Tahun</button>
+          <button class="btn btn-outline-warning hover-scale active" onclick="updateChart('week')">1 Minggu</button>
+          <button class="btn btn-outline-warning hover-scale" onclick="updateChart('month')">1 Bulan</button>
+          <button class="btn btn-outline-warning hover-scale" onclick="updateChart('year')">1 Tahun</button>
         </div>
       </div>
       <div class="card-body px-4 pb-4">
@@ -177,21 +167,18 @@
 @section('scripts')
 <style>
 body {
-  background: #f5f7fb !important;
+  background: #fffaf4 !important;
 }
 
-/* 🧭 Breadcrumb Modern */
+/* Breadcrumb */
 .breadcrumb-item + .breadcrumb-item::before {
   content: "›";
-  color: #6c757d;
+  color: #ffb74d;
   margin: 0 6px;
-}
-.breadcrumb-icon {
-  transition: 0.3s ease;
 }
 .breadcrumb-icon:hover {
   transform: scale(1.1);
-  background-color: #e8f0fe;
+  background-color: #ffecb3;
 }
 .smooth-fade {
   animation: smoothFade 0.8s ease;
@@ -201,32 +188,40 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Buttons & hover */
+/* Hover & Glow */
 .hover-scale {
   transition: all 0.3s ease-in-out;
 }
 .hover-scale:hover {
   transform: scale(1.05);
-  background-color: #e9f2ff;
+  background-color: #fff3e0;
 }
 .hover-glow:hover {
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 12px rgba(255, 152, 0, 0.4);
 }
 
-/* Card hover */
+/* Card Hover */
 .hover-card {
   transition: all 0.3s ease;
-  background-color: #fafbff;
+  background-color: #fffdf9;
+  border-left: 4px solid #ffcc80;
 }
 .hover-card:hover {
-  background-color: #f1f5ff;
+  background-color: #fff8e1;
   transform: translateY(-3px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15);
 }
 
-/* Progress bar */
+/* Progress */
 .progress-bar {
   transition: width 0.6s ease-in-out;
+}
+
+/* Chart Buttons */
+.btn-outline-warning.active {
+  background-color: #FF9800 !important;
+  color: white !important;
+  border-color: #FF9800 !important;
 }
 
 /* Responsive */

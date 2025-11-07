@@ -78,7 +78,8 @@ Route::middleware(['auth', 'role:super_admin'])
             'suppliers'  => SupplierController::class,
             'users'      => UserController::class,
         ]);
-
+        Route::post('/suppliers/import', [SupplierController::class, 'import'])
+            ->name('suppliers.import');
         // Barcode
         Route::get('items/{item}/barcode-pdf', [ItemController::class, 'printBarcode'])
             ->name('items.barcode.pdf');
@@ -122,6 +123,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/dashboard/data', 'getChartData');
         Route::get('/dashboard/modal/{type}', 'loadModalData')->name('dashboard.modal.data');
         Route::get('/dashboard/modal/barang_keluar', 'barangKeluarModal')->name('dashboard.modal.barang_keluar');
+
     });
 
     // Item Out (Barang Keluar)
@@ -150,7 +152,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/guests/search', 'searchGuests')->name('guests.search');
         Route::get('/pegawai/search', 'pegawaiSearch')->name('pegawai.search');
     });
-    
+
     Route::resource('guests', GuestController::class)->except('show');
 
     /*

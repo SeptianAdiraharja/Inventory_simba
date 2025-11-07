@@ -25,8 +25,8 @@
                         <div class="d-flex">
                           <div class="flex-shrink-0 me-3">
                             <div class="avatar avatar-online">
-                              <img src="{{ asset('assets/img/avatars/1.png') }}" 
-                                  alt="alt" 
+                              <img src="{{ asset('assets/img/avatars/1.png') }}"
+                                  alt="alt"
                                   class="w-px-40 h-auto rounded-circle" />
                             </div>
                           </div>

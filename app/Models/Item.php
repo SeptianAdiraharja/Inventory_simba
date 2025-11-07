@@ -121,23 +121,20 @@ class Item extends Model
         });
     }
 
-    private static function generateUniqueCode($categoryId)
+    private static function generateUniqueCode($categoryId, $unitId)
     {
-        $categoryCode = str_pad($categoryId, 3, '0', STR_PAD_LEFT);
+    // Format: [CategoryID]-[UnitID]-[IncrementID]
+        $categoryCode = str_pad($categoryId ?? 1, 3, '0', STR_PAD_LEFT);
+        $unitCode     = str_pad($unitId ?? 1, 3, '0', STR_PAD_LEFT);
 
-        $lastItem = self::where('category_id', $categoryId)
-            ->orderBy('id', 'desc')
-            ->first();
+    // Ambil item terakhir untuk menghitung urutan berikutnya
+        $lastItem = self::orderBy('id', 'desc')->first();
+        $nextIncrement = $lastItem ? ($lastItem->id + 1) : 1;
 
-        $nextNumber = 1;
-        if ($lastItem && preg_match('/-(\d+)-/', $lastItem->code, $matches)) {
-            $nextNumber = ((int) $matches[1]) + 1;
-        }
+        $incrementCode = str_pad($nextIncrement, 3, '0', STR_PAD_LEFT);
 
-        $formattedNumber = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-        $randomNumber = mt_rand(100, 999);
-
-        return "{$categoryCode}-{$formattedNumber}-{$randomNumber}";
+    // Hasil akhirnya: 001-001-116
+        return "{$categoryCode}-{$unitCode}-{$incrementCode}";
     }
 
     // === Guest cart ===
