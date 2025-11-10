@@ -18,6 +18,9 @@ class SearchController extends Controller
         $kategori = $request->input('kategori');
 
         $items = Item::with('category')
+        ->when(!$query, function ($q) {
+            $q->where('stock', '>', 0);
+        })
             ->when($query, function ($q) use ($query) {
                 $q->where(function ($sub) use ($query) {
                     $sub->where('name', 'LIKE', "%{$query}%")
