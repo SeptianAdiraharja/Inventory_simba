@@ -90,11 +90,11 @@
                         <h6 class="mb-0 fw-semibold text-primary">
                             <i class="ri-calendar-line me-2"></i>Pengajuan Minggu Ini
                         </h6>
-                        <span class="fw-bold text-primary">{{ $countThisWeek }}/5 kali</span>
+                        <span class="fw-bold text-warning">{{ $countThisWeek }}/5 kali</span>
                     </div>
 
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar {{ $isLimitReached ? 'bg-danger' : 'bg-primary' }}"
+                        <div class="progress-bar {{ $isLimitReached ? 'bg-danger' : 'bg-warning' }}"
                             role="progressbar"
                             style="width: {{ $progress }}%;"
                             aria-valuenow="{{ $progress }}"
@@ -113,7 +113,7 @@
                 </div>
                 <h4 class="d-flex justify-content-between align-items-center mb-3">
                     <span class="text-primary">Keranjang</span>
-                    <span class="badge bg-primary rounded-pill">
+                    <span class="badge rounded-pill" style="background-color: #FF7F00; color: #fff;">
                         {{ $cartsitems ? $cartsitems->cartItems->count() : 0 }}
                     </span>
                 </h4>
@@ -308,7 +308,7 @@
                 </div>
                 <h4 class="d-flex justify-content-between align-items-center mb-3">
                     <span class="text-primary">Keranjang</span>
-                    <span class="badge bg-primary rounded-pill">
+                    <span class="badge bg-warning rounded-pill">
                         {{ $cartsitems ? $cartsitems->cartItems->count() : 0 }}
                     </span>
                 </h4>
@@ -507,7 +507,8 @@
                         </form>
                     </div>
 
-                    @if(Auth::user()->role === 'admin' && (request()->is('admin/pegawai/*/produk') || request()->is('admin/request*') || request()->is('admin/itemout*') || request()->is('admin/pegawai*') || request()->is('admin/transaksi*') || request()->is('admin/rejects*')))
+                    @if(Auth::user()->role === 'admin' && (request()->is('admin/pegawai//produk') || request()->is('admin/request') || request()->is('admin/itemout*') || request()->is('admin/pegawai*') || request()->is('admin/transaksi*') || request()->is('admin/rejects*')))
+
                         <script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 const searchForm = document.getElementById('search-form');
@@ -691,7 +692,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             Swal.fire({
                 title: 'Konfirmasi!',
-                text: `Yakin ingin menghapus item "${itemName}" dari keranjang?`,
+                text: Yakin ingin menghapus item "${itemName}" dari keranjang?,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Ya, hapus!',
@@ -754,14 +755,14 @@ document.addEventListener('DOMContentLoaded', function () {
   color: #aaa;
 }
 .breadcrumb-item a {
-  color: #6c63ff;
+  color: #FFA500;
   transition: color 0.2s;
 }
 .breadcrumb-item a:hover {
-  color: #7d0dfd;
+  color: #FF7F00;
 }
 .breadcrumb-item.active {
-  color: #7d0dfd;
+  color: #000000;
 }
 
 

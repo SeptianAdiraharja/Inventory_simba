@@ -1,276 +1,289 @@
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("📦 ItemOut Scanner Loaded");
+  console.log("📦 ItemOut Scanner Loaded");
 
-    const scannedItems = {}; // Menyimpan hasil scan sementara per cart (dalam bentuk barcode)
+  const scannedItems = {};
 
-    // ======================================================
-    // 🔹 Saat modal dibuka → reset & disable tombol simpan
-    // ======================================================
-    document.addEventListener("show.bs.modal", (e) => {
-        const modal = e.target;
-        // Cari form di dalam modal
-        const form = modal.querySelector(".scan-form");
-        if (!form) return;
+  // ======================================================
+  // 🔹 Saat modal dibuka → reset & disable tombol simpan
+  // ======================================================
+  document.addEventListener("show.bs.modal", (e) => {
+    const modal = e.target;
+    const form = modal.querySelector(".scan-form");
+    if (!form) return;
 
-        const cartId = form.dataset.cartId;
-        const saveBtn = form.querySelector(".save-all-scan-btn");
+    const cartId = form.dataset.cartId;
+    const saveBtn = form.querySelector(".save-all-scan-btn");
 
-        // Pastikan Set untuk cartId ini ada
-        if (!scannedItems[cartId]) scannedItems[cartId] = new Set();
-        // Reset Set saat modal dibuka (opsional, tergantung alur bisnis)
-        // Jika *hanya* item yang di-scan di sesi ini yang ingin dikirim, uncomment baris bawah:
-        // scannedItems[cartId] = new Set();
+    if (!scannedItems[cartId]) scannedItems[cartId] = new Set();
 
-        saveBtn.disabled = true;
-        saveBtn.classList.add("disabled");
+    // Reset tombol saat modal dibuka
+    saveBtn.disabled = true;
+    saveBtn.classList.add("disabled");
 
-        console.log(`🟢 Modal untuk Cart #${cartId} dibuka`);
-    });
+    console.log(`🟢 Modal untuk Cart #${cartId} dibuka`);
+  });
 
-    // ======================================================
-    // 🔹 Saat submit form scan
-    // ======================================================
-    document.addEventListener("submit", async (e) => {
-        // Gunakan closest agar lebih robust
-        const form = e.target.closest(".scan-form");
-        if (!form) return;
-        e.preventDefault();
+  // ======================================================
+  // 🔹 Saat submit form scan - PERBAIKAN DI SINI
+  // ======================================================
+  document.addEventListener("submit", async (e) => {
+    const form = e.target.closest(".scan-form");
+    if (!form) return;
+    e.preventDefault();
 
-        const cartId = form.dataset.cartId;
-        const barcodeInput = form.querySelector(".barcode-input");
-        // Ambil nilai barcode dan bersihkan
-        const barcode = barcodeInput.value.trim();
-        const resultBox = form.querySelector(".scan-result");
-        const saveBtn = form.querySelector(".save-all-scan-btn");
+    const cartId = form.dataset.cartId;
+    const barcodeInput = form.querySelector(".barcode-input");
+    const barcode = barcodeInput.value.trim();
+    const saveBtn = form.querySelector(".save-all-scan-btn");
 
-        if (!barcode) return;
+    if (!barcode) {
+      Swal.fire("Peringatan", "Masukkan kode barang terlebih dahulu.", "warning");
+      return;
+    }
 
-        try {
-            // URL endpoint scan
-            const url = `/admin/itemout/scan/${cartId}`;
-            const res = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector(
-                        'meta[name="csrf-token"]'
-                    ).content,
-                },
-                body: JSON.stringify({ barcode }),
-            });
+    try {
+      const url = `/admin/itemout/scan/${cartId}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+        },
+        body: JSON.stringify({ barcode }),
+      });
 
-            const data = await res.json();
-            console.log("🔹 Scan result:", data);
+      // PERBAIKAN: Cek status HTTP response
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
 
-            if (!data.success) {
-                // Tampilkan pesan error dari backend atau default
-                Swal.fire("Gagal", data.message || "Scan gagal.", "error");
-                // Reset input dan fokuskan kembali
-                barcodeInput.value = "";
-                barcodeInput.focus();
-                return;
-            }
+      const data = await res.json();
+      console.log("🔹 Scan result:", data);
 
-            // Tambahkan barcode yang berhasil di-scan ke Set
-            scannedItems[cartId].add(barcode);
+      // PERBAIKAN: Cek struktur response yang berbeda
+      if (data.success === false || data.error) {
+        Swal.fire("Gagal", data.message || data.error || "Scan gagal.", "error");
+        barcodeInput.value = "";
+        barcodeInput.focus();
+        return;
+      }
 
-            // ✅ Update baris item
-            let row = null;
-            // Ambil semua baris di tbody yang ada di form/modal
-            const rows = form.querySelectorAll("tbody tr");
+      // PERBAIKAN: Jika berhasil, update UI tanpa menunggu response tertentu
+      scannedItems[cartId].add(barcode);
 
-            // Cari baris yang kode itemnya cocok dengan barcode yang di-scan
-            rows.forEach((tr) => {
-                // Gunakan tr.dataset.itemCode jika item code disimpan di data attribute,
-                // jika tidak, gunakan cell content seperti di bawah:
-                const codeCell = tr.querySelector(".item-code");
-                if (codeCell && codeCell.textContent.trim() === barcode) {
-                    row = tr;
-                }
-            });
+      const rows = form.querySelectorAll("tbody tr");
+      let rowFound = false;
 
-            if (row) {
-                // Update badge menjadi "Sudah dipindai"
-                const badge = row.querySelector("td:last-child .badge");
-                if (badge) {
-                    badge.classList.remove("bg-secondary");
-                    badge.classList.add("bg-success");
-                    badge.textContent = "Sudah dipindai";
-                }
+      rows.forEach((tr) => {
+        const codeCell = tr.querySelector(".item-code");
+        if (codeCell && codeCell.textContent.trim() === barcode) {
+          rowFound = true;
+          const badge = tr.querySelector("td:last-child .badge");
+          if (badge) {
+            badge.classList.remove("bg-secondary");
+            badge.classList.add("bg-success");
+            badge.textContent = "Sudah dipindai";
+          }
 
-                // Efek visual sukses
-                row.classList.add("table-success");
-                setTimeout(() => row.classList.remove("table-success"), 1200);
-
-                // 🔹 Cek ulang semua baris apakah sudah selesai di-scan
-                // Filter hanya baris yang memiliki badge untuk pengecekan
-                const allRowsWithBadge = Array.from(rows).filter(r => r.querySelector(".badge"));
-                const allScannedNow = allRowsWithBadge.length > 0 && Array.from(allRowsWithBadge).every((r) =>
-                    r
-                        .querySelector(".badge")
-                        ?.textContent.includes("Sudah dipindai")
-                );
-
-                console.log("🧩 Cek semua dipindai:", allScannedNow);
-
-                if (allScannedNow) {
-                    // Aktifkan tombol simpan
-                    saveBtn.disabled = false;
-                    saveBtn.classList.remove("disabled");
-
-                    Swal.fire({
-                        icon: "info",
-                        title: "Semua Barang Sudah Dipindai",
-                        text: "Tekan tombol 'Simpan Semua Hasil Scan' untuk menyimpan ke sistem.",
-                        timer: 2500,
-                        showConfirmButton: false,
-                    });
-                }
-            } else {
-                 // Kasus: Scan berhasil di backend, tapi baris item tidak ditemukan di tabel modal
-                 console.warn(`Item dengan barcode ${barcode} berhasil di-scan, tetapi baris tidak ditemukan di tabel.`);
-            }
-
-            // Tampilkan pesan sukses scan
-            resultBox.textContent = data.message;
-            resultBox.classList.remove("text-danger");
-            resultBox.classList.add("text-success");
-
-            // Reset input dan fokuskan kembali
-            barcodeInput.value = "";
-            barcodeInput.focus();
-
-        } catch (err) {
-            console.error("❌ Error saat scan:", err);
-            // Reset input dan fokuskan kembali
-            barcodeInput.value = "";
-            barcodeInput.focus();
-            Swal.fire("Error", "Gagal memproses scan. Coba lagi.", "error");
+          // Efek sukses singkat
+          tr.classList.add("table-success");
+          setTimeout(() => tr.classList.remove("table-success"), 1000);
         }
-    });
+      });
 
-    // ======================================================
-    // 🔹 Tombol SIMPAN SEMUA HASIL SCAN ditekan
-    // ======================================================
-    document.addEventListener("click", async (e) => {
-        // Hanya tangani klik pada tombol .save-all-scan-btn
-        const btn = e.target.closest(".save-all-scan-btn");
-        if (!btn) return;
+      // PERBAIKAN: Cek apakah semua sudah dipindai
+      const allRows = Array.from(rows).filter(r => r.querySelector(".badge"));
+      const allScanned = allRows.every(r =>
+        r.querySelector(".badge")?.textContent.includes("Sudah dipindai")
+      );
 
-        const cartId = btn.dataset.cartId;
-        // Cari form/modal yang terkait dengan cartId ini
-        const form = document.querySelector(
-            `.scan-form[data-cart-id="${cartId}"]`
-        );
-
-        // **Perbaikan di sini:**
-        // Ambil SEMUA baris dari tbody di dalam form/modal saat ini
-        const rows = form ? form.querySelectorAll("tbody tr") : [];
-
-        // Filter hanya baris yang punya badge (yaitu item yang valid)
-        const validRows = Array.from(rows).filter((r) =>
-            r.querySelector(".badge")
-        );
-
-        // Cek apakah semua item yang valid sudah dipindai (badge-nya sukses)
-        const allScanned = validRows.length > 0 && validRows.every((r) => {
-            const badge = r.querySelector(".badge");
-            // Pastikan badge ada dan teksnya sesuai
-            return badge && badge.textContent.trim().includes("Sudah dipindai");
-        });
-
-        // ✅ Debugging log detail
-        console.log("🧩 Total rows ditemukan (di modal):", rows.length);
-        console.log("🧩 Rows valid dengan badge:", validRows.length);
-        validRows.forEach((r, i) => {
-             console.log(i + 1, r.querySelector(".badge")?.textContent.trim());
-        });
-        console.log("✅ Semua sudah dipindai?", allScanned);
-
-
-        if (!allScanned) {
-            Swal.fire(
-                "Belum Lengkap!",
-                "Masih ada barang yang belum dipindai. Pastikan semua item memiliki status 'Sudah dipindai'.",
-                "warning"
-            );
-            return;
-        }
+      if (allScanned) {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove("disabled");
 
         Swal.fire({
-            title: "Simpan Semua Hasil Scan?",
-            text: "Pastikan semua barang sudah benar sebelum disimpan.",
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonText: "Ya, Simpan!",
-            cancelButtonText: "Batal",
-        }).then(async (result) => {
-            if (!result.isConfirmed) return;
-
-            try {
-                const items = [];
-                // **Perbaikan di sini:**
-                // Iterasi hanya pada validRows (item yang ada di tabel)
-                validRows.forEach((r) => {
-                    // Asumsi ID item disimpan di data-item-id pada tag <tr>
-                    const id = r.dataset.itemId;
-
-                    // Pastikan sel jumlah ditemukan
-                    const qtyCell = r.querySelector(".item-qty");
-                    // Gunakan data.quantity dari response scan jika ada, atau ambil dari cell.
-                    // Jika cell item-qty berisi total kuantitas, ambil dari sana.
-                    // Jika tidak, asumsikan 1 jika ID ada.
-                    const qty = qtyCell
-                        ? parseInt(qtyCell.textContent.trim()) || 1
-                        : 1;
-
-                    // Hanya masukkan item yang memiliki ID (jika ID tidak ada, baris itu mungkin header/footer)
-                    if (id) {
-                       items.push({ id: parseInt(id), quantity: qty });
-                    }
-                });
-
-                // Cek payload yang akan dikirim (untuk debugging)
-                console.log("Payload ke Release Endpoint:", { items });
-
-                // Endpoint untuk me-*release* (mengeluarkan) item
-                const res = await fetch(`/admin/itemout/release/${cartId}`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": document.querySelector(
-                            'meta[name="csrf-token"]'
-                        ).content,
-                    },
-                    body: JSON.stringify({ items }),
-                });
-
-                const data = await res.json();
-                console.log("💾 Release result:", data);
-
-                if (!data.success) {
-                    Swal.fire(
-                        "Gagal",
-                        data.message || "Gagal menyimpan hasil scan.",
-                        "error"
-                    );
-                    return;
-                }
-
-                // Clear state setelah sukses
-                delete scannedItems[cartId];
-
-                Swal.fire({
-                    icon: "success",
-                    title: "Berhasil!",
-                    text: "Semua hasil scan berhasil disimpan dan barang dikeluarkan.",
-                    timer: 2000,
-                    showConfirmButton: false,
-                }).then(() => location.reload()); // Reload halaman setelah sukses
-            } catch (err) {
-                console.error("❌ Error saat menyimpan:", err);
-                Swal.fire("Error", "Gagal menyimpan hasil scan.", "error");
-            }
+          icon: "success",
+          title: "Semua Barang Sudah Dipindai",
+          text: "Tekan tombol 'Simpan Semua Hasil Scan' untuk menyimpan ke sistem.",
+          timer: 3000,
+          showConfirmButton: false,
         });
+      } else if (rowFound) {
+        // PERBAIKAN: Tampilkan pesan sukses hanya jika barang ditemukan
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: `Barang dengan kode ${barcode} berhasil dipindai.`,
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      } else {
+        // PERBAIKAN: Jika barang tidak ditemukan dalam daftar
+        Swal.fire("Peringatan", "Kode barang tidak ditemukan dalam daftar permintaan.", "warning");
+      }
+
+      barcodeInput.value = "";
+      barcodeInput.focus();
+
+    } catch (err) {
+      console.error("❌ Error saat scan:", err);
+
+      // PERBAIKAN: Tampilkan pesan error yang lebih spesifik
+      let errorMessage = "Gagal memproses scan. Coba lagi.";
+
+      if (err.message.includes("HTTP error")) {
+        errorMessage = "Terjadi masalah koneksi dengan server. Periksa jaringan Anda.";
+      } else if (err.message.includes("JSON")) {
+        errorMessage = "Response dari server tidak valid.";
+      }
+
+      Swal.fire("Error", errorMessage, "error");
+      barcodeInput.value = "";
+      barcodeInput.focus();
+    }
+  });
+
+  // ======================================================
+  // 🔹 Tombol SIMPAN SEMUA ditekan - PERBAIKAN
+  // ======================================================
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".save-all-scan-btn");
+    if (!btn) return;
+
+    // PERBAIKAN: Cek apakah tombol disabled
+    if (btn.disabled) {
+      Swal.fire("Peringatan", "Masih ada barang yang belum dipindai.", "warning");
+      return;
+    }
+
+    const cartId = btn.dataset.cartId;
+    const form = document.querySelector(`.scan-form[data-cart-id="${cartId}"]`);
+
+    if (!form) {
+      Swal.fire("Error", "Form tidak ditemukan.", "error");
+      return;
+    }
+
+    const rows = form.querySelectorAll("tbody tr");
+    const validRows = Array.from(rows).filter(r => r.querySelector(".badge"));
+
+    const allScanned = validRows.every(r => {
+      const badge = r.querySelector(".badge");
+      return badge && badge.textContent.includes("Sudah dipindai");
     });
+
+    if (!allScanned) {
+      Swal.fire("Belum Lengkap!", "Masih ada barang yang belum dipindai.", "warning");
+      return;
+    }
+
+    // ✅ SweetAlert konfirmasi
+    Swal.fire({
+      title: "Simpan Semua Hasil Scan?",
+      text: "Pastikan semua barang sudah benar sebelum disimpan.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Simpan!",
+      cancelButtonText: "Batal",
+      backdrop: `rgba(0,0,0,0.35)`,
+      didOpen: () => {
+        const activeModal = document.querySelector('.modal.show');
+        const backdrop = document.querySelector('.modal-backdrop.show');
+
+        if (activeModal) {
+          activeModal.style.zIndex = 1040;
+          activeModal.classList.add("modal-blur");
+        }
+        if (backdrop) backdrop.style.zIndex = 1030;
+      },
+      willClose: () => {
+        const activeModal = document.querySelector('.modal.show');
+        const backdrop = document.querySelector('.modal-backdrop.show');
+
+        if (activeModal) {
+          activeModal.style.zIndex = 1050;
+          activeModal.classList.remove("modal-blur");
+        }
+        if (backdrop) backdrop.style.zIndex = 1040;
+      },
+    }).then(async (result) => {
+      if (!result.isConfirmed) return;
+
+      try {
+        const items = [];
+        validRows.forEach((r) => {
+          const id = r.dataset.itemId;
+          const qtyCell = r.querySelector(".item-qty");
+          const qty = qtyCell ? parseInt(qtyCell.textContent.trim()) || 1 : 1;
+          if (id) items.push({ id: parseInt(id), quantity: qty });
+        });
+
+        // 🔄 Tampilkan animasi loading
+        let timerInterval;
+        Swal.fire({
+          title: "Menyimpan Data...",
+          html: "<b>0%</b> selesai",
+          timerProgressBar: true,
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+            const b = Swal.getHtmlContainer().querySelector("b");
+            let progress = 0;
+            timerInterval = setInterval(() => {
+              progress = Math.min(progress + 5, 100);
+              b.textContent = progress + "%";
+            }, 100);
+          },
+          willClose: () => {
+            clearInterval(timerInterval);
+          }
+        });
+
+        // Kirim request ke backend
+        const res = await fetch(`/admin/itemout/release/${cartId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+          },
+          body: JSON.stringify({ items }),
+        });
+
+        // PERBAIKAN: Cek status response
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log("💾 Release result:", data);
+
+        if (!data.success) {
+          Swal.fire("Gagal", data.message || "Gagal menyimpan hasil scan.", "error");
+          return;
+        }
+
+        delete scannedItems[cartId];
+
+        // ✅ Sukses - DITAMBAHKAN BUTTON OKE
+        Swal.fire({
+          title: "Berhasil!",
+          text: "Semua data berhasil disimpan.",
+          icon: "success",
+          confirmButtonText: "OKE",
+          confirmButtonColor: "#FF9800",
+          allowOutsideClick: false,
+          allowEscapeKey: false
+        }).then(() => {
+          // Tutup modal dan refresh halaman
+          const modal = bootstrap.Modal.getInstance(document.getElementById(`scanModal${cartId}`));
+          if (modal) modal.hide();
+          location.reload();
+        });
+
+      } catch (err) {
+        console.error("❌ Error saat menyimpan:", err);
+        Swal.fire("Error", "Gagal menyimpan hasil scan: " + err.message, "error");
+      }
+    });
+  });
 });

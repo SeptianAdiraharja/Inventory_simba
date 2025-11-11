@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\SupplierImport;
 
 class SupplierController extends Controller
 {
@@ -51,5 +53,25 @@ class SupplierController extends Controller
     {
         $supplier->delete();
         return redirect()->route('super_admin.suppliers.index')->with('success', 'Supplier berhasil dihapus.');
+    }
+
+    // 🧩 Tambahan fungsi import Excel
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xls,xlsx'
+        ], [
+            'file.required' => 'Silakan pilih file Excel untuk diunggah.',
+            'file.mimes' => 'Format file harus .xls atau .xlsx.'
+        ]);
+
+        try {
+            Excel::import(new SupplierImport, $request->file('file'));
+            return redirect()->route('super_admin.suppliers.index')
+                             ->with('success', 'Data supplier berhasil diimport dari Excel!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                             ->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
+        }
     }
 }

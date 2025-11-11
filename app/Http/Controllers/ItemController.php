@@ -43,7 +43,7 @@ class ItemController extends Controller
             $items->latest();
         }
 
-        $items = $items->paginate(10);
+        $items = $items->paginate(15);
 
         return view('role.super_admin.items.index', compact('items'));
     }
@@ -160,8 +160,8 @@ class ItemController extends Controller
     {
         $jumlah = (int) $request->get('jumlah', 1);
 
-        $widthPt = (30 / 25.4) * 72;   
-        $heightPt = (20 / 25.4) * 72; 
+        $widthPt = (30 / 25.4) * 72;
+        $heightPt = (20 / 25.4) * 72;
 
         $pdf = Pdf::loadView('role.super_admin.items.barcode-pdf', compact('item', 'jumlah'))
             ->setPaper([0, 0, $widthPt, $heightPt], 'portrait')
