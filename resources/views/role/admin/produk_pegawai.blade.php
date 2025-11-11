@@ -84,7 +84,6 @@
     box-shadow: 0 0 0 2px #fff;
   }
 
-  /* === Modal === */
   .modal-content {
     border-radius: 1.25rem;
     border: none;
@@ -128,7 +127,7 @@
           </a>
         </li>
         <li class="breadcrumb-item active fw-semibold text-dark" aria-current="page">
-          Daftar Produk Guest
+          Daftar Produk Pegawai: {{ $pegawai->name }}
         </li>
       </ol>
     </nav>
@@ -143,7 +142,7 @@
   id="openCartModal"
   data-bs-toggle="modal"
   data-bs-target="#cartModal"
-  data-guest-id="{{ $guest->id ?? '' }}"
+  data-pegawai-id="{{ $pegawai->id ?? '' }}"
   style="bottom:25px; right:25px; width:70px; height:70px; font-size:1.5rem; z-index:1050;">
   <i class="ri-shopping-cart-2-line"></i>
   @if(isset($cartItems) && $cartItems->filter(fn($i)=>is_null($i->pivot->released_at))->count() > 0)
@@ -184,7 +183,7 @@
   <div class="modal fade" id="scanModal-{{ $item->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <form id="scanForm-{{ $item->id }}" method="POST" action="{{ route('admin.produk.scan', ['id' => $guest->id ?? 0]) }}">
+        <form id="scanForm-{{ $item->id }}" method="POST" action="{{ route('admin.produk.scan', ['id' => $pegawai->id ?? 0]) }}">
           @csrf
           <div class="modal-header">
             <h5 class="modal-title fw-semibold">
@@ -194,7 +193,7 @@
           </div>
 
           <div class="modal-body">
-            <input type="hidden" name="guest_id" value="{{ $guest->id ?? '' }}">
+            <input type="hidden" name="pegawai_id" value="{{ $pegawai->id ?? '' }}">
             <input type="hidden" name="item_id" value="{{ $item->id }}">
             <div class="mb-3">
               <label class="form-label fw-semibold">Jumlah Barang</label>
@@ -231,7 +230,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title fw-semibold">
-          <i class="ri-shopping-cart-line me-2"></i>Keranjang Guest
+          <i class="ri-shopping-cart-line me-2"></i>Keranjang Pegawai
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
@@ -255,7 +254,7 @@
         </table>
       </div>
       <div class="modal-footer">
-        <form id="releaseForm" method="POST" action="{{ route('admin.produk.release', ['id' => $guest->id ?? 0]) }}">
+        <form id="releaseForm" method="POST" action="{{ route('admin.produk.release', ['id' => $pegawai->id ?? 0]) }}">
           @csrf
           <button type="submit" class="btn btn-success">
             <i class="ri-send-plane-line me-1"></i> Keluarkan Semua
@@ -272,7 +271,7 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ asset('admin-produk-pegawai.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('form[id^="scanForm-"]').forEach(form => {

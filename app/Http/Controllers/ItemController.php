@@ -2,34 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Item;
-use App\Models\Category;
-use App\Models\Unit;
-use App\Models\Supplier;
+use App\Models\{Item, Category, Unit, Supplier};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\{Auth, Storage};
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\ItemsImport;
 
 class ItemController extends Controller
 {
+    /* =====================================================
+       📋 INDEX — DAFTAR SEMUA BARANG
+    ===================================================== */
     public function index(Request $request)
     {
         $items = Item::with(['category', 'unit', 'supplier']);
 
         if ($request->filled('search')) {
             $items->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhereHas('category', function ($cat) use ($request) {
-                      $cat->where('name', 'like', '%' . $request->search . '%');
-                  });
+                $q->where('name', 'like', "%{$request->search}%")
+                  ->orWhereHas('category', fn($cat) =>
+                      $cat->where('name', 'like', "%{$request->search}%")
+                  );
             });
         }
 
         if ($request->filled('date_from') && $request->filled('date_to')) {
             $items->whereBetween('created_at', [
-                $request->date_from . ' 00:00:00',
-                $request->date_to . ' 23:59:59'
+                "{$request->date_from} 00:00:00",
+                "{$request->date_to} 23:59:59"
             ]);
         } elseif ($request->filled('date_from')) {
             $items->whereDate('created_at', '>=', $request->date_from);
@@ -48,14 +50,21 @@ class ItemController extends Controller
         return view('role.super_admin.items.index', compact('items'));
     }
 
+    /* =====================================================
+       🆕 CREATE — TAMBAH BARANG
+    ===================================================== */
     public function create()
     {
         $categories = Category::all();
         $units = Unit::all();
         $suppliers = Supplier::all();
+
         return view('role.super_admin.items.create', compact('categories', 'units', 'suppliers'));
     }
 
+    /* =====================================================
+       💾 STORE — SIMPAN BARANG BARU
+    ===================================================== */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -71,21 +80,25 @@ class ItemController extends Controller
         $validated['created_by'] = Auth::id();
         $validated['stock'] = 0;
 
-        // simpan gambar jika ada
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('images/items', 'public');
         }
 
-        // biarkan code dikosongkan supaya model generate otomatis
         Item::create($validated);
 
-        return redirect()->route('super_admin.items.index')->with('success', 'Item berhasil ditambahkan.');
+        return redirect()->route('super_admin.items.index')
+            ->with('success', 'Item berhasil ditambahkan.');
     }
 
+    /* =====================================================
+       🔍 SHOW — DETAIL BARANG + STATUS SUPPLIER
+    ===================================================== */
     public function show(Request $request, Item $item)
     {
         $supplierId = $request->get('supplier_id');
-        $itemInQuery = $item->itemIns();
+        $now = Carbon::now();
+
+        $itemInQuery = $item->itemIns()->with('supplier');
 
         if ($supplierId) {
             $itemInQuery->where('supplier_id', $supplierId);
@@ -93,34 +106,44 @@ class ItemController extends Controller
 
         $itemIns = $itemInQuery->get();
 
-        $expiredCount = $itemIns->where('expired_at', '<', now())->sum('quantity');
-        $nonExpiredCount = $itemIns->where('expired_at', '>=', now())->sum('quantity');
+        $expiredCount = $itemIns->where('expired_at', '<', $now)->sum('quantity');
+        $nonExpiredCount = $itemIns->where('expired_at', '>=', $now)->sum('quantity');
 
-        // 🔹 ambil supplier yang pernah masukin item ini
         $suppliers = $item->itemIns()
-            ->with('supplier') // pastikan di model Item_in ada relasi ke Supplier
+            ->with('supplier')
             ->get()
             ->pluck('supplier')
+            ->filter()
             ->unique('id')
             ->values();
+
+        $totalStock = $item->itemIns()->sum('quantity');
 
         return view('role.super_admin.items.show', compact(
             'item',
             'suppliers',
             'supplierId',
             'expiredCount',
-            'nonExpiredCount'
+            'nonExpiredCount',
+            'totalStock'
         ));
     }
 
+    /* =====================================================
+       ✏️ EDIT — FORM EDIT BARANG
+    ===================================================== */
     public function edit(Item $item)
     {
         $categories = Category::all();
         $units = Unit::all();
         $suppliers = Supplier::all();
+
         return view('role.super_admin.items.edit', compact('item', 'categories', 'units', 'suppliers'));
     }
 
+    /* =====================================================
+       🔁 UPDATE — SIMPAN PERUBAHAN BARANG
+    ===================================================== */
     public function update(Request $request, Item $item)
     {
         $validated = $request->validate([
@@ -131,7 +154,6 @@ class ItemController extends Controller
             'image'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // Simpan gambar baru jika diupload
         if ($request->hasFile('image')) {
             if ($item->image && Storage::disk('public')->exists($item->image)) {
                 Storage::disk('public')->delete($item->image);
@@ -139,13 +161,15 @@ class ItemController extends Controller
             $validated['image'] = $request->file('image')->store('images/items', 'public');
         }
 
-        // Update field yang diizinkan
         $item->update($validated);
 
         return redirect()->route('super_admin.items.index')
             ->with('success', 'Item berhasil diperbarui.');
     }
 
+    /* =====================================================
+       🗑️ DESTROY — HAPUS ITEM
+    ===================================================== */
     public function destroy(Item $item)
     {
         if ($item->image && Storage::disk('public')->exists($item->image)) {
@@ -153,9 +177,14 @@ class ItemController extends Controller
         }
 
         $item->delete();
-        return redirect()->route('super_admin.items.index')->with('success', 'Item berhasil dihapus.');
+
+        return redirect()->route('super_admin.items.index')
+            ->with('success', 'Item berhasil dihapus.');
     }
 
+    /* =====================================================
+       🧾 PRINT BARCODE — GENERATE PDF BARCODE
+    ===================================================== */
     public function printBarcode(Request $request, Item $item)
     {
         $jumlah = (int) $request->get('jumlah', 1);
@@ -179,4 +208,18 @@ class ItemController extends Controller
         return $pdf->stream('barcode-' . $item->code . '.pdf');
     }
 
+    /* =====================================================
+       📤 IMPORT — UPLOAD DAN SIMPAN DATA BARANG DARI EXCEL
+    ===================================================== */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,csv,xls'
+        ]);
+
+        Excel::import(new ItemsImport, $request->file('file'));
+
+        return redirect()->route('super_admin.items.index')
+            ->with('success', 'Data barang berhasil diimport!');
+    }
 }

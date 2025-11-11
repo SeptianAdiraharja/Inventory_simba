@@ -1,61 +1,88 @@
 @extends('layouts.index')
+
 @section('content')
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
   {{-- ======================== --}}
-  {{-- 🧭 BREADCRUMB ORANGE --}}
+  {{-- 🧭 BREADCRUMB --}}
   {{-- ======================== --}}
-  <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap align-items-center justify-content-between smooth-fade">
-    <div class="d-flex align-items-center gap-2 flex-wrap">
+  <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 smooth-fade">
+    <div class="d-flex align-items-center flex-wrap gap-2">
       <i class="bi bi-box-seam fs-5" style="color:#FF9800;"></i>
-      <a href="{{ route('dashboard') }}" class="breadcrumb-link fw-semibold text-decoration-none" style="color:#FF9800;">
-        Dashboard
-      </a>
+      <a href="{{ route('dashboard') }}" class="breadcrumb-link fw-semibold text-decoration-none" style="color:#FF9800;">Dashboard</a>
       <span class="text-muted">/</span>
-      <span class="text-dark fw-semibold">Daftar Barang</span>
+      <span class="fw-semibold text-dark">Daftar Barang</span>
     </div>
 
-    <a href="{{ route('super_admin.items.create') }}"
-       class="btn btn-sm rounded-pill d-flex align-items-center gap-2 shadow-sm hover-glow"
-       style="background-color:#FF9800;color:#fff;">
-      <i class="ri ri-add-line fs-5"></i> Tambah Barang
-    </a>
+    <div class="d-flex align-items-center gap-2">
+      <!-- Tombol Import Excel -->
+      <button type="button" class="btn btn-sm rounded-pill d-flex align-items-center gap-2 shadow-sm hover-glow"
+              style="background-color:#FFB300;color:#fff;" data-bs-toggle="modal" data-bs-target="#importModal">
+        <i class="bi bi-upload fs-6"></i> Import Data
+      </button>
+
+      <!-- Tombol Tambah Barang -->
+      <a href="{{ route('super_admin.items.create') }}"
+         class="btn btn-sm rounded-pill d-flex align-items-center gap-2 shadow-sm hover-glow"
+         style="background-color:#FF9800;color:#fff;">
+        <i class="ri ri-add-line fs-5"></i> Tambah Barang
+      </a>
+    </div>
   </div>
 
+  {{-- ✅ ALERTS --}}
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="bi bi-check-circle me-1"></i>{{ session('success') }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  @endif
+
+  @if($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle me-1"></i>{{ $errors->first() }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  @endif
+
   {{-- ======================== --}}
-  {{-- 📦 DAFTAR BARANG --}}
+  {{-- 📦 FILTER DAN TABEL --}}
   {{-- ======================== --}}
-  <div class="card shadow-sm border-0 rounded-4 smooth-fade">
+  <div class="card shadow-sm border-0 rounded-4 smooth-fade mb-5">
     <div class="card-header bg-white border-0 pb-0">
       <h4 class="fw-bold mb-3" style="color:#FF9800;"><i class="ri-archive-2-line me-2"></i> Daftar Barang</h4>
 
-      {{-- 🔍 Filter, Range, & Search --}}
-      <form id="filterForm" method="GET" action="{{ route('super_admin.items.index') }}" class="row g-2 align-items-center">
+      {{-- 🔍 Filter & Search --}}
+      <form id="filterForm" method="GET" action="{{ route('super_admin.items.index') }}" class="row g-3 align-items-end">
         <div class="col-md-3 col-sm-6">
+          <label class="form-label text-muted small mb-1">Dari Tanggal</label>
           <input type="date" name="date_from" id="dateFrom" class="form-control form-control-sm border-0 shadow-sm"
-                 style="border-left:4px solid #FF9800 !important;" value="{{ request('date_from') }}">
+                 value="{{ request('date_from') }}" style="border-left:4px solid #FF9800 !important;">
         </div>
         <div class="col-md-3 col-sm-6">
+          <label class="form-label text-muted small mb-1">Sampai Tanggal</label>
           <input type="date" name="date_to" id="dateTo" class="form-control form-control-sm border-0 shadow-sm"
-                 style="border-left:4px solid #FF9800 !important;" value="{{ request('date_to') }}">
+                 value="{{ request('date_to') }}" style="border-left:4px solid #FF9800 !important;">
         </div>
         <div class="col-md-3 col-sm-6">
+          <label class="form-label text-muted small mb-1">Urutkan Stok</label>
           <select name="sort_stock" id="sortStock" class="form-select form-select-sm border-0 shadow-sm"
                   style="border-left:4px solid #FF9800 !important;">
-            <option value="">Urutkan Stok</option>
+            <option value="">Semua</option>
             <option value="desc" {{ request('sort_stock') == 'desc' ? 'selected' : '' }}>Paling Banyak</option>
             <option value="asc" {{ request('sort_stock') == 'asc' ? 'selected' : '' }}>Paling Sedikit</option>
           </select>
         </div>
         <div class="col-md-2 col-sm-6">
+          <label class="form-label text-muted small mb-1">Cari Barang / Kategori</label>
           <input type="text" name="search" id="autoSearchInput" class="form-control form-control-sm border-0 shadow-sm"
-                 style="border-left:4px solid #FF9800 !important;"
-                 placeholder="Cari nama / kategori..." value="{{ request('search') }}">
+                 placeholder="Cari..." value="{{ request('search') }}"
+                 style="border-left:4px solid #FF9800 !important;">
         </div>
-        <div class="col-md-1 text-md-end">
+        <div class="col-md-1 text-md-end text-center">
           @if(request('date_from') || request('date_to') || request('sort_stock') || request('search'))
-          <a href="{{ route('super_admin.items.index') }}" class="btn btn-sm btn-outline-warning w-100">
-            <i class="ri-refresh-line me-1"></i> Reset
+          <a href="{{ route('super_admin.items.index') }}" class="btn btn-sm btn-outline-warning w-100 rounded-pill">
+            <i class="ri-refresh-line"></i>
           </a>
           @endif
         </div>
@@ -66,7 +93,7 @@
     <div class="card-body pt-3">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
-          <thead class="table-light text-center">
+          <thead class="text-center" style="background:#FFF3E0;">
             <tr>
               <th>Nama</th>
               <th>Kategori</th>
@@ -85,20 +112,22 @@
               <td>{{ $item->unit->name ?? '-' }}</td>
               <td>Rp {{ number_format($item->price, 0, ',', '.') }}</td>
               <td>{{ $item->stock }}</td>
-              <td>{{ $item->created_at ? $item->created_at->format('d M Y') : '-' }}</td>
+              <td>{{ $item->created_at? $item->created_at->format('d M Y'):'-' }}</td>
               <td>
-                <div class="dropdown">
-                  <button type="button" class="btn p-0 dropdown-toggle hide-arrow shadow-none" data-bs-toggle="dropdown">
-                    <i class="ri-more-2-fill text-muted"></i>
+                <div class="dropdown position-static">
+                  <button class="btn btn-sm p-0 shadow-none" data-bs-toggle="dropdown">
+                    <i class="ri-more-2-fill text-muted fs-5"></i>
                   </button>
-                  <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
+                  <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 p-1">
                     <li>
-                      <a class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#detailModal{{ $item->id }}">
+                      <a class="dropdown-item d-flex align-items-center rounded-3"
+                         data-bs-toggle="modal" data-bs-target="#detailModal{{ $item->id }}">
                         <i class="ri-file-list-3-line me-2 text-warning"></i> Detail
                       </a>
                     </li>
                     <li>
-                      <a class="dropdown-item d-flex align-items-center" href="{{ route('super_admin.items.show', $item->id) }}">
+                      <a class="dropdown-item d-flex align-items-center rounded-3"
+                         href="{{ route('super_admin.items.show', $item->id) }}">
                         <i class="ri-eye-line me-2 text-primary"></i> Lihat
                       </a>
                     </li>
@@ -109,16 +138,15 @@
 
             {{-- 🪄 MODAL DETAIL --}}
             <div class="modal fade" id="detailModal{{ $item->id }}" tabindex="-1" aria-hidden="true">
-              <div class="modal-dialog modal-lg modal-dialog-centered">
+              <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                  <div class="modal-header text-white py-2" style="background-color:#FF9800;">
+                  <div class="modal-header text-white py-2" style="background:linear-gradient(90deg,#FF9800,#FFB300);">
                     <h5 class="modal-title fw-semibold">
                       <i class="ri-archive-line me-2"></i> Detail Barang — {{ $item->name }}
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                   </div>
-
-                  <div class="modal-body bg-light-subtle">
+                  <div class="modal-body bg-light">
                     <div class="row mb-3">
                       <div class="col-md-6">
                         <p><strong>Kategori:</strong> {{ $item->category->name ?? '-' }}</p>
@@ -145,7 +173,7 @@
                     </div>
                   </div>
 
-                  <div class="modal-footer bg-white border-0 pt-3 d-flex justify-content-between flex-wrap">
+                  <div class="modal-footer bg-white border-0 pt-3 d-flex flex-wrap justify-content-between gap-2">
                     <form action="{{ route('super_admin.items.barcode.pdf', $item->id) }}" method="GET" target="_blank"
                           class="d-flex align-items-center gap-2 flex-wrap mb-2 mb-md-0">
                       <div class="input-group input-group-sm" style="width:130px;">
@@ -180,7 +208,9 @@
             </div>
             @empty
             <tr>
-              <td colspan="7" class="text-center py-4 text-muted"><i class="ri-information-line me-1"></i> Belum ada data barang.</td>
+              <td colspan="7" class="text-center py-4 text-muted">
+                <i class="ri-information-line me-1"></i> Belum ada data barang.
+              </td>
             </tr>
             @endforelse
           </tbody>
@@ -190,21 +220,50 @@
   </div>
 </div>
 
+{{-- ✅ MODAL IMPORT --}}
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header text-white" style="background:linear-gradient(90deg,#FF9800,#FF9300);">
+        <h5 class="modal-title" id="importModalLabel"><i class="bi bi-file-earmark-excel me-2"></i>Import Data Barang</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="{{ route('super_admin.items.import') }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="file" class="form-label fw-semibold">Pilih File Excel</label>
+            <input type="file" name="file" id="file" class="form-control" accept=".xlsx,.xls,.csv" required>
+            <small class="text-muted">Format file: .xlsx / .xls / .csv</small>
+          </div>
+          <div class="alert alert-info small mt-3">
+            <i class="bi bi-info-circle me-1"></i>
+            Pastikan file berisi kolom:
+            <br><code>name, code, category_id, stock, price, expired_at, supplier_id, unit_id, created_by, image</code>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-warning text-white">
+            <i class="bi bi-check-circle me-1"></i>Import Sekarang
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 {{-- 🌈 STYLE TAMBAHAN --}}
 <style>
-.smooth-fade{animation:fadeIn .6s ease-in-out;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-.table-row-hover{transition:background-color .2s ease,transform .15s ease;}
-.table-row-hover:hover{background-color:#FFF9E6!important;transform:translateX(3px);}
-.hover-glow{transition:all .25s ease;}
-.hover-glow:hover{background-color:#FFC107!important;color:#fff!important;box-shadow:0 0 12px rgba(255,152,0,0.4);}
-.breadcrumb-link{position:relative;transition:all .25s ease;}
-.breadcrumb-link::after{content:'';position:absolute;bottom:-2px;left:0;width:0;height:2px;background:#FF9800;transition:width .25s ease;}
-.breadcrumb-link:hover::after{width:100%;}
-.modal-header{background:linear-gradient(90deg,#FF9800,#FFB300);}
+  html, body {background-color: #f8f9fb !important;}
+  .smooth-fade{animation:fadeIn .6s ease-in-out;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  .table-row-hover:hover{background-color:#FFF9E6!important;transform:translateX(3px);}
+  .hover-glow:hover{background-color:#FFC107!important;box-shadow:0 0 12px rgba(255,152,0,0.4);}
+  .dropdown-item:hover{background-color:#FFF3E0;color:#FF9800;}
 </style>
 
-{{-- ⚡ SCRIPT AUTO FILTER --}}
+{{-- ⚡ AUTO FILTER --}}
 <script>
 document.addEventListener('DOMContentLoaded',function(){
   const form=document.getElementById('filterForm');

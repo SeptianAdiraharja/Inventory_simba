@@ -1,5 +1,4 @@
 @extends('layouts.index')
-
 @section('content')
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
@@ -22,54 +21,9 @@
   </div>
 
   {{-- ======================== --}}
-  {{-- 🔔 ALERT MESSAGE --}}
-  {{-- ======================== --}}
-  @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm" role="alert">
-      <i class="ri-check-line me-2"></i>{{ session('success') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  @endif
-
-  @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm" role="alert">
-      <i class="ri-error-warning-line me-2"></i>{{ session('error') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  @endif
-
-  {{-- ======================== --}}
-  {{-- 📥 IMPORT SUPPLIER --}}
-  {{-- ======================== --}}
-  <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 smooth-fade">
-    <div class="card-header bg-white border-0 py-3 px-4 d-flex flex-wrap justify-content-between align-items-center border-bottom">
-      <div class="d-flex align-items-center gap-2">
-        <i class="ri-upload-line fs-5" style="color:#FF9800;"></i>
-        <h5 class="fw-bold mb-0" style="color:#FF9800;">Import Data Supplier</h5>
-      </div>
-      <small class="text-muted">Unggah file Excel (.xls atau .xlsx)</small>
-    </div>
-
-    <div class="card-body bg-light p-4">
-      <form action="{{ route('super_admin.suppliers.import') }}" method="POST" enctype="multipart/form-data" class="d-flex align-items-center gap-3 flex-wrap">
-        @csrf
-        <input type="file" name="file" accept=".xls,.xlsx" required
-               class="form-control border-0 rounded-3 shadow-sm px-3 py-2"
-               style="max-width: 300px; background:#fff; border-left:4px solid #FF9800 !important;">
-
-        <button type="submit" class="btn rounded-pill text-white fw-semibold shadow-sm px-4 py-2 hover-glow"
-                style="background-color:#FF9800;">
-          <i class="ri-upload-2-line me-1"></i> Import
-        </button>
-      </form>
-    </div>
-  </div>
-
-  {{-- ======================== --}}
   {{-- 🧾 FORM TAMBAH SUPPLIER --}}
   {{-- ======================== --}}
   <div class="card border-0 shadow-sm rounded-4 overflow-hidden smooth-fade">
-    {{-- Header --}}
     <div class="card-header bg-white border-0 py-3 px-4 d-flex flex-wrap justify-content-between align-items-center border-bottom">
       <div class="d-flex align-items-center gap-2">
         <i class="ri-user-add-line fs-5" style="color:#FF9800;"></i>
@@ -78,7 +32,6 @@
       <small class="text-muted text-end ms-auto mt-1 mt-sm-0">Input data supplier baru</small>
     </div>
 
-    {{-- Body --}}
     <div class="card-body bg-light p-4">
       <form action="{{ route('super_admin.suppliers.store') }}" method="POST" class="needs-validation" novalidate>
         @csrf
@@ -125,93 +78,13 @@
   </div>
 </div>
 
-{{-- ======================== --}}
 {{-- 🎨 STYLE --}}
-{{-- ======================== --}}
 <style>
-/* Smooth fade-in animation */
-.smooth-fade { animation: fadeIn 0.6s ease-in-out; }
-@keyframes fadeIn { from {opacity:0;transform:translateY(10px);} to {opacity:1;transform:translateY(0);} }
-
-/* Glowing buttons */
-.hover-glow { transition: all 0.25s ease; }
-.hover-glow:hover {
-  background-color: #FFC107 !important;
-  color: #fff !important;
-  box-shadow: 0 0 12px rgba(255,152,0,0.4);
-}
-.hover-glow-outline {
-  transition: all 0.25s ease;
-}
-.hover-glow-outline:hover {
-  background-color: #FF9800 !important;
-  color: #fff !important;
-  box-shadow: 0 0 10px rgba(255,152,0,0.4);
-}
-
-/* Input focus effect */
-input::placeholder { color: #b9b9b9 !important; opacity: 1; }
-.form-control:focus {
-  border-color: #FF9800 !important;
-  box-shadow: 0 0 0 3px rgba(255,193,7,0.25) !important;
-}
-
-/* Card layout */
-.card {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-}
-.card-body {
-  background-color: #fffdf8;
-}
-
-/* Breadcrumb underline */
-.breadcrumb-link {
-  position: relative;
-  transition: all 0.25s ease;
-}
-.breadcrumb-link::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: #FF9800;
-  transition: width 0.25s ease;
-}
-.breadcrumb-link:hover::after {
-  width: 100%;
-}
-
-/* Responsiveness */
-@media (max-width:768px) {
-  .card-header { flex-direction: column; align-items: flex-start; gap: .25rem; }
-  .card-body { padding: 1.5rem; }
-  .btn { font-size: 0.9rem; }
-  .form-control-lg { font-size: 0.9rem; padding: 0.7rem 1rem; }
-  .breadcrumb-link { font-size: 0.9rem; }
-}
+.smooth-fade{animation:fadeIn .6s ease-in-out;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.hover-glow{transition:all .25s ease;}
+.hover-glow:hover{background-color:#FFC107!important;color:#fff!important;box-shadow:0 0 12px rgba(255,152,0,0.4);}
+.hover-glow-outline{transition:all .25s ease;}
+.hover-glow-outline:hover{background-color:#FF9800!important;color:#fff!important;box-shadow:0 0 10px rgba(255,152,0,0.4);}
 </style>
-
-{{-- ======================== --}}
-{{-- ⚙️ VALIDATION SCRIPT --}}
-{{-- ======================== --}}
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const forms = document.querySelectorAll('.needs-validation');
-  Array.from(forms).forEach(form => {
-    form.addEventListener('submit', event => {
-      if (!form.checkValidity()) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      form.classList.add('was-validated');
-    }, false);
-  });
-});
-</script>
-@endpush
 @endsection

@@ -116,16 +116,24 @@
             <h5 class="fw-bold mb-3"><i class="{{ $sec['icon'] }} me-1" style="color:{{ $sec['color'] }};"></i> {{ $sec['title'] }}</h5>
             <ul class="list-unstyled mb-0">
               @forelse($sec['data'] as $item)
-                <li class="d-flex mb-3 align-items-center pb-2 border-bottom">
-                  <div class="flex-grow-1">
-                    <h6 class="mb-1 fw-semibold">{{ $item->item->name ?? $item->name }}</h6>
-                    <small class="text-muted">
-                      @if(isset($item->quantity)) Jumlah: {{ $item->quantity }}<br>@endif
-                      @if(isset($item->stock)) Stok tersisa: {{ $item->stock }}<br>@endif
-                      {{ isset($item->created_at) ? 'Tanggal: ' . $item->created_at->format('d M Y') : '' }}
-                    </small>
-                  </div>
-                  <span class="badge {{ $sec['badge'] }}">{{ $item->quantity ?? $item->stock }}</span>
+                <li class="d-flex mb-3 align-items-center pb-2 border-bottom justify-content-between">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1 fw-semibold">{{ $item->item->name ?? $item->name }}</h6>
+                        <small class="text-muted">
+                        @if(isset($item->quantity)) Jumlah: {{ $item->quantity }}<br>@endif
+                        @if(isset($item->stock)) Stok tersisa: {{ $item->stock }}<br>@endif
+                        {{ isset($item->created_at) ? 'Tanggal: ' . $item->created_at->format('d M Y') : '' }}
+                        </small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge {{ $sec['badge'] }}">{{ $item->quantity ?? $item->stock }}</span>
+
+                        {{-- 🔍 Tombol Show --}}
+                        <a href="{{ route('super_admin.item_ins.index', ['search' => $item->item->name ?? $item->name]) }}"
+                        class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1">
+                        Cari
+                        </a>
+                    </div>
                 </li>
               @empty
                 <li class="text-muted fst-italic">{{ $sec['empty'] }}</li>

@@ -87,7 +87,7 @@
 
                 <div class="p-3 border rounded-3 mb-3 bg-light">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0 fw-semibold text-primary">
+                        <h6 class="mb-0 fw-semibold text-warning">
                             <i class="ri-calendar-line me-2"></i>Pengajuan Minggu Ini
                         </h6>
                         <span class="fw-bold text-warning">{{ $countThisWeek }}/5 kali</span>
@@ -112,7 +112,7 @@
                     @endif
                 </div>
                 <h4 class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="text-primary">Keranjang</span>
+                    <span class="text-warning">Keranjang</span>
                     <span class="badge rounded-pill" style="background-color: #FF7F00; color: #fff;">
                         {{ $cartsitems ? $cartsitems->cartItems->count() : 0 }}
                     </span>
@@ -182,7 +182,7 @@
                         </form>
                     @endif
                 @else
-                    <a href="{{ route('pegawai.produk') }}" class="w-100 btn btn-outline-primary btn-lg">
+                    <a href="{{ route('pegawai.produk') }}" class="w-100 btn btn-outline-warning btn-lg">
                         Lanjutkan Belanja
                     </a>
                 @endif

@@ -12,6 +12,8 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\PermintaanController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\KopSuratController;
+use App\Models\Visitor; // ✅ Tambahan
+use App\Models\User;
 
 // Role Controllers
 use App\Http\Controllers\Role\SuperAdminController;
@@ -28,17 +30,48 @@ use App\Http\Controllers\SearchController;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| 🌟 Default Route (Welcome Page)
 |--------------------------------------------------------------------------
+| Saat pertama kali aplikasi diakses, user diarahkan ke "welcome.blade.php".
+| Kalau sudah login, langsung ke dashboard sesuai role.
 */
-
 Route::get('/', function () {
-    return view('auth/login');
-});
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
 
+    try {
+        $ip = request()->ip();
+        $userAgent = request()->userAgent();
+        $today = now()->toDateString();
+
+        // Cek apakah IP ini sudah tercatat hari ini
+        $exists = Visitor::where('ip_address', $ip)
+            ->whereDate('created_at', $today)
+            ->exists();
+
+        if (!$exists) {
+            Visitor::create([
+                'ip_address' => $ip,
+                'user_agent' => $userAgent,
+            ]);
+        }
+
+    } catch (\Throwable $th) {
+        // kalau error, log aja (tidak akan ganggu tampilan)
+        \Log::error('Gagal mencatat pengunjung: ' . $th->getMessage());
+    }
+
+    $totalPengunjung = Visitor::count();
+    $pegawaiAktif = User::where('role', 'pegawai')
+        ->where('status', 'active')
+        ->count();
+
+    return view('welcome', compact('totalPengunjung', 'pegawaiAktif'));
+})->name('welcome');
 /*
 |--------------------------------------------------------------------------
-| Banned
+| Banned User Management
 |--------------------------------------------------------------------------
 */
 Route::put('/users/{id}/ban', [UserController::class, 'ban'])->name('users.ban');
@@ -78,32 +111,26 @@ Route::middleware(['auth', 'role:super_admin'])
             'suppliers'  => SupplierController::class,
             'users'      => UserController::class,
         ]);
-        Route::post('/suppliers/import', [SupplierController::class, 'import'])
-            ->name('suppliers.import');
+
+        // Import Barang & Supplier
+        Route::post('/items/import', [ItemController::class, 'import'])->name('items.import');
+        Route::post('/suppliers/import', [SupplierController::class, 'import'])->name('suppliers.import');
+
         // Barcode
-        Route::get('items/{item}/barcode-pdf', [ItemController::class, 'printBarcode'])
-            ->name('items.barcode.pdf');
+        Route::get('items/{item}/barcode-pdf', [ItemController::class, 'printBarcode'])->name('items.barcode.pdf');
 
-        // Export
+        // Export Barang Masuk / Keluar / Reject
         Route::get('/export', [ExportController::class, 'index'])->name('export.index');
-        Route::get('/export/barang-masuk/excel', [ExportController::class, 'exportBarangMasukExcel'])
-            ->name('exports.barang_masuk.excel');
-        Route::get('/export/barang-masuk/pdf', [ExportController::class, 'exportBarangMasukPdf'])
-            ->name('exports.barang_masuk.pdf');
-        Route::get('/export/barang-keluar/excel', [ExportController::class, 'exportBarangKeluarExcel'])
-            ->name('exports.barang_keluar.excel');
-        Route::get('/export/barang-keluar/pdf', [ExportController::class, 'exportBarangKeluarPdf'])
-            ->name('exports.barang_keluar.pdf');
-        Route::get('/export/download', [ExportController::class, 'download'])
-            ->name('export.download');
-
-        // Export Barang Reject
-        Route::get('/export/barang-reject-improved', [ExportController::class, 'exportBarangRejectExcelImproved'])
-            ->name('export.barangRejectImproved');
-        Route::get('/export/barang-reject/pdf', [ExportController::class, 'exportBarangRejectPdf'])
-            ->name('exports.barang_reject.pdf');
-
+        Route::get('/export/barang-masuk/excel', [ExportController::class, 'exportBarangMasukExcel'])->name('exports.barang_masuk.excel');
+        Route::get('/export/barang-masuk/pdf', [ExportController::class, 'exportBarangMasukPdf'])->name('exports.barang_masuk.pdf');
+        Route::get('/export/barang-keluar/excel', [ExportController::class, 'exportBarangKeluarExcel'])->name('exports.barang_keluar.excel');
+        Route::get('/export/barang-keluar/pdf', [ExportController::class, 'exportBarangKeluarPdf'])->name('exports.barang_keluar.pdf');
+        Route::get('/export/barang-reject-improved', [ExportController::class, 'exportBarangRejectExcelImproved'])->name('export.barangRejectImproved');
+        Route::get('/export/barang-reject/pdf', [ExportController::class, 'exportBarangRejectPdf'])->name('exports.barang_reject.pdf');
+        Route::get('/export/download', [ExportController::class, 'download'])->name('export.download');
         Route::delete('/export/clear', [ExportController::class, 'clearLogs'])->name('export.clear');
+
+        // Kop Surat
         Route::resource('kop_surat', KopSuratController::class);
 });
 
@@ -117,16 +144,15 @@ Route::middleware(['auth', 'role:admin'])
     ->as('admin.')
     ->group(function () {
 
-    // Dashboard
+    // Dashboard Admin
     Route::controller(AdminController::class)->group(function () {
         Route::get('/dashboard', 'index')->name('dashboard');
         Route::get('/dashboard/data', 'getChartData');
         Route::get('/dashboard/modal/{type}', 'loadModalData')->name('dashboard.modal.data');
         Route::get('/dashboard/modal/barang_keluar', 'barangKeluarModal')->name('dashboard.modal.barang_keluar');
-
     });
 
-    // Item Out (Barang Keluar)
+    // Barang Keluar
     Route::controller(ItemoutController::class)->group(function () {
         Route::get('/itemout/search', 'search')->name('itemout.search');
         Route::resource('itemout', ItemoutController::class);
@@ -136,7 +162,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/itemout/release/{cart}', 'release')->name('itemout.release');
     });
 
-    // Requests & Carts
+    // Request & Cart
     Route::controller(RequestController::class)->group(function () {
         Route::get('/request', 'index')->name('request');
         Route::get('/request/search', 'search')->name('request.search');
@@ -150,16 +176,10 @@ Route::middleware(['auth', 'role:admin'])
     // Guest Management
     Route::controller(SearchController::class)->group(function () {
         Route::get('/guests/search', 'searchGuests')->name('guests.search');
-        Route::get('/pegawai/search', 'pegawaiSearch')->name('pegawai.search');
     });
-
     Route::resource('guests', GuestController::class)->except('show');
 
-    /*
-    |--------------------------------------------------------------------------
-    | Pegawai Management
-    |--------------------------------------------------------------------------
-    */
+    // Pegawai Management
     Route::controller(AdminPegawaiController::class)->group(function () {
         Route::resource('pegawai', AdminPegawaiController::class);
         Route::get('/pegawai/{id}/produk', 'showProduk')->name('pegawai.produk');
@@ -167,7 +187,6 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/pegawai/{id}/cart', [AdminPegawaiController::class, 'showCart'])->name('pegawai.cart');
         Route::delete('/pegawai/{pegawai}/cart/item/{id}', [AdminPegawaiController::class, 'destroyCartItem'])->name('admin.pegawai.cart.item.destroy');
         Route::post('/pegawai/{id}/cart/save', [AdminPegawaiController::class, 'saveCartToItemOut'])->name('pegawai.cart.save');
-
     });
 
     // Produk Guest
@@ -189,7 +208,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/export/barang-keluar/pdf', 'exportBarangKeluarPdfAdmin')->name('barang_keluar.pdf');
     });
 
-    // Data Transaksi & Refund
+    // Transaksi & Refund
     Route::controller(TransaksiItemOutController::class)->group(function () {
         Route::get('/transaksi', 'index')->name('transaksi.out');
         Route::get('/transaksi/search', 'search')->name('transaksi.search');
@@ -201,7 +220,7 @@ Route::middleware(['auth', 'role:admin'])
 
     // Reject Barang
     Route::controller(RejectController::class)->group(function () {
-        Route::get('/rejects/search', 'search')->name('rejects.search'); // ✅ Route search baru
+        Route::get('/rejects/search', 'search')->name('rejects.search');
         Route::get('/rejects', 'index')->name('rejects.index');
         Route::get('/rejects/scan', 'scanPage')->name('rejects.scan');
         Route::post('/rejects/process', 'processScan')->name('rejects.process');
@@ -221,7 +240,6 @@ Route::middleware(['auth', 'role:pegawai'])
         Route::get('/dashboard', [PegawaiController::class, 'index'])->name('dashboard');
         Route::resource('cart', CartController::class);
 
-        // Produk & Permintaan
         Route::get('/produk', [PermintaanController::class, 'index'])->name('produk');
         Route::get('/produk/search', [SearchController::class, 'index'])->name('produk.search');
 
@@ -240,11 +258,8 @@ Route::middleware(['auth', 'role:pegawai'])
 
 /*
 |--------------------------------------------------------------------------
-| 🔗 Dashboard Global Redirect (Fix RouteNotFoundException)
+| Dashboard Redirect (Role Based)
 |--------------------------------------------------------------------------
-|
-| Sekarang route('dashboard') akan otomatis redirect ke dashboard sesuai role.
-|
 */
 Route::middleware(['auth'])->get('/dashboard', function () {
     $user = auth()->user();

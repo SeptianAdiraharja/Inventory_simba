@@ -10,17 +10,35 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::query();
+        // 🔹 Ambil semua admin & super_admin (tetap tampil di atas)
+        $admins = User::whereIn('role', ['admin'])
+                      ->orderBy('name')
+                      ->get();
 
+        // 🔹 Query khusus untuk pegawai saja
+        $query = User::where('role', 'pegawai');
+
+        // 🔍 Filter status pegawai
         if ($request->status === 'banned') {
             $query->where('is_banned', true);
         } elseif ($request->status === 'active') {
             $query->where('is_banned', false);
         }
 
-        $users = $query->latest()->get();
+        // 🔎 Pencarian berdasarkan nama / email (khusus pegawai)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
 
-        return view('role.super_admin.users.index', compact('users'));
+        // 🔹 Ambil hasil pegawai
+        $pegawai = $query->orderBy('name')->get();
+
+        // 🔹 Kirim dua dataset terpisah ke view
+        return view('role.super_admin.users.index', compact('admins', 'pegawai'));
     }
 
     public function create()
@@ -38,10 +56,10 @@ class UserController extends Controller
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
-
         User::create($validated);
 
-        return redirect()->route('super_admin.users.index')->with('success', 'Akun berhasil dibuat.');
+        return redirect()->route('super_admin.users.index')
+                         ->with('success', 'Akun berhasil dibuat.');
     }
 
     public function edit(User $user)
@@ -66,22 +84,24 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        return redirect()->route('super_admin.users.index')->with('success', 'Akun berhasil diperbarui.');
+        return redirect()->route('super_admin.users.index')
+                         ->with('success', 'Akun berhasil diperbarui.');
     }
 
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('super_admin.users.index')->with('success', 'Akun berhasil dihapus.');
+        return redirect()->route('super_admin.users.index')
+                         ->with('success', 'Akun berhasil dihapus.');
     }
 
+    // 🚫 BAN PEGAWAI
     public function ban($id)
     {
         $user = User::findOrFail($id);
 
-        // Cek kalau bukan pegawai, tolak
         if ($user->role !== 'pegawai') {
-            return redirect()->back()->with('error', 'Hanya pegawai yang bisa diban!');
+            return back()->with('error', 'Hanya pegawai yang bisa diban!');
         }
 
         $user->update([
@@ -89,15 +109,16 @@ class UserController extends Controller
             'banned_at' => now(),
         ]);
 
-        return redirect()->back()->with('success', "Pegawai {$user->name} berhasil diban.");
+        return back()->with('success', "Pegawai {$user->name} berhasil diban.");
     }
 
+    // 🔓 UNBAN PEGAWAI
     public function unban($id)
     {
         $user = User::findOrFail($id);
 
         if ($user->role !== 'pegawai') {
-            return redirect()->back()->with('error', 'Hanya pegawai yang bisa di-unban!');
+            return back()->with('error', 'Hanya pegawai yang bisa di-unban!');
         }
 
         $user->update([
@@ -105,6 +126,6 @@ class UserController extends Controller
             'banned_at' => null,
         ]);
 
-        return redirect()->back()->with('success', "Pegawai {$user->name} berhasil di-unban.");
+        return back()->with('success', "Pegawai {$user->name} berhasil di-unban.");
     }
 }
