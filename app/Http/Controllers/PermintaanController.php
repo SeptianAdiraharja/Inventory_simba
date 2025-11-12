@@ -17,9 +17,9 @@ class PermintaanController extends Controller
         $categories = Category::all();
         $items = Item::with('category')
             ->withSum('cartItems as total_dibeli', 'quantity')
-            ->orderByRaw('CASE WHEN stock > 0 THEN 0 ELSE 1 END')
             ->orderByDesc('total_dibeli')
-            ->orderByDesc('created_at')
+            ->orderByDesc('created_at') // misal kalau sama ambil yang baru dibuat
+            ->where('stock', '>', 0)
             ->paginate(12);
 
         return view('role.pegawai.produk', compact('categories', 'items'));
