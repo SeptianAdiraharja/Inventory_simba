@@ -81,9 +81,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-
     // =========================================================
-    // ✅ APPROVE ALL (langsung update ke DB) - TIDAK BERUBAH
+    // ✅ APPROVE ALL (langsung update ke DB)
     // =========================================================
     document.addEventListener("click", async (e) => {
         const approveAll = e.target.closest(".approve-all-btn");
@@ -167,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Ganti judul modal
         document.querySelector('#rejectModal .modal-title').innerHTML =
             '<i class="bi bi-x-circle me-2"></i> Alasan Penolakan Semua Barang';
-        document.querySelector('#rejectModal .btn-danger').textContent = 'Tolak Semua Barang';
+        document.querySelector('#rejectModal button[type="submit"]').textContent = 'Tolak Semua Barang';
 
         // Tampilkan modal
         modal.show();
@@ -196,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Ganti judul modal
         document.querySelector('#rejectModal .modal-title').innerHTML =
             '<i class="bi bi-x-circle me-2"></i> Alasan Penolakan Barang';
-        document.querySelector('#rejectModal .btn-danger').textContent = 'Tolak Barang';
+        document.querySelector('#rejectModal button[type="submit"]').textContent = 'Tolak Barang';
 
         // Kosongkan textarea dan tampilkan modal
         form.elements['reason'].value = '';
@@ -267,7 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
             } finally {
                 modal.hide();
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Tolak Semua Barang';
+                submitBtn.textContent = isBulk ? 'Tolak Semua Barang' : 'Tolak Barang';
             }
 
         } else {
@@ -276,7 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const newStatus = 'rejected';
 
             if (!pendingChanges[cartId]) pendingChanges[cartId] = {};
-            pendingChanges[cartId][itemId] = { status: newStatus, reason: reason }; // Simpan reason juga!
+            pendingChanges[cartId][itemId] = { status: newStatus, reason: reason };
 
             const itemRow = document.querySelector(`.detail-content-wrapper[data-cart-id="${cartId}"] tr[data-item-id="${itemId}"]`);
             if (itemRow) {
@@ -292,9 +291,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-
     // =========================================================
-    // 📦 Klik tombol "Detail (Lihat Barang)" - TIDAK BERUBAH
+    // 📦 Klik tombol "Detail (Lihat Barang)"
     // =========================================================
     document.querySelectorAll(".detail-toggle-btn").forEach((btn) => {
         btn.addEventListener("click", async (e) => {
@@ -338,7 +336,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // =========================================================
-    // ⚡ Klik Approve Item Satuan (tanpa kirim ke DB) - BERUBAH SEDIKIT
+    // ⚡ Klik Approve Item Satuan (tanpa kirim ke DB)
     // =========================================================
     document.addEventListener("click", (e) => {
         const approveBtn = e.target.closest(".item-approve-btn");
@@ -352,7 +350,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const newStatus = "approved";
 
             if (!pendingChanges[cartId]) pendingChanges[cartId] = {};
-            pendingChanges[cartId][itemId] = { status: newStatus, reason: null }; // Hapus reason jika ada
+            pendingChanges[cartId][itemId] = { status: newStatus, reason: null };
 
             updateItemUI(itemRow, newStatus, true);
 
@@ -361,7 +359,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // =========================================================
-    // 💾 Klik "Simpan Perubahan" → kirim semua pendingChanges - BERUBAH UNTUK MENGIRIM REASON
+    // 💾 Klik "Simpan Perubahan" → kirim semua pendingChanges
     // =========================================================
     document.addEventListener("click", async (e) => {
         const saveBtn = e.target.closest(".cart-detail-save-btn");
@@ -378,11 +376,9 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // Ubah format pendingChanges agar backend bisa memprosesnya (item_id: {status: 'x', reason: 'y'})
-        // dan pastikan hanya mengirim yang perlu diupdate.
+        // Ubah format pendingChanges agar backend bisa memprosesnya
         const changesToSend = {};
         for (const itemId in pendingChanges[cartId]) {
-            // Asumsi backend hanya perlu status dan reason
             changesToSend[itemId] = {
                 status: pendingChanges[cartId][itemId].status,
                 reason: pendingChanges[cartId][itemId].reason || null
@@ -448,7 +444,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // =========================================================
-    // ❌ Klik "Batal" → reload detail - TIDAK BERUBAH
+    // ❌ Klik "Batal" → reload detail
     // =========================================================
     document.addEventListener("click", async (e) => {
         const cancelBtn = e.target.closest(".cart-detail-cancel-btn");
@@ -460,7 +456,6 @@ document.addEventListener("DOMContentLoaded", () => {
         delete pendingChanges[cartId];
         container.dataset.loaded = "false";
 
-        // Asumsi `bootstrap` sudah global
         const res = await fetch(`/admin/carts/${cartId}`);
         container.innerHTML = await res.text();
         container.dataset.loaded = "true";
@@ -469,7 +464,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Inisialisasi Bootstrap (agar modal bisa dipanggil)
-    // Cek apakah Bootstrap sudah dimuat atau tidak.
     if (typeof bootstrap === 'undefined') {
         console.warn("Bootstrap JS mungkin belum dimuat. Fungsi modal mungkin tidak bekerja.");
     }

@@ -145,19 +145,17 @@
   data-pegawai-id="{{ $pegawai->id ?? '' }}"
   style="bottom:25px; right:25px; width:70px; height:70px; font-size:1.5rem; z-index:1050;">
   <i class="ri-shopping-cart-2-line"></i>
-  @if(isset($cartItems) && $cartItems->filter(fn($i)=>is_null($i->pivot->released_at))->count() > 0)
-  <span class="position-absolute badge rounded-pill"
-    style="top:-5px; right:-5px; font-size:0.8rem; padding:6px 8px;">
-    {{ $cartItems->filter(fn($i)=>is_null($i->pivot->released_at))->count() }}
+  <span class="position-absolute badge rounded-pill" id="cartBadge"
+    style="top:-5px; right:-5px; font-size:0.8rem; padding:6px 8px; display:none;">
+    0
   </span>
-  @endif
 </button>
 
 <!-- 📦 Daftar Produk -->
 <div class="row gy-4 mt-3 animate__animated animate__fadeInUp">
   @foreach ($items as $item)
   <div class="col-xl-3 col-lg-4 col-md-6">
-    <div class="card shadow-sm">
+    <div class="card shadow-sm" data-item-id="{{ $item->id }}">
       <img src="{{ asset('storage/' . $item->image) }}" class="card-img-top"
            alt="{{ $item->name }}" style="height:220px; object-fit:cover; border-radius:1.25rem 1.25rem 0 0;">
       <div class="card-body d-flex flex-column justify-content-between">
@@ -170,8 +168,10 @@
             <span class="{{ $item->stock > 0 ? 'text-success fw-bold' : 'text-danger fw-bold' }}">{{ $item->stock }}</span>
           </p>
         </div>
-        <button type="button" class="btn btn-primary mt-3 w-100"
+        <button type="button" class="btn btn-primary mt-3 w-100 scan-btn"
                 data-bs-toggle="modal" data-bs-target="#scanModal-{{ $item->id }}"
+                data-item-id="{{ $item->id }}"
+                data-item-name="{{ $item->name }}"
                 {{ $item->stock == 0 ? 'disabled' : '' }}>
           <i class="ri-scan-line me-1"></i> Keluarkan Barang
         </button>
@@ -183,7 +183,7 @@
   <div class="modal fade" id="scanModal-{{ $item->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <form id="scanForm-{{ $item->id }}" method="POST" action="{{ route('admin.produk.scan', ['id' => $pegawai->id ?? 0]) }}">
+        <form class="scan-form" method="POST" action="{{ route('admin.pegawai.scan', ['id' => $pegawai->id ?? 0]) }}" data-item-id="{{ $item->id }}">
           @csrf
           <div class="modal-header">
             <h5 class="modal-title fw-semibold">
@@ -197,20 +197,20 @@
             <input type="hidden" name="item_id" value="{{ $item->id }}">
             <div class="mb-3">
               <label class="form-label fw-semibold">Jumlah Barang</label>
-              <input type="number" name="quantity" class="form-control form-control-lg rounded-3 border-warning"
+              <input type="number" name="quantity" class="form-control form-control-lg rounded-3 border-warning quantity-input"
                      min="1" max="{{ $item->stock }}" value="1" required>
-              <small class="text-muted">Maksimum stok: {{ $item->stock }}</small>
+              <small class="text-muted">Maksimum stok: <span class="stock-max">{{ $item->stock }}</span></small>
             </div>
             <div class="mb-3">
               <label class="form-label fw-semibold">Masukkan / Scan Barcode</label>
-              <input type="text" name="barcode" class="form-control form-control-lg rounded-3 border-warning"
-                     placeholder="Arahkan scanner ke sini..." required>
+              <input type="text" name="barcode" class="form-control form-control-lg rounded-3 border-warning barcode-input"
+                     placeholder="Arahkan scanner ke sini..." required autofocus>
               <small class="text-muted">Tekan Enter setelah scan untuk menyimpan data.</small>
             </div>
           </div>
 
           <div class="modal-footer">
-            <button type="submit" class="btn btn-success">
+            <button type="submit" class="btn btn-success submit-btn">
               <i class="ri-check-line me-1"></i> Simpan
             </button>
             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
@@ -230,36 +230,35 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title fw-semibold">
-          <i class="ri-shopping-cart-line me-2"></i>Keranjang Pegawai
+          <i class="ri-shopping-cart-line me-2"></i>Keranjang Pegawai: {{ $pegawai->name }}
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body bg-light">
-        <table class="table table-hover align-middle">
-          <thead>
-            <tr>
-              <th>Nama Barang</th>
-              <th>Kode</th>
-              <th class="text-center">Jumlah</th>
-              <th class="text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="cartTableBody">
-            <tr>
-              <td colspan="4" class="text-center text-muted py-3">
-                <i class="ri-information-line me-1"></i>Keranjang kosong
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div id="cartContent">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Nama Barang</th>
+                <th>Kode</th>
+                <th class="text-center">Jumlah</th>
+                <th class="text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="cartTableBody">
+              <tr>
+                <td colspan="4" class="text-center text-muted py-3">
+                  <i class="ri-information-line me-1"></i>Keranjang kosong
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
       <div class="modal-footer">
-        <form id="releaseForm" method="POST" action="{{ route('admin.produk.release', ['id' => $pegawai->id ?? 0]) }}">
-          @csrf
-          <button type="submit" class="btn btn-success">
-            <i class="ri-send-plane-line me-1"></i> Keluarkan Semua
-          </button>
-        </form>
+        <button type="button" class="btn btn-success" id="saveCartButton">
+          <i class="ri-send-plane-line me-1"></i> Simpan Keranjang
+        </button>
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
           <i class="ri-close-line me-1"></i> Tutup
         </button>
@@ -268,47 +267,27 @@
   </div>
 </div>
 
+<!-- 🔔 Toast Container -->
+<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1060;"></div>
+
+<!-- 📱 Snackbar -->
+<div id="snackbar" class="snackbar"></div>
+
 @endsection
 
 @push('scripts')
-<script src="{{ asset('admin-produk-pegawai.js') }}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('form[id^="scanForm-"]').forEach(form => {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const data = new FormData(form);
-      const modal = bootstrap.Modal.getInstance(form.closest('.modal'));
-
-      try {
-        const response = await fetch(form.action, {
-          method: "POST",
-          body: data,
-          headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}" }
-        });
-
-        if (!response.ok) throw new Error("Request gagal");
-
-        const result = await response.json();
-        Swal.fire({
-          icon: 'success',
-          title: 'Berhasil!',
-          text: result.message || 'Barang berhasil disimpan ke keranjang.',
-          timer: 2000,
-          showConfirmButton: false
-        });
-
-        modal.hide();
-
-      } catch (err) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Gagal!',
-          text: 'Terjadi kesalahan saat menyimpan barang.'
-        });
-      }
-    });
-  });
-});
+// Data global untuk JavaScript
+window.PegawaiApp = {
+    id: {{ $pegawai->id }},
+    csrf: "{{ csrf_token() }}",
+    routes: {
+        scan: "{{ route('admin.pegawai.scan', ['id' => $pegawai->id]) }}",
+        cart: "{{ route('admin.pegawai.cart', ['id' => $pegawai->id]) }}",
+        saveCart: "{{ route('admin.pegawai.cart.save', ['id' => $pegawai->id]) }}",
+        deleteItemBase: "{{ route('admin.pegawai.cart.item.destroy', ['pegawai' => $pegawai->id, 'id' => 'ITEM_ID']) }}"
+    }
+};
 </script>
+<script src="{{ asset('js/admin-produk-pegawai.js') }}"></script>
 @endpush

@@ -39,7 +39,7 @@ class AdminPegawaiController extends Controller
     /* =======================================================
        🔍 SEARCH – Method untuk pencarian pegawai
     ======================================================== *
-    
+
     /**
      * Show the form for creating a new resource.
      */
@@ -103,8 +103,20 @@ class AdminPegawaiController extends Controller
                 ], 422);
             }
 
-            // pastikan pegawai punya cart
-            $cart = Cart::firstOrCreate(['user_id' => $pegawai->id]);
+            // 🔴 PERBAIKAN: Cari cart dengan status active terlebih dahulu
+            $cart = Cart::where('user_id', $pegawai->id)
+                ->where('status', 'active')
+                ->first();
+
+            // 🔴 Jika tidak ada cart active, buat baru
+            if (! $cart) {
+                $cart = Cart::create([
+                    'user_id' => $pegawai->id,
+                    'status'  => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             // buat item baru di cart
             $cartItem = CartItem::create([
@@ -143,14 +155,15 @@ class AdminPegawaiController extends Controller
         $pegawai = User::findOrFail($pegawaiId);
         $itemId = $request->query('item_id');
 
+        // 🔴 PERBAIKAN: Cari cart dengan status active atau yang masih memiliki item scanned
         $cart = Cart::with(['cartItems' => function ($q) use ($itemId) {
-                    $q->where('status', 'scanned')
+                    $q->where('status', 'scanned') // Tampilkan item dengan status scanned
                     ->when($itemId, fn($query) => $query->where('item_id', $itemId))
                     ->orderByDesc('created_at')
                     ->with('item');
                 }])
                 ->where('user_id', $pegawai->id)
-                ->whereIn('status', ['active', 'pending', 'approved'])
+                ->where('status', 'active') // 🔴 Hanya cart dengan status active
                 ->latest()
                 ->first();
 
@@ -174,23 +187,21 @@ class AdminPegawaiController extends Controller
             }
         }
 
-        // 🔹 Hitung total permintaan minggu ini
-        $weeklyRequestCount = Item_out::whereHas('cart', function ($query) use ($pegawaiId) {
+        // 🔹 HITUNG PERMINTAAN MINGGU INI HANYA DARI CART
+        $weeklyCartCount = Cart::where('user_id', $pegawaiId)
+            ->whereIn('status', ['active', 'pending', 'approved'])
+            ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+            ->count();
+
+        // 🔹 Hitung juga item_outs yang berasal dari cart (untuk permintaan yang sudah disetujui)
+        $weeklyItemOutCount = Item_out::whereHas('cart', function ($query) use ($pegawaiId) {
                 $query->where('user_id', $pegawaiId);
             })
             ->whereBetween('released_at', [now()->startOfWeek(), now()->endOfWeek()])
             ->count();
 
-        // 🔹 Tambahkan jumlah permintaan aktif/pending di cart minggu ini
-        $activePendingCount = CartItem::whereHas('cart', function ($query) use ($pegawaiId) {
-                $query->where('user_id', $pegawaiId)
-                    ->whereIn('status', ['active', 'pending', 'approved']);
-            })
-            ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
-            ->count();
-
-        // 🔹 Gabungkan dua sumber
-        $totalWeekly = $weeklyRequestCount + $activePendingCount;
+        // 🔹 Gabungkan kedua sumber (cart aktif + item_outs yang sudah approved)
+        $totalWeekly = $weeklyCartCount + $weeklyItemOutCount;
 
         $hasReachedLimit = $totalWeekly >= 5;
 
@@ -204,6 +215,13 @@ class AdminPegawaiController extends Controller
                 'limit_message' => $hasReachedLimit
                     ? 'Pegawai ini sudah mencapai batas peminjaman mingguan (5 permintaan).'
                     : null,
+                'debug' => [
+                    'cart_count' => $weeklyCartCount,
+                    'item_out_count' => $weeklyItemOutCount,
+                    'cart_found' => $cart ? true : false,
+                    'cart_id' => $cart ? $cart->id : null,
+                    'items_count' => count($items)
+                ]
             ],
         ]);
     }
@@ -225,11 +243,20 @@ class AdminPegawaiController extends Controller
             $itemId = $request->item_id;
             $quantity = $request->quantity;
 
-            // 🔹 1. Buat cart aktif jika belum ada
-            $cart = Cart::firstOrCreate(
-                ['user_id' => $pegawaiId, 'status' => 'active'],
-                ['created_at' => now(), 'updated_at' => now()]
-            );
+            // 🔴 PERBAIKAN: Cari cart dengan status active terlebih dahulu
+            $cart = Cart::where('user_id', $pegawaiId)
+                ->where('status', 'active')
+                ->first();
+
+            // 🔴 Jika tidak ada cart active, buat baru
+            if (! $cart) {
+                $cart = Cart::create([
+                    'user_id' => $pegawaiId,
+                    'status'  => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             // 🔹 2. Tambahkan / update item dalam cart_items
             $cartItem = CartItem::where('cart_id', $cart->id)
@@ -273,25 +300,19 @@ class AdminPegawaiController extends Controller
         try {
             $pegawai = User::findOrFail($pegawaiId);
 
-            // 🔹 Cek apakah ada cart active
+            // 🔴 PERBAIKAN: Cari cart dengan status active terlebih dahulu
             $cart = Cart::where('user_id', $pegawai->id)
-                    ->whereIn('status', ['active', 'approved'])
+                    ->where('status', 'active')
                     ->first();
 
-            // 🔹 Jika belum ada, buat cart langsung dengan status approved
             if (! $cart) {
-                $cart = Cart::create([
-                    'user_id' => $pegawai->id,
-                    'status'  => 'approved',
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada keranjang aktif yang ditemukan.',
                 ]);
-            } else {
-                // Jika sudah ada, ubah status ke approved
-                $cart->update(['status' => 'approved']);
             }
 
-            // 🔹 Ambil semua cart items yang dimiliki pegawai (bisa pending/baru)
+            // 🔹 Ambil semua cart items yang dimiliki pegawai
             $cartItems = CartItem::where('cart_id', $cart->id)->get();
 
             if ($cartItems->isEmpty()) {
@@ -331,6 +352,9 @@ class AdminPegawaiController extends Controller
                 ]);
             }
 
+            // 🔴 Update status cart menjadi approved setelah semua item diproses
+            $cart->update(['status' => 'approved']);
+
             DB::commit();
 
             return response()->json([
@@ -354,9 +378,13 @@ class AdminPegawaiController extends Controller
     {
         $pegawai = User::findOrFail($pegawaiId);
 
-        $cart = Cart::where('user_id', $pegawai->id)->first();
+        // 🔴 PERBAIKAN: Cari cart dengan status active
+        $cart = Cart::where('user_id', $pegawai->id)
+            ->where('status', 'active')
+            ->first();
+
         if (! $cart) {
-            return response()->json(['success' => false, 'message' => 'Cart tidak ditemukan'], 404);
+            return response()->json(['success' => false, 'message' => 'Cart aktif tidak ditemukan'], 404);
         }
 
         $cartItem = CartItem::where('id', $cartItemId)->where('cart_id', $cart->id)->first();

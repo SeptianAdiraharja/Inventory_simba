@@ -14,6 +14,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\KopSuratController;
 use App\Models\Visitor; // ✅ Tambahan
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 // Role Controllers
 use App\Http\Controllers\Role\SuperAdminController;
@@ -59,7 +60,7 @@ Route::get('/', function () {
 
     } catch (\Throwable $th) {
         // kalau error, log aja (tidak akan ganggu tampilan)
-        \Log::error('Gagal mencatat pengunjung: ' . $th->getMessage());
+        Log::error('Gagal mencatat pengunjung: ' . $th->getMessage());
     }
 
     $totalPengunjung = Visitor::count();
@@ -182,11 +183,11 @@ Route::middleware(['auth', 'role:admin'])
     // Pegawai Management
     Route::controller(AdminPegawaiController::class)->group(function () {
         Route::resource('pegawai', AdminPegawaiController::class);
-        Route::get('/pegawai/{id}/produk', 'showProduk')->name('pegawai.produk');
-        Route::post('/pegawai/{id}/scan', [AdminPegawaiController::class, 'scan'])->name('pegawai.scan');
-        Route::get('/pegawai/{id}/cart', [AdminPegawaiController::class, 'showCart'])->name('pegawai.cart');
-        Route::delete('/pegawai/{pegawai}/cart/item/{id}', [AdminPegawaiController::class, 'destroyCartItem'])->name('admin.pegawai.cart.item.destroy');
-        Route::post('/pegawai/{id}/cart/save', [AdminPegawaiController::class, 'saveCartToItemOut'])->name('pegawai.cart.save');
+        Route::get('/pegawai/{id}/produk', 'showProduk')->name('pegawai.produk'); // Perbaiki nama route
+        Route::post('/pegawai/{id}/scan', 'scan')->name('pegawai.scan'); // Perbaiki nama route
+        Route::get('/pegawai/{id}/cart', 'showCart')->name('pegawai.cart'); // Perbaiki nama route
+        Route::delete('/pegawai/{pegawai}/cart/item/{id}', 'destroyCartItem')->name('pegawai.cart.item.destroy');
+        Route::post('/pegawai/{id}/cart/save', 'saveCartToItemOut')->name('pegawai.cart.save'); // Perbaiki nama route
     });
 
     // Produk Guest

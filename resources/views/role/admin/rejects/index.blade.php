@@ -76,7 +76,6 @@
             <tr>
               <th width="50">#</th>
               <th>Nama Barang</th>
-              <th>Asal Item</th>
               <th>Jumlah</th>
               <th>Kondisi</th>
               <th>Deskripsi</th>
@@ -88,7 +87,6 @@
               <tr class="table-row-smooth">
                 <td class="fw-semibold text-secondary">{{ $loop->iteration }}</td>
                 <td class="fw-semibold text-dark">{{ $reject->name }}</td>
-                <td class="text-secondary">{{ $reject->item->name ?? '-' }}</td>
                 <td class="fw-semibold text-dark">{{ $reject->quantity }}</td>
                 <td>
                   @php

@@ -232,7 +232,7 @@
   </div>
 </div>
 
-{{-- MODAL REFUND --}}
+{{-- MODAL REFUND PEGAWAI - FIXED --}}
 <div class="modal fade" id="refundModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg rounded-4">
@@ -252,11 +252,136 @@
           <div class="mb-3">
             <label class="form-label fw-semibold">Jumlah Refund</label>
             <input type="number" name="qty" id="refundQty" class="form-control rounded-3" min="1" required>
+            <small class="text-muted">Maksimal: <span id="maxQty">0</span></small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Kode Barang (Scan)</label>
+            <input type="text" name="code" class="form-control rounded-3" placeholder="Scan barcode barang" required>
           </div>
         </div>
         <div class="modal-footer bg-light">
           <button type="submit" class="btn text-white rounded-pill fw-semibold px-3" style="background-color:#FF9800;">
-            ✅ Proses
+            ✅ Proses Refund
+          </button>
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Batal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{-- MODAL REFUND GUEST --}}
+<div class="modal fade" id="refundModalGuest" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <form action="{{ route('admin.guest.refund') }}" method="POST">
+        @csrf
+        <div class="modal-header text-white" style="background:linear-gradient(90deg, #FF9800, #FFB74D);">
+          <h5 class="modal-title fw-bold"><i class="bi bi-arrow-counterclockwise me-2"></i> Refund Barang Tamu</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="guest_cart_item_id" id="refundGuestCartItemId">
+          <input type="hidden" name="item_id" id="refundGuestItemId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nama Barang</label>
+            <input type="text" class="form-control rounded-3" id="refundGuestItemName" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Jumlah Refund</label>
+            <input type="number" name="qty" id="refundGuestQty" class="form-control rounded-3" min="1" required>
+            <small class="text-muted">Maksimal: <span id="maxGuestQty">0</span></small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Kode Barang (Scan)</label>
+            <input type="text" name="code" class="form-control rounded-3" placeholder="Scan barcode barang" required>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="submit" class="btn text-white rounded-pill fw-semibold px-3" style="background-color:#FF9800;">
+            ✅ Proses Refund
+          </button>
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Batal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{-- MODAL EDIT PEGAWAI --}}
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <form action="{{ route('admin.pegawai.updateItem') }}" method="POST">
+        @csrf
+        <div class="modal-header text-white" style="background:linear-gradient(90deg, #FF9800, #FFB74D);">
+          <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Barang</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="cart_item_id" id="editCartItemId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Pilih Barang</label>
+            <select name="item_id" class="form-select rounded-3" id="editItemId" required>
+              <option value="">-- Pilih Barang --</option>
+              @foreach($items as $item)
+                <option value="{{ $item->id }}" data-code="{{ $item->code }}">{{ $item->name }} ({{ $item->code }})</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Jumlah</label>
+            <input type="number" name="qty" class="form-control rounded-3" id="editQty" min="1" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Kode Barang (Scan)</label>
+            <input type="text" name="code" class="form-control rounded-3" placeholder="Scan barcode barang" required>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="submit" class="btn text-white rounded-pill fw-semibold px-3" style="background-color:#FF9800;">
+            💾 Simpan Perubahan
+          </button>
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Batal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{-- MODAL EDIT GUEST --}}
+<div class="modal fade" id="editModalGuest" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <form action="{{ route('admin.guest.updateItem') }}" method="POST">
+        @csrf
+        <div class="modal-header text-white" style="background:linear-gradient(90deg, #FF9800, #FFB74D);">
+          <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Barang Tamu</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="guest_cart_item_id" id="editGuestCartItemId">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Pilih Barang</label>
+            <select name="item_id" class="form-select rounded-3" id="editGuestItemId" required>
+              <option value="">-- Pilih Barang --</option>
+              @foreach($items as $item)
+                <option value="{{ $item->id }}" data-code="{{ $item->code }}">{{ $item->name }} ({{ $item->code }})</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Jumlah</label>
+            <input type="number" name="qty" class="form-control rounded-3" id="editGuestQty" min="1" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Kode Barang (Scan)</label>
+            <input type="text" name="code" class="form-control rounded-3" placeholder="Scan barcode barang" required>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="submit" class="btn text-white rounded-pill fw-semibold px-3" style="background-color:#FF9800;">
+            💾 Simpan Perubahan
           </button>
           <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Batal</button>
         </div>
@@ -265,6 +390,91 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+// Refund Modal Pegawai
+document.addEventListener('DOMContentLoaded', function() {
+    const refundModal = document.getElementById('refundModal');
+    if (refundModal) {
+        refundModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const cartItemId = button.getAttribute('data-cart-item-id');
+            const itemId = button.getAttribute('data-item-id');
+            const itemName = button.getAttribute('data-item-name');
+            const maxQty = button.getAttribute('data-max-qty');
+
+            document.getElementById('refundCartItemId').value = cartItemId;
+            document.getElementById('refundItemId').value = itemId;
+            document.getElementById('refundItemName').value = itemName;
+            document.getElementById('refundQty').max = maxQty;
+            document.getElementById('refundQty').value = 1;
+            document.getElementById('maxQty').textContent = maxQty;
+        });
+    }
+
+    // Refund Modal Guest
+    const refundModalGuest = document.getElementById('refundModalGuest');
+    if (refundModalGuest) {
+        refundModalGuest.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const cartItemId = button.getAttribute('data-cart-item-id');
+            const itemId = button.getAttribute('data-item-id');
+            const itemName = button.getAttribute('data-item-name');
+            const maxQty = button.getAttribute('data-max-qty');
+
+            document.getElementById('refundGuestCartItemId').value = cartItemId;
+            document.getElementById('refundGuestItemId').value = itemId;
+            document.getElementById('refundGuestItemName').value = itemName;
+            document.getElementById('refundGuestQty').max = maxQty;
+            document.getElementById('refundGuestQty').value = 1;
+            document.getElementById('maxGuestQty').textContent = maxQty;
+        });
+    }
+
+    // Edit Modal Pegawai
+    const editModal = document.getElementById('editModal');
+    if (editModal) {
+        editModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const cartItemId = button.getAttribute('data-cart-item-id');
+            const itemId = button.getAttribute('data-item-id');
+            const qty = button.getAttribute('data-qty');
+
+            document.getElementById('editCartItemId').value = cartItemId;
+            document.getElementById('editItemId').value = itemId;
+            document.getElementById('editQty').value = qty;
+        });
+    }
+
+    // Edit Modal Guest
+    const editModalGuest = document.getElementById('editModalGuest');
+    if (editModalGuest) {
+        editModalGuest.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const guestCartItemId = button.getAttribute('data-guest-cart-item-id');
+            const itemId = button.getAttribute('data-item-id');
+            const qty = button.getAttribute('data-qty');
+
+            document.getElementById('editGuestCartItemId').value = guestCartItemId;
+            document.getElementById('editGuestItemId').value = itemId;
+            document.getElementById('editGuestQty').value = qty;
+        });
+    }
+
+    // Reject Button Handler
+    document.querySelectorAll('.btn-reject').forEach(button => {
+        button.addEventListener('click', function() {
+            const itemCode = this.getAttribute('data-item-code');
+            if (confirm(`Apakah Anda yakin ingin reject barang dengan kode ${itemCode}?`)) {
+                // Implement reject logic here
+                alert('Fitur reject belum diimplementasikan');
+            }
+        });
+    });
+});
+</script>
+@endpush
 
 @push('styles')
 <style>

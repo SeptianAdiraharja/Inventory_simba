@@ -108,28 +108,6 @@
                       <i class="bi bi-eye me-2 text-warning"></i> Lihat Semua Barang
                     </a>
                   </li>
-
-                  @php
-                    $isDisabled = in_array($req->status, ['approved', 'approved_partially', 'rejected']);
-                  @endphp
-
-                  <li>
-                    <a class="dropdown-item approve-all-btn text-success fw-semibold {{ $isDisabled ? 'disabled opacity-50' : '' }}"
-                       href="#"
-                       data-cart-id="{{ $req->cart_id }}"
-                       @if($isDisabled) tabindex="-1" aria-disabled="true" @endif>
-                      <i class="bi bi-check-circle me-2"></i> Setujui Semua
-                    </a>
-                  </li>
-
-                  <li>
-                    <a class="dropdown-item reject-all-btn text-danger fw-semibold {{ $isDisabled ? 'disabled opacity-50' : '' }}"
-                       href="#"
-                       data-cart-id="{{ $req->cart_id }}"
-                       @if($isDisabled) tabindex="-1" aria-disabled="true" @endif>
-                      <i class="bi bi-x-octagon me-2"></i> Tolak Semua
-                    </a>
-                  </li>
                 </ul>
               </div>
             </td>
@@ -142,7 +120,7 @@
                    class="detail-content-wrapper collapse bg-light border-top"
                    data-cart-id="{{ $req->cart_id }}" data-loaded="false">
                 <p class="text-center text-muted m-0 p-3">
-                  Klik “Lihat Semua Barang” untuk membuka detail.
+                  Klik "Lihat Semua Barang" untuk membuka detail.
                 </p>
               </div>
             </td>
