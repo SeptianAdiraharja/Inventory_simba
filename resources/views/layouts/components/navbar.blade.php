@@ -753,16 +753,6 @@ document.addEventListener('DOMContentLoaded', function () {
   color: #aaa;
 }
 .breadcrumb-item a {
-<<<<<<< HEAD
-  color: #6c63ff;
-  transition: color 0.2s;
-}
-.breadcrumb-item a:hover {
-  color: #7d0dfd;
-}
-.breadcrumb-item.active {
-  color: #7d0dfd;
-=======
   color: #FFA500;
   transition: color 0.2s;
 }
@@ -771,13 +761,8 @@ document.addEventListener('DOMContentLoaded', function () {
 }
 .breadcrumb-item.active {
   color: #000000;
->>>>>>> finish_admiin
 }
 
 
 </style>
-<<<<<<< HEAD
 @endpush
-=======
-@endpush
->>>>>>> finish_admiin

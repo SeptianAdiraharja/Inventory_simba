@@ -139,13 +139,17 @@
     {{-- ⚙️ FOOTER AKSI --}}
     {{-- ============================= --}}
     <div class="col-12 mt-3 d-flex justify-content-end gap-2">
-        <button type="button" class="btn btn-outline-secondary cart-detail-cancel-btn">
-            <i class="bi bi-x-circle me-1"></i> Batal
-        </button>
-
         @php
+            // Tombol Batal akan disabled jika semua item sudah diproses (tidak ada yang pending)
+            $allItemsProcessed = !$cartItems->contains('status', 'pending');
             $disableSave = in_array($cart->status, ['approved', 'approved_partially', 'rejected']);
         @endphp
+
+        <button type="button"
+                class="btn btn-outline-secondary cart-detail-cancel-btn {{ $allItemsProcessed ? 'disabled opacity-50' : '' }}"
+                @if($allItemsProcessed) disabled aria-disabled="true" @endif>
+            <i class="bi bi-x-circle me-1"></i> Batal
+        </button>
 
         <button type="button"
                 class="btn btn-primary cart-detail-save-btn {{ $disableSave ? 'disabled opacity-50' : '' }}"
