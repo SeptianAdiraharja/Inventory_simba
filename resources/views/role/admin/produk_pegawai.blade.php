@@ -74,14 +74,39 @@
     border: none;
     box-shadow: 0 10px 20px rgba(255, 152, 0, 0.4);
     transition: all 0.3s ease;
+    position: relative;
   }
   #openCartModal:hover {
     transform: scale(1.1);
     box-shadow: 0 12px 25px rgba(255, 152, 0, 0.5);
   }
-  #openCartModal .badge {
-    background-color: #e53935;
-    box-shadow: 0 0 0 2px #fff;
+
+  /* === PERBAIKAN: Badge di luar border === */
+  .cart-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: linear-gradient(135deg, #e53935, #f44336);
+    color: white;
+    border-radius: 40%;
+    min-width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(229, 57, 53, 0.4);
+    border: 2px solid #ffffff;
+    z-index: 1051;
+    animation: pulse 2s infinite;
+    display: none;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
   }
 
   .modal-content {
@@ -111,6 +136,42 @@
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
   }
+
+  /* === Toast & Snackbar === */
+  #toast-container {
+    z-index: 1060;
+  }
+
+  .snackbar {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 8px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1070;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    font-size: 14px;
+  }
+
+  .snackbar.show {
+    visibility: visible;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  }
+
+  @keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+  }
+
+  @keyframes fadeout {
+    from {bottom: 30px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+  }
 </style>
 
 <!-- 🧭 Breadcrumb -->
@@ -137,19 +198,19 @@
   </div>
 </div>
 
-<!-- 🛒 Floating Cart Button -->
-<button class="btn btn-primary shadow-lg position-fixed rounded-circle d-flex align-items-center justify-content-center"
-  id="openCartModal"
-  data-bs-toggle="modal"
-  data-bs-target="#cartModal"
-  data-pegawai-id="{{ $pegawai->id ?? '' }}"
-  style="bottom:25px; right:25px; width:70px; height:70px; font-size:1.5rem; z-index:1050;">
-  <i class="ri-shopping-cart-2-line"></i>
-  <span class="position-absolute badge rounded-pill" id="cartBadge"
-    style="top:-5px; right:-5px; font-size:0.8rem; padding:6px 8px; display:none;">
-    0
-  </span>
-</button>
+<!-- 🛒 Floating Cart Button - DIPERBAIKI -->
+<div class="position-fixed" style="bottom:25px; right:25px; z-index:1050;">
+  <button class="btn btn-primary shadow-lg rounded-circle d-flex align-items-center justify-content-center"
+    id="openCartModal"
+    data-bs-toggle="modal"
+    data-bs-target="#cartModal"
+    data-pegawai-id="{{ $pegawai->id ?? '' }}"
+    style="width:70px; height:70px; font-size:1.5rem;">
+    <i class="ri-shopping-cart-2-line"></i>
+  </button>
+  <!-- 🆕 Badge berada di luar tombol -->
+  <span class="cart-badge" id="cartBadge">0</span>
+</div>
 
 <!-- 📦 Daftar Produk -->
 <div class="row gy-4 mt-3 animate__animated animate__fadeInUp">

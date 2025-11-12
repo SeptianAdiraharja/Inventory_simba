@@ -87,21 +87,34 @@
 
   /* === Floating Cart === */
   #openCartModal {
-    background: linear-gradient(90deg, #FF9800, #FFB74D);
-    border: none;
-    box-shadow: 0 10px 20px rgba(255, 152, 0, 0.4);
-    transition: all 0.3s ease;
-  }
+  background: linear-gradient(90deg, #FF9800, #FFB74D);
+  border: none;
+  box-shadow: 0 10px 20px rgba(255, 152, 0, 0.4);
+  transition: all 0.3s ease;
+  position: relative; /* penting agar badge bisa diposisikan absolut */
+  overflow: visible;
+}
 
-  #openCartModal:hover {
-    transform: scale(1.1);
-    box-shadow: 0 12px 25px rgba(255, 152, 0, 0.5);
-  }
+#openCartModal:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 25px rgba(255, 152, 0, 0.5);
+}
 
-  #openCartModal .badge {
-    background-color: #e53935;
-    box-shadow: 0 0 0 2px #fff;
-  }
+/* === Badge di luar tombol === */
+#openCartModal .badge {
+  position: absolute;
+  top: -10px;        /* lebih keluar dari tombol */
+  right: -10px;      /* posisikan di luar lingkaran */
+  background-color: #e53935;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 7px;
+  border-radius: 10px;
+  box-shadow: 0 0 0 2px #fff; /* biar ada garis putih di sekeliling */
+  z-index: 10;
+}
+
 
   /* === Modal === */
   .modal-content {
