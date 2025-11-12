@@ -87,14 +87,14 @@
 
                 <div class="p-3 border rounded-3 mb-3 bg-light">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0 fw-semibold text-primary">
+                        <h6 class="mb-0 fw-semibold text-warning">
                             <i class="ri-calendar-line me-2"></i>Pengajuan Minggu Ini
                         </h6>
-                        <span class="fw-bold text-primary">{{ $countThisWeek }}/5 kali</span>
+                        <span class="fw-bold text-warning">{{ $countThisWeek }}/5 kali</span>
                     </div>
 
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar {{ $isLimitReached ? 'bg-danger' : 'bg-primary' }}"
+                        <div class="progress-bar {{ $isLimitReached ? 'bg-danger' : 'bg-warning' }}"
                             role="progressbar"
                             style="width: {{ $progress }}%;"
                             aria-valuenow="{{ $progress }}"
@@ -112,8 +112,8 @@
                     @endif
                 </div>
                 <h4 class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="text-primary">Keranjang</span>
-                    <span class="badge bg-primary rounded-pill">
+                    <span class="text-warning">Keranjang</span>
+                    <span class="badge rounded-pill" style="background-color: #FF7F00; color: #fff;">
                         {{ $cartsitems ? $cartsitems->cartItems->count() : 0 }}
                     </span>
                 </h4>
@@ -182,7 +182,7 @@
                         </form>
                     @endif
                 @else
-                    <a href="{{ route('pegawai.produk') }}" class="w-100 btn btn-outline-primary btn-lg">
+                    <a href="{{ route('pegawai.produk') }}" class="w-100 btn btn-outline-warning btn-lg">
                         Lanjutkan Belanja
                     </a>
                 @endif
@@ -308,7 +308,7 @@
                 </div>
                 <h4 class="d-flex justify-content-between align-items-center mb-3">
                     <span class="text-primary">Keranjang</span>
-                    <span class="badge bg-primary rounded-pill">
+                    <span class="badge bg-warning rounded-pill">
                         {{ $cartsitems ? $cartsitems->cartItems->count() : 0 }}
                     </span>
                 </h4>
@@ -506,7 +506,6 @@
                             <button type="submit" style="display: none;"></button>
                         </form>
                     </div>
-
                     @if(Auth::user()->role === 'admin' && (request()->is('admin/pegawai/*/produk') || request()->is('admin/request*') || request()->is('admin/itemout*') || request()->is('admin/pegawai*') || request()->is('admin/transaksi*') || request()->is('admin/rejects*')))
                         <script>
                             document.addEventListener('DOMContentLoaded', function() {
@@ -691,7 +690,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             Swal.fire({
                 title: 'Konfirmasi!',
-                text: `Yakin ingin menghapus item "${itemName}" dari keranjang?`,
+                text: Yakin ingin menghapus item "${itemName}" dari keranjang?,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Ya, hapus!',
@@ -754,6 +753,7 @@ document.addEventListener('DOMContentLoaded', function () {
   color: #aaa;
 }
 .breadcrumb-item a {
+<<<<<<< HEAD
   color: #6c63ff;
   transition: color 0.2s;
 }
@@ -762,8 +762,22 @@ document.addEventListener('DOMContentLoaded', function () {
 }
 .breadcrumb-item.active {
   color: #7d0dfd;
+=======
+  color: #FFA500;
+  transition: color 0.2s;
+}
+.breadcrumb-item a:hover {
+  color: #FF7F00;
+}
+.breadcrumb-item.active {
+  color: #000000;
+>>>>>>> finish_admiin
 }
 
 
 </style>
+<<<<<<< HEAD
 @endpush
+=======
+@endpush
+>>>>>>> finish_admiin

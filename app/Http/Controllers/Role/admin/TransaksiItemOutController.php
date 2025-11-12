@@ -72,40 +72,45 @@ class TransaksiItemOutController extends Controller
     /**
      * 🔹 Proses Refund Barang
      */
+    /**
+ * 🔹 Proses Refund Barang - VERSI FIXED
+ */
     public function refundBarang(Request $request)
     {
         $request->validate([
             'cart_item_id' => 'required|exists:cart_items,id',
             'item_id' => 'required|exists:items,id',
-            'code' => 'required|string',
             'qty' => 'required|integer|min:1',
+            'code' => 'required|string',
         ]);
 
         DB::beginTransaction();
         try {
+<<<<<<< HEAD
             // Ambil cart item yang benar
             $cartItem = CartItem::with('item')->findOrFail($request->cart_item_id);
+=======
+            // Ambil cart item
+            $cartItem = CartItem::with(['item', 'cart'])->findOrFail($request->cart_item_id);
+>>>>>>> finish_admiin
 
-            // Cek bahwa cartItem terkait dengan item_id yang dikirim
+            // Validasi item_id match
             if ($cartItem->item_id != $request->item_id) {
                 return back()->with('error', 'Data cart item tidak cocok dengan barang yang dipilih.');
             }
 
-            // Cari Item berdasarkan code (hasil scan)
+            // Validasi code
             $scannedItem = Item::where('code', $request->code)->first();
             if (!$scannedItem) {
-                return back()->with('error', 'Code tidak ditemukan di database.');
+                return back()->with('error', 'Kode barang tidak ditemukan.');
+            }
+            if ($scannedItem->id != $request->item_id) {
+                return back()->with('error', 'Kode barang tidak cocok dengan item yang dipilih.');
             }
 
-            // Pastikan scanned item sama dengan item yang ada di cart item
-            if ($scannedItem->id != $cartItem->item_id) {
-                return back()->with('error', 'Code tidak cocok dengan barang pada cart.');
-            }
-
-            $cartId = $cartItem->cart_id;
-            $itemId = $cartItem->item_id;
             $refundQty = (int) $request->qty;
 
+<<<<<<< HEAD
             // Validasi jumlah refund
             if ($refundQty > $cartItem->quantity) {
                 return back()->with('error', 'Jumlah refund melebihi jumlah pada cart.');
@@ -130,32 +135,53 @@ class TransaksiItemOutController extends Controller
             $itemOut->save();
 
             // Kurangi quantity di cart_item
+=======
+            // Validasi quantity
+            if ($refundQty > $cartItem->quantity) {
+                return back()->with('error', 'Jumlah refund melebihi jumlah barang pada cart.');
+            }
+
+            // Update cart item quantity
+>>>>>>> finish_admiin
             $cartItem->quantity -= $refundQty;
+
             if ($cartItem->quantity <= 0) {
                 $cartItem->quantity = 0;
                 $cartItem->status = 'refunded';
             }
             $cartItem->save();
 
-            // Tambahkan kembali stok item
+            // Update item stock
             $scannedItem->increment('stock', $refundQty);
 
-            // Jika semua item di cart sudah refunded, ubah status cart
-            $remainingItems = CartItem::where('cart_id', $cartId)
-                ->where(function ($q) {
-                    $q->whereNull('status')->orWhere('status', '!=', 'refunded');
-                })
+            // Update item_out record
+            $itemOut = Item_out::where('cart_id', $cartItem->cart_id)
+                ->where('item_id', $cartItem->item_id)
+                ->first();
+
+            if ($itemOut) {
+                $itemOut->quantity -= $refundQty;
+                if ($itemOut->quantity <= 0) {
+                    $itemOut->delete();
+                } else {
+                    $itemOut->save();
+                }
+            }
+
+            // Check if all items in cart are refunded
+            $remainingItems = CartItem::where('cart_id', $cartItem->cart_id)
+                ->where('quantity', '>', 0)
                 ->count();
 
             if ($remainingItems == 0) {
-                Cart::where('id', $cartId)->update(['status' => 'refunded']);
+                Cart::where('id', $cartItem->cart_id)->update(['status' => 'refunded']);
             }
 
             DB::commit();
             return back()->with('success', 'Refund berhasil. Stok barang dikembalikan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Refund error: ' . $e->getMessage() . ' -- trace: ' . $e->getTraceAsString());
+            Log::error('Refund error: ' . $e->getMessage());
             return back()->with('error', 'Refund gagal: ' . $e->getMessage());
         }
     }

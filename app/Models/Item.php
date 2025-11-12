@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Milon\Barcode\DNS1D;
+use Carbon\Carbon;
 
 class Item extends Model
 {
@@ -24,7 +25,10 @@ class Item extends Model
         'expired_at' => 'datetime',
     ];
 
-    // === Relasi ===
+    /* ===========================
+       🔗 RELASI ANTAR MODEL
+    ============================ */
+
     public function cartItems()
     {
         return $this->hasMany(CartItem::class, 'item_id');
@@ -72,7 +76,25 @@ class Item extends Model
         return $this->belongsTo(Supplier::class);
     }
 
-    // === Accessor / Helper ===
+    // 🧩 Relasi tambahan agar bisa ambil supplier melalui Item_in
+    public function suppliersThroughIn()
+    {
+        return $this->hasManyThrough(
+            Supplier::class,
+            Item_in::class,
+            'item_id',     // Foreign key di Item_in
+            'id',          // Foreign key di Supplier
+            'id',          // Local key di Item
+            'supplier_id'  // Local key di Item_in
+        );
+    }
+
+
+    /* ===========================
+       📊 AKSESOR & HELPER FIELD
+    ============================ */
+
+    // Jumlah expired & non-expired (semua supplier)
     public function getExpiredCountAttribute()
     {
         return $this->itemIns->where('expired_at', '<', now())->sum('quantity');
@@ -81,6 +103,23 @@ class Item extends Model
     public function getNonExpiredCountAttribute()
     {
         return $this->itemIns->where('expired_at', '>=', now())->sum('quantity');
+    }
+
+    // Jumlah expired & non-expired (berdasarkan supplier)
+    public function expiredCountBySupplier($supplierId)
+    {
+        return $this->itemIns
+            ->where('supplier_id', $supplierId)
+            ->where('expired_at', '<', now())
+            ->sum('quantity');
+    }
+
+    public function nonExpiredCountBySupplier($supplierId)
+    {
+        return $this->itemIns
+            ->where('supplier_id', $supplierId)
+            ->where('expired_at', '>=', now())
+            ->sum('quantity');
     }
 
     public function getPriceRupiahAttribute()
@@ -97,7 +136,6 @@ class Item extends Model
     {
         $dns1d = new DNS1D();
         $png = $dns1d->getBarcodePNG($this->code, 'C128', 2, 60);
-
         return 'data:image/png;base64,' . $png;
     }
 
@@ -109,7 +147,9 @@ class Item extends Model
         return $this->expired_at->isFuture() ? 'no expired' : 'expired';
     }
 
-    // === Auto Generate Code ===
+    /* ===========================
+       ⚙️ AUTO GENERATE KODE BARANG
+    ============================ */
     protected static function boot()
     {
         parent::boot();
@@ -140,7 +180,9 @@ class Item extends Model
         return "{$categoryCode}-{$formattedNumber}-{$randomNumber}";
     }
 
-    // === Guest cart ===
+    /* ===========================
+       🛒 GUEST CART RELATIONS
+    ============================ */
     public function guestCartItems()
     {
         return $this->hasMany(Guest_carts_item::class, 'item_id');

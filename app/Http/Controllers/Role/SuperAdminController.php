@@ -84,10 +84,11 @@ class SuperAdminController extends Controller
          * 🔹 BARANG HAMPIR KEDALUARSA
          * ============================
          */
-        
+
         $expiredSoon = Item_in::whereNotNull('expired_at')
-            ->whereBetween('expired_at', [Carbon::now(), Carbon::now()->addDays(30)])
-            ->with('item')
+            ->whereBetween('expired_at', [Carbon::now(), Carbon::now()->addDays(10)])
+            ->with(['item', 'supplier'])
+            ->orderBy('expired_at', 'asc')
             ->get();
 
         /**

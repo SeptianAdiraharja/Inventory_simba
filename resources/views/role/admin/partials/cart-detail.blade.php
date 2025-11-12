@@ -4,35 +4,58 @@
     {{-- 🧾 HEADER PERMINTAAN --}}
     {{-- ============================= --}}
     <div class="col-12 mb-3">
-        <h5 class="fw-bold mb-1">
-            Permintaan #{{ $cart->id }} — {{ $cart->user_name }}
-        </h5>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="fw-bold mb-1">
+                    Permintaan #{{ $cart->id }} — {{ $cart->user_name }}
+                </h5>
 
-        <p class="text-muted small mb-1">
-            Status Cart Utama:
-            <span id="main-status-{{ $cart->id }}"
-                  class="badge
-                      @if($cart->status == 'pending') bg-warning text-dark
-                      @elseif($cart->status == 'rejected') bg-danger
-                      @elseif($cart->status == 'approved') bg-success
-                      @elseif($cart->status == 'approved_partially') bg-warning text-dark
-                      @endif">
-                {{ ucfirst(str_replace('_', ' ', $cart->status)) }}
-            </span>
-        </p>
+                <p class="text-muted small mb-1">
+                    Status Cart Utama:
+                    <span id="main-status-{{ $cart->id }}"
+                          class="badge
+                              @if($cart->status == 'pending') bg-warning text-dark
+                              @elseif($cart->status == 'rejected') bg-danger
+                              @elseif($cart->status == 'approved') bg-success
+                              @elseif($cart->status == 'approved_partially') bg-warning text-dark
+                              @endif">
+                        {{ ucfirst(str_replace('_', ' ', $cart->status)) }}
+                    </span>
+                </p>
 
-        <p class="text-muted small mb-0">
-            Status Pemrosesan Item:
-            <span class="fw-semibold">
-                @if($scan_status == 'Selesai')
-                    <i class="bi bi-check-all text-success me-1"></i> Selesai (Semua item telah diproses)
-                @elseif($scan_status == 'Sebagian')
-                    <i class="bi bi-hourglass-split text-warning me-1"></i> Sebagian diproses
-                @else
-                    <i class="bi bi-x-circle text-danger me-1"></i> Belum diproses
-                @endif
-            </span>
-        </p>
+                <p class="text-muted small mb-0">
+                    Status Pemrosesan Item:
+                    <span class="fw-semibold">
+                        @if($scan_status == 'Selesai')
+                            <i class="bi bi-check-all text-success me-1"></i> Selesai (Semua item telah diproses)
+                        @elseif($scan_status == 'Sebagian')
+                            <i class="bi bi-hourglass-split text-warning me-1"></i> Sebagian diproses
+                        @else
+                            <i class="bi bi-x-circle text-danger me-1"></i> Belum diproses
+                        @endif
+                    </span>
+                </p>
+            </div>
+
+            {{-- TOMBOL SETUJUI SEMUA & TOLAK SEMUA --}}
+            <div class="d-flex gap-2">
+                @php
+                    $isDisabled = in_array($cart->status, ['approved', 'approved_partially', 'rejected']);
+                @endphp
+
+                <button class="btn btn-success btn-sm approve-all-btn {{ $isDisabled ? 'disabled opacity-50' : '' }}"
+                        data-cart-id="{{ $cart->id }}"
+                        @if($isDisabled) disabled aria-disabled="true" @endif>
+                    <i class="bi bi-check-circle me-1"></i> Setujui Semua
+                </button>
+
+                <button class="btn btn-outline-danger btn-sm reject-all-btn {{ $isDisabled ? 'disabled opacity-50' : '' }}"
+                        data-cart-id="{{ $cart->id }}"
+                        @if($isDisabled) disabled aria-disabled="true" @endif>
+                    <i class="bi bi-x-octagon me-1"></i> Tolak Semua
+                </button>
+            </div>
+        </div>
     </div>
 
     {{-- ============================= --}}

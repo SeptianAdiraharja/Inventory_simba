@@ -4,17 +4,18 @@
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
   {{-- ======================== --}}
-  {{-- 🧭 BREADCRUMB MODERN --}}
+  {{-- 🧭 BREADCRUMB ORANYE --}}
   {{-- ======================== --}}
   <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 animate__animated animate__fadeInDown smooth-fade">
     <div class="d-flex align-items-center gap-2">
-      <div class="breadcrumb-icon bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-circle" style="width:38px;height:38px;">
+      <div class="breadcrumb-icon d-flex align-items-center justify-content-center rounded-circle"
+           style="width:38px;height:38px;background:#FFF3E0;color:#FF9800;">
         <i class="bi bi-house-door-fill fs-5"></i>
       </div>
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0 align-items-center">
           <li class="breadcrumb-item">
-            <a href="{{ route('dashboard') }}" class="text-decoration-none text-primary fw-semibold">
+            <a href="{{ route('dashboard') }}" class="text-decoration-none fw-semibold" style="color:#FF9800;">
               Dashboard
             </a>
           </li>
@@ -35,9 +36,9 @@
   {{-- ======================== --}}
   {{-- 📦 KONTEN UTAMA --}}
   {{-- ======================== --}}
-  <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+  <div class="card shadow-lg border-0 rounded-4 overflow-hidden animate__animated animate__fadeInUp">
     <div class="card-body bg-light">
-      <h4 class="fw-bold mb-4 text-primary">
+      <h4 class="fw-bold mb-4" style="color:#FF9800;">
         <i class="bi bi-box-arrow-up"></i> Export Data Barang Keluar
       </h4>
 
@@ -50,14 +51,15 @@
           <form method="GET" action="{{ route('admin.export.out') }}" id="filter-form" class="row g-3 align-items-end">
             <div class="col-md-3">
               <label class="form-label fw-semibold">Tanggal Mulai</label>
-              <input type="date" name="start_date" value="{{ $startDate ?? '' }}" class="form-control shadow-sm rounded-3" required>
+              <input type="date" name="start_date" value="{{ $startDate ?? '' }}" class="form-control shadow-sm rounded-3 border-warning" required>
             </div>
             <div class="col-md-3">
               <label class="form-label fw-semibold">Tanggal Akhir</label>
-              <input type="date" name="end_date" value="{{ $endDate ?? '' }}" class="form-control shadow-sm rounded-3" required>
+              <input type="date" name="end_date" value="{{ $endDate ?? '' }}" class="form-control shadow-sm rounded-3 border-warning" required>
             </div>
             <div class="col-md-3">
-              <button type="submit" class="btn btn-primary w-100 rounded-3 fw-semibold shadow-sm">
+              <button type="submit" class="btn text-white w-100 rounded-3 fw-semibold shadow-sm"
+                      style="background-color:#FF9800;">
                 <i class="bi bi-search"></i> Tampilkan
               </button>
             </div>
@@ -76,20 +78,22 @@
             </h6>
             <div>
               <a href="{{ route('admin.barang_keluar.excel', ['start_date' => $startDate, 'end_date' => $endDate]) }}"
-                 class="btn btn-success btn-sm rounded-3 shadow-sm me-2" target="_blank">
+                 class="btn text-white btn-sm rounded-3 shadow-sm me-2"
+                 style="background-color:#4CAF50;" target="_blank">
                 <i class="bi bi-file-earmark-excel"></i> Excel
               </a>
               <a href="{{ route('admin.barang_keluar.pdf', ['start_date' => $startDate, 'end_date' => $endDate]) }}"
-                 class="btn btn-primary btn-sm rounded-3 shadow-sm" target="_blank">
+                 class="btn text-white btn-sm rounded-3 shadow-sm"
+                 style="background-color:#FF9800;" target="_blank">
                 <i class="bi bi-file-earmark-pdf"></i> PDF
               </a>
             </div>
           </div>
 
           <div class="table-responsive">
-            <table class="table table-bordered align-middle text-center mb-0">
-              <thead class="table-primary">
-                <tr>
+            <table class="table table-bordered align-middle text-center mb-0 table-hover">
+              <thead style="background:#FFF3E0;" class="fw-semibold">
+                <tr class="text-secondary">
                   <th>NO</th>
                   <th>NAMA BARANG</th>
                   <th>JUMLAH</th>
@@ -100,9 +104,9 @@
               <tbody>
                 @foreach ($items as $i => $itemOut)
                 <tr>
-                  <td class="fw-semibold text-secondary">{{ $i + 1 }}</td>
+                  <td class="fw-semibold text-muted">{{ $i + 1 }}</td>
                   <td class="fw-semibold text-dark">{{ $itemOut->item->name ?? 'Barang Dihapus' }}</td>
-                  <td class="text-primary fw-bold">{{ $itemOut->quantity }}</td>
+                  <td class="fw-bold text-warning">{{ $itemOut->quantity }}</td>
                   <td>{{ \Carbon\Carbon::parse($itemOut->released_at ?? $itemOut->created_at)->format('d-m-Y H:i') }}</td>
                   <td>{{ $itemOut->cart->user->name ?? 'Tamu/Non-User' }}</td>
                 </tr>
@@ -113,8 +117,8 @@
         </div>
       </div>
       @elseif(request()->has('start_date') && request()->has('end_date'))
-      <div class="alert alert-warning rounded-4 shadow-sm p-3 text-center fw-semibold animate__animated animate__fadeIn">
-        <i class="bi bi-exclamation-circle"></i> Tidak ada data barang keluar pada rentang tanggal tersebut.
+      <div class="alert alert-warning border-0 rounded-4 shadow-sm p-3 text-center fw-semibold animate__animated animate__fadeIn">
+        <i class="bi bi-exclamation-circle me-1"></i> Tidak ada data barang keluar pada rentang tanggal tersebut.
       </div>
       @endif
 
@@ -127,15 +131,15 @@
             </h6>
             <form action="{{ route('admin.export.out.clear') }}" method="POST">
               @csrf
-              <button type="submit" class="btn btn-danger btn-sm rounded-3 shadow-sm">
+              <button type="submit" class="btn text-white btn-sm rounded-3 shadow-sm" style="background-color:#F44336;">
                 <i class="bi bi-trash"></i> Bersihkan Riwayat
               </button>
             </form>
           </div>
 
           <div class="table-responsive">
-            <table class="table align-middle table-bordered text-center mb-0">
-              <thead class="table-light">
+            <table class="table align-middle table-bordered text-center mb-0 table-hover">
+              <thead style="background:#FFF8E1;" class="fw-semibold text-secondary">
                 <tr>
                   <th>NO</th>
                   <th>FORMAT</th>
@@ -147,7 +151,7 @@
                 @forelse ($exports as $index => $export)
                 <tr>
                   <td>{{ $index + 1 }}</td>
-                  <td><span class="badge bg-primary px-3 py-2">{{ strtoupper($export->format) }}</span></td>
+                  <td><span class="badge text-white px-3 py-2" style="background-color:#FF9800;">{{ strtoupper($export->format) }}</span></td>
                   <td class="fw-medium text-dark">{{ $export->filename }}</td>
                   <td class="text-muted">{{ \Carbon\Carbon::parse($export->created_at)->format('d/m/Y H:i') }}</td>
                 </tr>
@@ -172,52 +176,40 @@
 
 @push('styles')
 <style>
-  body {
-    background-color: #f4f6f9;
-  }
+  body { background-color: #fffaf4; }
 
   .breadcrumb-item + .breadcrumb-item::before {
     content: "›";
-    color: #6c757d;
+    color: #ffb74d;
     margin: 0 6px;
   }
 
-  .smooth-fade {
-    animation: smoothFade 0.8s ease;
+  .breadcrumb-icon { transition: 0.3s ease; }
+  .breadcrumb-icon:hover {
+    transform: scale(1.1);
+    background-color: #ffecb3;
   }
 
+  .smooth-fade { animation: smoothFade 0.8s ease; }
   @keyframes smoothFade {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .breadcrumb-icon {
-    transition: 0.3s ease;
-  }
-
-  .breadcrumb-icon:hover {
-    transform: scale(1.1);
-    background-color: #e8f0fe;
-  }
-
   .table-hover tbody tr:hover {
-    background-color: #f0f8ff;
-    transition: 0.2s ease;
-  }
-
-  .btn {
-    transition: 0.2s ease;
+    background-color: #fff3e0 !important;
+    transition: 0.25s ease;
   }
 
   .btn:hover {
-    opacity: 0.9;
+    transform: scale(1.03);
+    transition: 0.2s ease-in-out;
   }
 
-  @media (max-width: 768px) {
-    .breadcrumb-extra { display: none; }
-    h4.fw-bold { font-size: 1.1rem; }
-    table { font-size: 0.9rem; }
-    .btn-sm { padding: 0.35rem 0.75rem; }
+  @media (max-width:768px){
+    .breadcrumb-extra{display:none;}
+    h4{font-size:1.1rem;}
+    table{font-size:0.9rem;}
   }
 </style>
 @endpush

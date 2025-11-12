@@ -13,34 +13,64 @@ class Item_inController extends Controller
 {
     public function index(Request $request)
     {
+        // ==============================
+        // 🔍 BASE QUERY
+        // ==============================
         $query = Item_in::with(['item', 'supplier', 'creator']);
 
+        // ==============================
+        // 📅 FILTER TANGGAL
+        // ==============================
         if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            $query->whereBetween('created_at', [
+                $request->start_date . ' 00:00:00',
+                $request->end_date . ' 23:59:59'
+            ]);
+        } elseif ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        } elseif ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
         }
 
+        // ==============================
+        // 🔎 FILTER PENCARIAN
+        // ==============================
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->whereHas('item', fn($sub) => $sub->where('name', 'like', "%{$search}%"))
-                ->orWhereHas('supplier', fn($sub) => $sub->where('name', 'like', "%{$search}%"));
+                $q->whereHas('item', fn($sub) =>
+                    $sub->where('name', 'like', "%{$search}%")
+                )
+                ->orWhereHas('supplier', fn($sub) =>
+                    $sub->where('name', 'like', "%{$search}%")
+                );
             });
         }
 
-        $perPage = $request->get('per_page', 10);
-        $items_in = $query->latest()->paginate($perPage);
-
-        if ($sort = $request->sort_stock) {
-        $query->orderBy('quantity', $sort);
+        // ==============================
+        // ⚖️ SORTING (URUTKAN BERDASARKAN STOK)
+        // ==============================
+        if ($request->filled('sort_stock')) {
+            $query->orderBy('quantity', $request->sort_stock);
         } else {
-            $query->latest(); // default urut terbaru
+            $query->latest();
         }
 
-        $items_in = $query->get();
+        // ==============================
+        // 📄 PAGINATION
+        // ==============================
+        $perPage = $request->get('per_page', 10);
+        $items_in = $query->paginate($perPage)->withQueryString();
 
+        // ==============================
+        // 🔁 RETURN VIEW
+        // ==============================
         return view('role.super_admin.item_ins.index', compact('items_in'));
     }
 
+    // =======================================================
+    // ➕ CREATE
+    // =======================================================
     public function create()
     {
         $items = Item::all();
@@ -48,6 +78,9 @@ class Item_inController extends Controller
         return view('role.super_admin.item_ins.create', compact('items', 'suppliers'));
     }
 
+    // =======================================================
+    // 💾 STORE
+    // =======================================================
     public function store(Request $request)
     {
         $request->validate([
@@ -65,6 +98,7 @@ class Item_inController extends Controller
             'created_by'  => Auth::id(),
         ]);
 
+        // Update stok barang
         $item = Item::findOrFail($request->item_id);
         $item->stock += $request->quantity;
         $item->save();
@@ -73,6 +107,9 @@ class Item_inController extends Controller
             ->with('success', 'Data berhasil ditambahkan & stok diperbarui');
     }
 
+    // =======================================================
+    // ✏️ EDIT
+    // =======================================================
     public function edit(Item_in $item_in)
     {
         $items = Item::all();
@@ -80,6 +117,9 @@ class Item_inController extends Controller
         return view('role.super_admin.item_ins.edit', compact('item_in', 'items', 'suppliers'));
     }
 
+    // =======================================================
+    // 🔁 UPDATE
+    // =======================================================
     public function update(Request $request, Item_in $item_in)
     {
         $request->validate([
@@ -90,9 +130,9 @@ class Item_inController extends Controller
         ]);
 
         $oldItemId = $item_in->item_id;
-        $oldQty    = $item_in->quantity;
+        $oldQty = $item_in->quantity;
 
-        // Update stok
+        // Update stok jika item berubah
         if ($oldItemId != $request->item_id) {
             $oldItem = Item::findOrFail($oldItemId);
             $oldItem->stock -= $oldQty;
@@ -108,21 +148,20 @@ class Item_inController extends Controller
             $item->save();
         }
 
-        $expiredAt = $request->has('expired_at') && $request->expired_at ? $request->expired_at : null;
-
         $item_in->update([
             'item_id'     => $request->item_id,
             'quantity'    => $request->quantity,
             'supplier_id' => $request->supplier_id,
-            'expired_at'  => $expiredAt, 
+            'expired_at'  => $request->expired_at,
         ]);
-
 
         return redirect()->route('super_admin.item_ins.index')
             ->with('success', 'Data berhasil diupdate & stok diperbarui');
     }
 
-
+    // =======================================================
+    // ❌ DESTROY
+    // =======================================================
     public function destroy(Item_in $item_in)
     {
         $item = Item::findOrFail($item_in->item_id);

@@ -23,8 +23,6 @@
                 <p class="mb-0">Keranjang kamu kosong.</p>
                 <small class="text-secondary">Tambahkan produk untuk melanjutkan pengajuan.</small>
             </div>
-
-        {{-- Jika keranjang berisi item --}}
         @else
             @php
                 $isLimitReached = $countThisWeek >= 5;
@@ -42,14 +40,12 @@
 
                 {{-- Progress Bar --}}
                 <div class="progress" style="height: 8px;">
-                    <div class="progress-bar
-                        {{ $isLimitReached ? 'bg-danger' : 'bg-primary' }}"
-                        role="progressbar"
-                        style="width: {{ $progress }}%;"
-                        aria-valuenow="{{ $progress }}"
-                        aria-valuemin="0"
-                        aria-valuemax="100">
-                    </div>
+                    <div class="progress-bar {{ $isLimitReached ? 'bg-danger' : 'bg-primary' }}"
+                         role="progressbar"
+                         style="width: {{ $progress }}%;"
+                         aria-valuenow="{{ $progress }}"
+                         aria-valuemin="0"
+                         aria-valuemax="100"></div>
                 </div>
 
                 {{-- Pesan peringatan --}}
@@ -67,28 +63,51 @@
                 <thead class="table">
                     <tr>
                         <th>Produk</th>
-                        <th class="text-center" style="width: 15%;">Jumlah</th>
+                        <th class="text-center" style="width: 20%;">Jumlah</th>
                         <th class="text-center" style="width: 10%;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($cart->cartItems as $item)
-                        <tr>
+                        <tr data-item-id="{{ $item->id }}">
                             <td>
                                 <div class="d-flex align-items-center">
                                     <img src="{{ asset('storage/' . $item->item->image) }}"
-                                        class="rounded me-3 shadow-sm"
-                                        style="width: 55px; height: 55px; object-fit: cover;"
-                                        alt="{{ $item->item->name }}">
+                                         class="rounded me-3 shadow-sm"
+                                         style="width: 55px; height: 55px; object-fit: cover;"
+                                         alt="{{ $item->item->name }}">
                                     <div>
                                         <h6 class="mb-0 text-truncate">{{ $item->item->name }}</h6>
-                                        <small class="text-muted">
-                                            Kategori: {{ $item->item->category->name ?? '-' }}
-                                        </small>
+                                        <small class="text-muted">Kategori: {{ $item->item->category->name ?? '-' }}</small>
                                     </div>
                                 </div>
                             </td>
-                            <td class="text-center fw-semibold">{{ $item->quantity }}</td>
+
+                            {{-- Input jumlah --}}
+                            <td class="text-center">
+                                <div class="d-inline-flex align-items-center gap-2 position-relative">
+                                    <button class="btn btn-sm btn-outline-secondary btn-minus" data-id="{{ $item->id }}">
+                                        <i class="ri-subtract-line"></i>
+                                    </button>
+
+                                    <input type="number"
+                                           class="form-control text-center quantity-input"
+                                           value="{{ $item->quantity }}"
+                                           min="1"
+                                           style="width: 70px;"
+                                           data-id="{{ $item->id }}">
+
+                                    <button class="btn btn-sm btn-outline-secondary btn-plus" data-id="{{ $item->id }}">
+                                        <i class="ri-add-line"></i>
+                                    </button>
+
+                                    {{-- Centang --}}
+                                    <i class="ri-check-line text-success fs-5 position-absolute checkmark"
+                                       style="right:-20px; opacity:0; transition:0.3s;"></i>
+                                </div>
+                            </td>
+
+                            {{-- Aksi hapus --}}
                             <td class="text-center">
                                 <form action="{{ route('pegawai.cart.destroy', $item->id) }}" method="POST" class="d-inline">
                                     @csrf
@@ -131,5 +150,77 @@
         background-color: #f8f9fa;
         transition: background-color 0.2s ease;
     }
+
+    .quantity-input {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 0.3rem;
+    }
+
+    .quantity-input:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 2px rgba(78,115,223,0.15);
+    }
+
+    .btn-minus, .btn-plus {
+        border-radius: 8px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-minus:hover, .btn-plus:hover {
+        background-color: #e7f1ff;
+        color: #0d6efd;
+    }
+
+    .checkmark.active {
+        opacity: 1 !important;
+        transform: scale(1.1);
+    }
 </style>
+
+{{-- Script interaksi tambah/kurang jumlah (REALTIME) --}}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = '{{ csrf_token() }}';
+
+    document.querySelectorAll('.btn-plus, .btn-minus').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const input = document.querySelector(`.quantity-input[data-id="${id}"]`);
+            const checkmark = this.parentElement.querySelector('.checkmark');
+            let value = parseInt(input.value);
+
+            if (this.classList.contains('btn-plus')) value++;
+            if (this.classList.contains('btn-minus') && value > 1) value--;
+
+            input.value = value;
+
+            // animasi centang
+            checkmark.classList.add('active');
+            setTimeout(() => checkmark.classList.remove('active'), 700);
+
+            // === AJAX Update ke Server ===
+            fetch(`/pegawai/cart/update/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ quantity: value })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) {
+                    alert('Gagal memperbarui jumlah.');
+                }
+            })
+            .catch(err => console.error(err));
+        });
+    });
+});
+</script>
 @endsection

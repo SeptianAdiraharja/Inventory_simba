@@ -220,31 +220,36 @@
     transition: 0.3s ease;
   }
 
-  /* === BUTTON ORANGE THEME === */
+  /* === BUTTON ORANGE THEME (Updated) === */
   .btn-orange-active {
     background-color: #FF9800 !important;
     color: #fff !important;
-    border: 1px solid #FF9800 !important;
-    box-shadow: 0 2px 6px rgba(255, 152, 0, 0.3);
-    transition: 0.3s ease;
+    border: 2px solid #FB8C00 !important;
+    box-shadow: 0 0 10px rgba(255, 152, 0, 0.4), inset 0 0 4px rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    font-weight: 600;
+    transform: scale(1.05);
+    transition: all 0.25s ease-in-out;
   }
   .btn-orange-active:hover,
   .btn-orange-active:focus {
-    background-color: #FB8C00 !important;
-    color: #fff !important;
+    background-color: #F57C00 !important;
+    box-shadow: 0 0 14px rgba(255, 152, 0, 0.6);
+    transform: scale(1.07);
   }
 
   .btn-outline-orange {
     border: 1px solid #FF9800 !important;
     color: #FF9800 !important;
     background-color: #fff !important;
-    transition: 0.3s ease;
+    border-radius: 10px;
+    transition: all 0.25s ease-in-out;
   }
   .btn-outline-orange:hover,
-  .btn-outline-orange:focus,
-  .btn-outline-orange.active {
+  .btn-outline-orange:focus {
     background-color: #FF9800 !important;
     color: #fff !important;
+    box-shadow: 0 0 10px rgba(255, 152, 0, 0.4);
   }
 
   /* RESPONSIVE */
