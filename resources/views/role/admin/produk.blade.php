@@ -91,6 +91,7 @@
     border: none;
     box-shadow: 0 10px 20px rgba(255, 152, 0, 0.4);
     transition: all 0.3s ease;
+    
   }
 
   #openCartModal:hover {
