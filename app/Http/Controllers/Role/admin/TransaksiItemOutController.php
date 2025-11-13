@@ -86,9 +86,6 @@ class TransaksiItemOutController extends Controller
 
         DB::beginTransaction();
         try {
-            // Ambil cart item yang benar
-            $cartItem = CartItem::with('item')->findOrFail($request->cart_item_id);
-
             // Ambil cart item
             $cartItem = CartItem::with(['item', 'cart'])->findOrFail($request->cart_item_id);
 
@@ -108,39 +105,13 @@ class TransaksiItemOutController extends Controller
 
             $refundQty = (int) $request->qty;
 
-
-            // Validasi jumlah refund
-            if ($refundQty > $cartItem->quantity) {
-                return back()->with('error', 'Jumlah refund melebihi jumlah pada cart.');
-            }
-
-            // Cari Item_out terkait
-            $itemOut = Item_out::where('cart_id', $cartId)
-                ->where('item_id', $itemId)
-                ->orderByDesc('created_at')
-                ->first();
-
-            if (!$itemOut) {
-                return back()->with('error', 'Data transaksi barang keluar tidak ditemukan untuk cart ini.');
-            }
-
-            if ($refundQty > $itemOut->quantity) {
-                return back()->with('error', 'Jumlah refund melebihi jumlah barang yang tercatat di transaksi keluar.');
-            }
-
-            // Kurangi quantity di item_out
-            $itemOut->quantity -= $refundQty;
-            $itemOut->save();
-
-            // Kurangi quantity di cart_item
-
             // Validasi quantity
             if ($refundQty > $cartItem->quantity) {
                 return back()->with('error', 'Jumlah refund melebihi jumlah barang pada cart.');
             }
 
             // Update cart item quantity
-             $cartItem->quantity -= $refundQty;
+            $cartItem->quantity -= $refundQty;
 
             if ($cartItem->quantity <= 0) {
                 $cartItem->quantity = 0;

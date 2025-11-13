@@ -297,8 +297,11 @@
         </table>
       </div>
       <div class="modal-footer">
-        <form id="releaseForm" method="POST">@csrf
-          <button type="submit" class="btn btn-success"><i class="ri-send-plane-line me-1"></i> Keluarkan Semua</button>
+        <form id="releaseForm" action="{{ route('admin.produk.release', $guest->id ?? 0) }}" method="POST">
+          @csrf
+          <button type="button" id="confirmReleaseBtn" class="btn btn-success">
+            <i class="ri-send-plane-line me-1"></i> Keluarkan Semua
+          </button>
         </form>
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
           <i class="ri-close-line me-1"></i> Tutup
@@ -308,9 +311,71 @@
   </div>
 </div>
 
+<!-- 🧭 PAGINATION -->
+@if ($items instanceof \Illuminate\Pagination\LengthAwarePaginator && $items->hasPages())
+  <div class="d-flex justify-content-center mt-4">
+    {{ $items->appends(request()->query())->links('pagination::bootstrap-5') }}
+  </div>
+@endif
+
 @endsection
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{{ asset('js/guest-cart.js') }}"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const releaseForm = document.getElementById("releaseForm");
+  const confirmBtn = document.getElementById("confirmReleaseBtn");
+
+  // === Konfirmasi saat klik "Keluarkan Semua" ===
+  if (confirmBtn) {
+    confirmBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      Swal.fire({
+        title: "Yakin ingin mengeluarkan semua barang?",
+        text: "Setelah ini stok akan langsung berkurang.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#43A047",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Ya, keluarkan!",
+        cancelButtonText: "Batal"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          releaseForm.submit();
+        }
+      });
+    });
+  }
+
+  // === SweetAlert flash message dari session Laravel ===
+  @if (session('success'))
+    Swal.fire({
+      icon: 'success',
+      title: 'Berhasil!',
+      html: `{!! session('success') !!}`,
+      showConfirmButton: false,
+      timer: 2500
+    });
+  @elseif (session('error'))
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal!',
+      html: `{!! session('error') !!}`,
+      showConfirmButton: true
+    });
+  @elseif (session('warning'))
+    Swal.fire({
+      icon: 'warning',
+      title: 'Peringatan!',
+      html: `{!! session('warning') !!}`,
+      showConfirmButton: true
+    });
+  @endif
+});
+</script>
 @endpush
+

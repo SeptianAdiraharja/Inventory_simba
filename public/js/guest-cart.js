@@ -14,82 +14,64 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // === Submit form scan barang ===
-    document.querySelectorAll("form[id^='form-']").forEach((form) => {
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const url = form.action;
-            const btn = form.querySelector("button[type='submit']");
-            const modal = bootstrap.Modal.getInstance(form.closest(".modal"));
-            const formData = new FormData(form);
+document.querySelectorAll("form[id^='form-']").forEach((form) => {
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const url = form.action;
+        const btn = form.querySelector("button[type='submit']");
+        const modal = bootstrap.Modal.getInstance(form.closest(".modal"));
+        const formData = new FormData(form);
 
-            btn.disabled = true;
-            btn.innerHTML =
-                "<i class='ri-loader-4-line spin me-1'></i> Menyimpan...";
+        btn.disabled = true;
+        btn.innerHTML =
+            "<i class='ri-loader-4-line spin me-1'></i> Menyimpan...";
 
-            try {
-                const res = await fetch(url, {
-                    method: "POST",
-                    headers: { "X-Requested-With": "XMLHttpRequest" },
-                    body: formData,
-                });
-                const data = await res.json();
+        try {
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+                body: formData,
+            });
+            const data = await res.json();
 
-                if (data.status === "success") {
-                    // === Tampilkan pesan sukses manis tanpa reload ===
-                    Swal.fire({
-                        iconHtml:
-                            '<i class="ri-checkbox-circle-line text-success fs-1"></i>',
-                        title: "<b>Berhasil!</b>",
-                        html: `
-              <div class="text-start mt-2" style="font-size: 0.95rem;">
-                ✅ Barang <b>${data.item_name}</b> sebanyak <b>${data.quantity}</b> ditambahkan ke keranjang.
-              </div>
-            `,
-                        showConfirmButton: false,
-                        timer: 2000,
-                        customClass: {
-                            popup: "shadow rounded-4 p-4",
-                            title: "fw-semibold text-dark",
-                            htmlContainer: "text-muted",
-                        },
-                        didClose: () => modal.hide(),
-                    });
+            if (data.status === "success") {
+                // ✅ Tidak ada SweetAlert di sini, langsung tutup modal
+                modal.hide();
 
-                    // Update badge jumlah item di tombol cart
-                    const badge = document.querySelector(
-                        "#openCartModal .badge"
-                    );
-                    if (badge) {
-                        badge.textContent = parseInt(badge.textContent) + 1;
-                    } else {
-                        const btn = document.getElementById("openCartModal");
-                        const badgeEl = document.createElement("span");
-                        badgeEl.className =
-                            "position-absolute badge rounded-pill bg-danger";
-                        badgeEl.style.cssText =
-                            "top:-5px; right:-5px; font-size:0.8rem; padding:6px 8px;";
-                        badgeEl.textContent = "1";
-                        btn.appendChild(badgeEl);
-                    }
+                // Update badge jumlah item di tombol cart
+                const badge = document.querySelector("#openCartModal .badge");
+                if (badge) {
+                    badge.textContent = parseInt(badge.textContent) + 1;
                 } else {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Gagal!",
-                        text: data.message || "Terjadi kesalahan.",
-                    });
+                    const btn = document.getElementById("openCartModal");
+                    const badgeEl = document.createElement("span");
+                    badgeEl.className =
+                        "position-absolute badge rounded-pill bg-danger";
+                    badgeEl.style.cssText =
+                        "top:-5px; right:-5px; font-size:0.8rem; padding:6px 8px;";
+                    badgeEl.textContent = "1";
+                    btn.appendChild(badgeEl);
                 }
-            } catch (err) {
+            } else {
                 Swal.fire({
                     icon: "error",
-                    title: "Kesalahan Koneksi",
-                    text: err.message,
+                    title: "Gagal!",
+                    text: data.message || "Terjadi kesalahan.",
                 });
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = "<i class='ri-check-line me-1'></i> Simpan";
             }
-        });
+        } catch (err) {
+            Swal.fire({
+                icon: "error",
+                title: "Kesalahan Koneksi",
+                text: err.message,
+            });
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = "<i class='ri-check-line me-1'></i> Simpan";
+        }
     });
+});
+
 
     // === Buka Modal Cart ===
     const openCartBtn = document.getElementById("openCartModal");

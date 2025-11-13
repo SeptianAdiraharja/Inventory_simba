@@ -23,8 +23,8 @@ class ItemoutController extends Controller
     {
         $search = $request->get('q');
 
-        // 🔹 1. Barang keluar dari PEGAWAI (Cart)
-        $approvedItems = Cart::with(['cartItems' => function ($q) {
+        // 🔹 Query untuk approvedItems dengan pagination database
+        $approvedItemsQuery = Cart::with(['cartItems' => function ($q) {
                 $q->whereNull('scanned_at')
                 ->where(function ($query) {
                     $query->where('status', 'approved')
@@ -39,42 +39,33 @@ class ItemoutController extends Controller
                     $query->where('status', 'approved')
                             ->orWhereNull('status');
                 });
-            })
-            // 🔍 Filter pencarian
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    // Cari berdasarkan nama atau email user
-                    $q->whereHas('user', function ($userQuery) use ($search) {
-                        $userQuery->where('name', 'like', "%{$search}%")
-                                ->orWhere('email', 'like', "%{$search}%");
-                    })
-                    // Atau berdasarkan nama/kode item di cartItems
-                    ->orWhereHas('cartItems.item', function ($itemQuery) use ($search) {
-                        $itemQuery->where('name', 'like', "%{$search}%")
-                                ->orWhere('code', 'like', "%{$search}%");
-                    });
-                });
-            })
-            ->latest()
-            ->get();
+            });
 
-        // 🔹 2. Barang keluar dari TAMU
+        // 🔍 Filter pencarian
+        if ($search) {
+            $approvedItemsQuery->where(function ($query) use ($search) {
+                $query->whereHas('user', function ($userQuery) use ($search) {
+                    $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                })
+                ->orWhereHas('cartItems.item', function ($itemQuery) use ($search) {
+                    $itemQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('code', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // ✅ Pagination database yang benar
+        $approvedItems = $approvedItemsQuery->latest()->paginate(10);
+
+        // 🔹 Guest items (jika masih perlu)
         $guestItemOuts = Guest::with(['guestCart.guestCartItems.item'])
             ->whereHas('guestCart.guestCartItems')
             ->orderByDesc('created_at')
             ->paginate(10);
 
-        // 🔹 3. Pagination manual untuk hasil pegawai
-        $approvedItemsPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
-            $approvedItems->forPage($request->get('page', 1), 10),
-            $approvedItems->count(),
-            10,
-            $request->get('page', 1),
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
-
         return view('role.admin.itemout', [
-            'approvedItems' => $approvedItemsPaginated,
+            'approvedItems' => $approvedItems, // ← Pagination normal
             'guestItemOuts' => $guestItemOuts,
             'search' => $search,
         ]);

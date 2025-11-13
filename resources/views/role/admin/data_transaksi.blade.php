@@ -114,10 +114,6 @@
                                     data-item-id="{{ $item->item->id }}" data-max-qty="{{ $item->quantity }}">
                               🔄 Refund
                             </button>
-                            <button class="btn btn-sm btn-outline-danger rounded-pill me-1 btn-reject fw-semibold smooth-btn"
-                                    data-item-code="{{ $item->item->code }}">
-                              ❌ Reject
-                            </button>
                             <button class="btn btn-sm btn-outline-info rounded-pill fw-semibold smooth-btn"
                                     data-bs-toggle="modal" data-bs-target="#editModal"
                                     data-cart-item-id="{{ $item->id }}" data-item-id="{{ $item->item->id }}"
@@ -199,10 +195,6 @@
                                     data-cart-item-id="{{ $item->id }}" data-item-name="{{ $item->item->name }}"
                                     data-item-id="{{ $item->item->id }}" data-max-qty="{{ $item->quantity }}">
                               🔄 Refund
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger rounded-pill me-1 btn-reject fw-semibold smooth-btn"
-                                    data-item-code="{{ $item->item->code }}">
-                              ❌ Reject
                             </button>
                             <button class="btn btn-sm btn-outline-info rounded-pill fw-semibold smooth-btn"
                                     data-bs-toggle="modal" data-bs-target="#editModalGuest"
@@ -508,4 +500,3 @@ body { background-color: #fffaf4 !important; }
 }
 </style>
 @endpush
->>>>>>> finish_admiin
