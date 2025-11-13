@@ -54,7 +54,7 @@ class ProdukController extends Controller
        $guest = Guest::with(['guestCart.items' => function ($q) {
             $q->wherePivot('released_at', null);
         }])->findOrFail($id);
-        $items = Item::with('category')->get();
+        $items = Item::with('category')->paginate(12);
 
         $cart = $guest->guestCart;
         $cartItems = $cart?->items ?? collect();
@@ -219,7 +219,7 @@ class ProdukController extends Controller
 
             return redirect()
                 ->route('admin.produk.byGuest', $guest->id)
-                ->with('success', 'Barang berhasil dikeluarkan dan released_at terisi.');
+                ->with('success', 'Barang berhasil dikeluarkan.');
         } catch (\Throwable $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());

@@ -334,6 +334,13 @@
 <!-- 📱 Snackbar -->
 <div id="snackbar" class="snackbar"></div>
 
+<!-- 🧭 Pagination -->
+@if ($items->hasPages())
+  <div class="d-flex justify-content-center mt-4">
+    {{ $items->appends(request()->query())->links('pagination::bootstrap-5') }}
+  </div>
+@endif
+
 @endsection
 
 @push('scripts')

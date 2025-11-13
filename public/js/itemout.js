@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!form) return;
 
     const cartId = form.dataset.cartId;
-    const saveBtn = form.querySelector(".save-all-scan-btn");
+    const saveBtn = modal.querySelector(".save-all-scan-btn");
 
     if (!scannedItems[cartId]) scannedItems[cartId] = new Set();
 
@@ -31,11 +31,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!form) return;
     e.preventDefault();
 
+    const modal = form.closest('.modal');
     const cartId = form.dataset.cartId;
     const barcodeInput = form.querySelector(".barcode-input");
     const barcode = barcodeInput.value.trim();
-    const resultBox = form.querySelector(".scan-result");
-    const saveBtn = form.querySelector(".save-all-scan-btn");
+    const saveBtn = modal.querySelector(".save-all-scan-btn");
 
     if (!barcode) return;
 
@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       scannedItems[cartId].add(barcode);
 
-      const rows = form.querySelectorAll("tbody tr");
+      const rows = modal.querySelectorAll("tbody tr");
       let row = null;
       rows.forEach((tr) => {
         const codeCell = tr.querySelector(".item-code");
@@ -100,10 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      resultBox.textContent = data.message;
-      resultBox.classList.remove("text-danger");
-      resultBox.classList.add("text-success");
-
       barcodeInput.value = "";
       barcodeInput.focus();
 
@@ -122,9 +118,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const btn = e.target.closest(".save-all-scan-btn");
     if (!btn) return;
 
+    const modal = btn.closest('.modal');
     const cartId = btn.dataset.cartId;
-    const form = document.querySelector(`.scan-form[data-cart-id="${cartId}"]`);
-    const rows = form.querySelectorAll("tbody tr");
+    const form = modal.querySelector(`.scan-form[data-cart-id="${cartId}"]`);
+    const rows = modal.querySelectorAll("tbody tr");
     const validRows = Array.from(rows).filter(r => r.querySelector(".badge"));
 
     const allScanned = validRows.every(r => {
