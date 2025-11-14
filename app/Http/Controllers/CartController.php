@@ -39,7 +39,7 @@ class CartController extends Controller
                     ->where('status', 'active')
                     ->with('cartItems.item')
                     ->first();
-
+        
         $countThisWeek = $this->getWeeklyRequestCount();
 
         return view('role.pegawai.cart', compact('cart', 'countThisWeek'));
