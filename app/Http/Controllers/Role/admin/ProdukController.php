@@ -16,12 +16,15 @@ class ProdukController extends Controller
     /**
      * Tampilkan semua produk
      */
+    /**
+     * Tampilkan semua produk
+     */
     public function index(Request $request)
     {
         $query = $request->input('q');
         $kategori = $request->input('kategori');
 
-        // Query utama
+        // Query utama - urutkan berdasarkan stok (terbanyak ke terkecil)
         $items = Item::with('category')
             ->when($query, function ($q) use ($query) {
                 $q->where(function ($sub) use ($query) {
@@ -36,6 +39,11 @@ class ProdukController extends Controller
                     $cat->where('name', $kategori);
                 });
             })
+            ->when(!$query, function ($q) {
+                // Hanya tampilkan barang dengan stok > 0 jika tidak sedang search
+                $q->where('stock', '>', 0);
+            })
+            ->orderBy('stock', 'desc') // Urutkan dari stok terbanyak ke terkecil
             ->latest()
             ->paginate(12)
             ->withQueryString(); // 🔥 menjaga query tetap ada saat pagination
@@ -49,12 +57,19 @@ class ProdukController extends Controller
     /**
      * Tampilkan produk + cart guest
      */
+    /**
+     * Tampilkan produk + cart guest
+     */
     public function showByGuest($id)
     {
        $guest = Guest::with(['guestCart.items' => function ($q) {
             $q->wherePivot('released_at', null);
         }])->findOrFail($id);
-        $items = Item::with('category')->paginate(12);
+
+        $items = Item::with('category')
+            ->where('stock', '>', 0) // Hanya tampilkan barang dengan stok > 0
+            ->orderBy('stock', 'desc') // Urutkan dari stok terbanyak ke terkecil
+            ->paginate(12);
 
         $cart = $guest->guestCart;
         $cartItems = $cart?->items ?? collect();

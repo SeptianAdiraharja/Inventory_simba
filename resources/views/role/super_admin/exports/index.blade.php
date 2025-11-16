@@ -107,73 +107,108 @@
   </div>
   @endif
 
-  {{-- 🔶 TABEL DATA --}}
-  @if(isset($items) && count($items) > 0)
-  <div class="card border-0 shadow-sm rounded-4 mb-4">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center fw-bold" style="color:#FF9800;">
-      <div><i class="bi bi-table me-2"></i> Data Barang</div>
-      <div class="btn-group">
-        <a href="{{ route('super_admin.export.download', array_merge(request()->query(), ['format' => 'excel'])) }}"
-           class="btn btn-success btn-sm rounded-pill shadow-sm"><i class="bi bi-file-earmark-excel"></i> Excel</a>
-        <a href="{{ route('super_admin.export.download', array_merge(request()->query(), ['format' => 'pdf'])) }}"
-           class="btn btn-danger btn-sm rounded-pill shadow-sm"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+    {{-- 🔶 TABEL DATA --}}
+    @if(isset($items) && count($items) > 0)
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h6 class="mb-0 fw-semibold">
+              <i class="bi bi-table"></i> Data
+              <span class="text-muted">({{ count($items) }} data)</span>
+              <small class="text-info ms-2">
+                  <i class="bi bi-sort-down"></i> Terbaru di atas
+              </small>
+          </h6>
+          <div class="btn-group">
+              <a href="{{ route('super_admin.export.download', array_merge(request()->query(), ['format' => 'excel'])) }}"
+                  class="btn btn-success btn-sm shadow-sm">
+                  <i class="bi bi-file-earmark-excel"></i> Excel
+              </a>
+              <a href="{{ route('super_admin.export.download', array_merge(request()->query(), ['format' => 'pdf'])) }}"
+                  class="btn btn-danger btn-sm shadow-sm">
+                  <i class="bi bi-file-earmark-pdf"></i> PDF
+              </a>
+          </div>
+      </div>
+
+      <div class="card-body table-responsive bg-white">
+          <table class="table table-bordered table-hover align-middle text-center">
+              <thead class="table-primary">
+                  <tr>
+                      <th>No</th>
+                      <th>Nama Barang</th>
+                      @if(request('type') == 'masuk')
+                          <th>Supplier</th>
+                          <th>Tanggal Masuk</th>
+                          <th>Jumlah</th>
+                          <th>Satuan</th>
+                          <th>Harga Satuan</th>
+                          <th>Total Harga</th>
+                      @elseif(request('type') == 'keluar')
+                          <th>Role</th>
+                          <th>Dikeluarkan Oleh</th>
+                          <th>Penerima</th>
+                          <th>Tanggal Keluar</th>
+                          <th>Jumlah</th>
+                          <th>Satuan</th>
+                          <th>Harga Satuan</th>
+                          <th>Total Harga</th>
+                      @elseif(request('type') == 'reject')
+                          <th>Status</th>
+                          <th>Tanggal Reject</th>
+                          <th>Jumlah</th>
+                          <th>Harga Satuan</th>
+                          <th>Total Harga</th>
+                      @endif
+                  </tr>
+              </thead>
+              <tbody>
+                  @foreach($items as $i => $row)
+                  <tr>
+                      <td>{{ $i + 1 }}</td>
+                      <td>{{ $row->item->name ?? '-' }}</td>
+                      @if(request('type') == 'masuk')
+                          <td>{{ $row->supplier->name ?? '-' }}</td>
+                          <td>
+                              {{ optional($row->created_at)->format('d-m-Y H:i') }}
+                          </td>
+                          <td>{{ $row->quantity }}</td>
+                          <td>{{ $row->item->unit->name ?? '-' }}</td>
+                          <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
+                          <td>Rp {{ number_format($row->total_price,0,',','.') }}</td>
+                      @elseif(request('type') == 'keluar')
+                          <td>{{ $row->role }}</td>
+                          <td>{{ $row->dikeluarkan }}</td>
+                          <td>{{ $row->penerima }}</td>
+                          <td>
+                              {{ \Carbon\Carbon::parse($row->created_at)->format('d-m-Y H:i') }}
+                          </td>
+                          <td>{{ $row->quantity }}</td>
+                          <td>{{ $row->item->unit->name ?? '-' }}</td>
+                          <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
+                          <td>Rp {{ number_format($row->total_price,0,',','.') }}</td>
+                      @elseif(request('type') == 'reject')
+                          <td>{{ $row->role }}</td>
+                          <td>
+                              {{ optional($row->created_at)->format('d-m-Y H:i') }}
+                              @if($i == 0)
+                                  <span class="badge bg-info ms-1" title="Data Terbaru">NEW</span>
+                              @endif
+                          </td>
+                          <td>{{ $row->quantity }}</td>
+                          <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
+                          <td>Rp {{ number_format($row->total_price,0,',','.') }}</td>
+                      @endif
+                  </tr>
+                  @endforeach
+              </tbody>
+          </table>
       </div>
     </div>
-
-    <div class="card-body table-responsive bg-white rounded-bottom-4">
-      <table class="table table-hover table-bordered align-middle text-center">
-        <thead style="background:#FFF3E0;">
-          <tr>
-            <th>No</th>
-            <th>Nama Barang</th>
-            @if(request('type') == 'masuk')
-              <th>Supplier</th><th>Tanggal Masuk</th><th>Jumlah</th><th>Satuan</th><th>Harga Satuan</th><th>Total Harga</th>
-            @elseif(request('type') == 'keluar')
-              <th>Role</th><th>Dikeluarkan Oleh</th><th>Penerima</th><th>Tanggal Keluar</th><th>Jumlah</th><th>Satuan</th><th>Harga Satuan</th><th>Total Harga</th>
-            @elseif(request('type') == 'reject')
-              <th>Status</th><th>Tanggal Reject</th><th>Jumlah</th><th>Harga Satuan</th><th>Total Harga</th>
-            @endif
-          </tr>
-        </thead>
-        <tbody>
-          @foreach($items as $i => $row)
-          <tr>
-            <td>{{ $i + 1 }}</td>
-            <td class="fw-semibold text-start">{{ $row->item->name ?? '-' }}</td>
-            @if(request('type') == 'masuk')
-              <td>{{ $row->supplier->name ?? '-' }}</td>
-              <td>{{ optional($row->created_at)->format('d-m-Y H:i') }}</td>
-              <td>{{ $row->quantity }}</td>
-              <td>{{ $row->item->unit->name ?? '-' }}</td>
-              <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
-              <td>Rp {{ number_format($row->total_price,0,',','.') }}</td>
-            @elseif(request('type') == 'keluar')
-              <td>{{ $row->role }}</td>
-              <td>{{ $row->dikeluarkan }}</td>
-              <td>{{ $row->penerima }}</td>
-              <td>{{ \Carbon\Carbon::parse($row->created_at)->format('d-m-Y H:i') }}</td>
-              <td>{{ $row->quantity }}</td>
-              <td>{{ $row->item->unit->name ?? '-' }}</td>
-              <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
-              <td>Rp {{ number_format($row->total_price,0,',','.') }}</td>
-            @elseif(request('type') == 'reject')
-              <td>{{ $row->role }}</td>
-              <td>{{ optional($row->created_at)->format('d-m-Y H:i') }}</td>
-              <td>{{ $row->quantity }}</td>
-              <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
-              <td>Rp {{ number_format($row->total_price,0,',','.') }}</td>
-            @endif
-          </tr>
-          @endforeach
-        </tbody>
-      </table>
+    @elseif(request()->has('start_date'))
+    <div class="alert alert-warning shadow-sm">
+      <i class="bi bi-exclamation-triangle"></i> Tidak ada data ditemukan untuk periode ini.
     </div>
-  </div>
-  @elseif(request()->has('start_date'))
-  <div class="alert alert-warning shadow-sm rounded-4">
-    <i class="bi bi-exclamation-triangle"></i> Tidak ada data ditemukan untuk periode ini.
-  </div>
-  @endif
+    @endif
 </div>
 
 {{-- ✨ STYLE ORANGE MODERN --}}

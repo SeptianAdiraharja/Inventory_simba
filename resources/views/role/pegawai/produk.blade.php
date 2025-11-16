@@ -174,13 +174,13 @@
       </h4>
       <small class="text-muted">Total {{ $items->total() }} produk tersedia</small>
     </div>
-    
+
     {{-- Filter Dropdown --}}
     <div class="d-flex align-items-center gap-2">
       <label class="text-muted small mb-0">Urutkan:</label>
-      <select name="sort" 
+      <select name="sort"
               id="sortFilter"
-              class="form-select form-select-sm shadow-sm" 
+              class="form-select form-select-sm shadow-sm"
               style="width: 200px; border-radius: 50px; border: 2px solid #FF9800;"
               onchange="applySortFilter(this.value)">
         <option value="stok_terbanyak" {{ request('sort', 'stok_terbanyak') == 'stok_terbanyak' ? 'selected' : '' }}>
@@ -280,10 +280,14 @@
 </div>
 
 @if ($items instanceof \Illuminate\Pagination\LengthAwarePaginator)
+  {{-- PAGINATION --}}
   <div class="mt-4 d-flex justify-content-center">
-    {{ $items->links() }}
+    {{ $items->links('pagination::bootstrap-5') }}
   </div>
+</div>
 @endif
+
+
 @endsection
 <script>
 function applySortFilter(sortValue) {

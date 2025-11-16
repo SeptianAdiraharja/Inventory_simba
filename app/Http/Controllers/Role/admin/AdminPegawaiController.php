@@ -78,6 +78,9 @@ class AdminPegawaiController extends Controller
                         $categoryQuery->where('name', 'LIKE', "%{$searchTerm}%");
                     });
             });
+        } else {
+            // Hanya tampilkan barang dengan stok > 0 jika tidak sedang search
+            $itemsQuery->where('stock', '>', 0);
         }
 
         // Filter berdasarkan kategori
@@ -86,6 +89,9 @@ class AdminPegawaiController extends Controller
                 $query->where('name', $request->kategori);
             });
         }
+
+        // 🔥 URUTKAN: Stok terbanyak di atas, terkecil di bawah
+        $itemsQuery->orderBy('stock', 'desc')->latest();
 
         // Ambil semua kategori untuk dropdown
         $categories = Category::all();

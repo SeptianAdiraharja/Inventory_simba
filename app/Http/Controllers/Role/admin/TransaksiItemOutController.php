@@ -19,31 +19,21 @@ use Illuminate\Support\Facades\Auth;
 
 class TransaksiItemOutController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $items = Item::all();
 
-        // 🔹 Ambil cart pegawai yang semua item-nya sudah discan
+        // 🔹 QUERY PEGAWAI YANG DIPERBAIKI - Tampilkan SEMUA transaksi selesai
         $finishedCarts = Cart::with([
-            'cartItems' => function ($q) {
-                $q->where('status', 'approved'); // hanya ambil item yang approved
-            },
-            'cartItems.item',
+            'cartItems.item', // Selalu load item, regardless of status
             'user'
         ])
-        ->whereIn('status', ['approved', 'approved_partially'])
-        ->get()
-        ->filter(function ($cart) {
-            // hanya ambil cart yang punya minimal 1 item approved dan sudah discan
-            return $cart->cartItems->isNotEmpty() &&
-                $cart->cartItems->every(fn($i) => $i->scanned_at);
-        });
+        ->whereIn('status', ['approved', 'approved_partially', 'completed'])
+        ->whereHas('cartItems') // Pastikan punya item
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-
-        // 🔹 Paginasi manual untuk Collection
+        // 🔹 Paginasi manual
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
         $perPage = 10;
         $pagedCarts = $finishedCarts->slice(($currentPage - 1) * $perPage, $perPage)->values();
@@ -56,7 +46,7 @@ class TransaksiItemOutController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
-        // 🔹 Data tamu
+        // 🔹 QUERY GUEST YANG DIPERBAIKI
         $guestItemOuts = Guest::with(['guestCart.guestCartItems.item'])
             ->whereHas('guestCart.guestCartItems')
             ->orderByDesc('created_at')
@@ -160,7 +150,7 @@ class TransaksiItemOutController extends Controller
     /**
      * 🔹 Proses Edit Barang dan Qty Pegawai
      */
-     public function updateItem(Request $request)
+    public function updateItem(Request $request)
     {
         $request->validate([
             'cart_item_id' => 'required|exists:cart_items,id',
@@ -291,7 +281,6 @@ class TransaksiItemOutController extends Controller
                 ]),
             ]);
 
-
             DB::commit();
 
             return back()->with('success', 'Refund barang tamu berhasil. Stok dikembalikan.');
@@ -308,7 +297,7 @@ class TransaksiItemOutController extends Controller
     public function updateItemGuest(Request $request)
     {
         $request->validate([
-            'guest_cart_item_id' => 'required|exists:guest_cart_items,id', // sesuai tabel relasi
+            'guest_cart_item_id' => 'required|exists:guest_cart_items,id',
             'item_id'            => 'required|exists:items,id',
             'qty'                => 'required|integer|min:1',
             'code'               => 'required|string',
