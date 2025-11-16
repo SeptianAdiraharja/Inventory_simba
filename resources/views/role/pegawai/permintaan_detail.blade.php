@@ -4,15 +4,17 @@
         <h5 class="mb-0 text-orange fw-semibold d-flex align-items-center gap-2">
             <i class="ri-file-list-line fs-5"></i> Detail Permintaan
         </h5>
-
+        @if($cart->status === 'approved_partially')
+            @php
+                $cart->status = 'Approved partially'
+            @endphp
+        @endif
         {{-- Status Badge Dinamis --}}
         <span class="badge rounded-pill px-3 py-2 fw-semibold fs-6
             {{ $cart->status === 'pending' ? 'bg-warning text-dark' :
-               ($cart->status === 'approved' ? 'bg-orange text-white' :
-               ($cart->status === 'rejected' ? 'bg-danger text-white' : 'bg-secondary text-white')) }}">
-            <i class="{{ $cart->status === 'pending' ? 'ri-time-line' :
-                       ($cart->status === 'approved' ? 'ri-check-line' :
-                       ($cart->status === 'rejected' ? 'ri-close-line' : 'ri-question-line')) }} me-1"></i>
+               ($cart->status === 'approved' ? 'bg-success text-white' :
+               ($cart->status === 'rejected' ? 'bg-danger text-white' : 
+               ($cart->status === 'Approved partially' ? 'bg-orange text-white' : 'bg-secondary text-white'))) }}">
             {{ ucfirst($cart->status) }}
         </span>
     </div>
@@ -49,6 +51,7 @@
                     <tr class="fw-semibold">
                         <th class="ps-4">Produk</th>
                         <th class="text-center" style="width: 15%;">Jumlah</th>
+                        <th class="text-center" style="width: 15%;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -75,6 +78,14 @@
                             </td>
                             <td class="text-center fw-semibold text-dark">
                                 {{ $item->quantity }}
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill px-3 py-2 fw-semibold fs-6
+                                    {{ $item->status === 'pending' ? 'bg-warning text-dark' :
+                                    ($item->status === 'approved' ? 'bg-success text-white' :
+                                    ($item->status === 'rejected' ? 'bg-danger text-white' : 'bg-secondary text-white')) }}">
+                                    {{ ucfirst($item->status) }}
+                                </span>
                             </td>
                         </tr>
                     @endforeach

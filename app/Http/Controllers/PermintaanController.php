@@ -12,16 +12,48 @@ use Illuminate\Support\Facades\DB;
 
 class PermintaanController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $categories = Category::all();
-        $items = Item::with('category')
-            ->withSum('cartItems as total_dibeli', 'quantity')
-            ->orderByDesc('total_dibeli')
-            ->orderByDesc('created_at') // misal kalau sama ambil yang baru dibuat
-            ->where('stock', '>', 0)
-            ->paginate(12);
-
+        $query = Item::with('category');
+        $sort = $request->get('sort', 'stok_terbanyak');
+        $query->where('stock', '>', 0);
+    
+        switch ($sort) {
+            case 'stok_terbanyak':
+                $query->orderBy('stock', 'desc');
+                break;
+                
+            case 'stok_sedikit':
+                $query->orderBy('stock', 'asc');
+                break;
+                
+            case 'paling_laris':
+                $query->withSum('cartItems as total_dibeli', 'quantity')
+                    ->orderByDesc('total_dibeli');
+                break;
+                
+            case 'terbaru':
+                $query->latest('created_at');
+                break;
+                
+            case 'terlama':
+                $query->oldest('created_at');
+                break;
+                
+            case 'nama_az':
+                $query->orderBy('name', 'asc');
+                break;
+                
+            case 'nama_za':
+                $query->orderBy('name', 'desc');
+                break;
+                
+            default:
+                $query->orderBy('stock', 'desc');
+        }
+    
+        $items = $query->paginate(12)->appends($request->all());
         return view('role.pegawai.produk', compact('categories', 'items'));
     }
 
@@ -52,7 +84,7 @@ class PermintaanController extends Controller
                         throw new \Exception("Jumlah melebihi stok {$item->name} (tersisa {$item->stock}).");
                     }
 
-                    $item->decrement('stock', $itemData['quantity']);
+                    // $item->decrement('stock', $itemData['quantity']);
 
                     $cartItem = CartItem::firstOrNew([
                         'cart_id' => $cart->id,
@@ -104,17 +136,41 @@ class PermintaanController extends Controller
             return redirect()->back()->with('error', 'Keranjang masih kosong.');
         }
 
-        DB::transaction(function () use ($cart) {
-            $cart->update(['status' => 'pending']);
-        });
-
-        return redirect()->back()->with([
-            'swal' => [
-                'icon' => 'success',
-                'title' => 'Sukses!',
-                'text' => 'Permintaan berhasil diajukan, menunggu persetujuan admin.'
-            ]
-        ]);
+        try {
+            DB::transaction(function () use ($cart) {
+                foreach ($cart->cartItems as $cartItem) {
+                    $item = Item::lockForUpdate()->findOrFail($cartItem->item_id);
+                    
+                    // Validasi stok masih cukup saat checkout
+                    if ($item->stock <= 0) {
+                        throw new \Exception("Stok {$item->name} sudah habis. Silakan hapus dari keranjang.");
+                    }
+                    
+                    if ($cartItem->quantity > $item->stock) {
+                        throw new \Exception("Stok {$item->name} tidak mencukupi (tersedia: {$item->stock}, diminta: {$cartItem->quantity}). Silakan sesuaikan jumlah.");
+                    }
+                    
+                    // 🔹 KURANGI STOK DI SINI
+                    $item->decrement('stock', $cartItem->quantity);
+                }
+                
+                // Update status cart
+                $cart->update(['status' => 'pending']);
+            });
+            
+            return redirect()->back()->with([
+                'swal' => [
+                    'icon' => 'success',
+                    'title' => 'Sukses!',
+                    'text' => 'Permintaan berhasil diajukan, menunggu persetujuan admin.'
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()->with([
+                'error' => $e->getMessage(),
+                'refresh_cart' => true 
+            ]);
+        }
     }
 
     public function historyPermintaan()
@@ -123,15 +179,20 @@ class PermintaanController extends Controller
             ->where('user_id', Auth::id())
             ->where('status', '!=', 'active')
             ->when(request('status') && request('status') != 'all', function ($query) {
+            if (request('status') === 'approved') {
+                $query->whereIn('status', ['approved', 'approved_partially']);
+            } else {
                 $query->where('status', request('status'));
-            })
+            }
+        })
             ->latest()
             ->paginate(10);
 
         $statusCounts = [
             'all' => Cart::where('user_id', Auth::id())->where('status', '!=', 'active')->count(),
             'pending' => Cart::where('user_id', Auth::id())->where('status', 'pending')->count(),
-            'approved' => Cart::where('user_id', Auth::id())->where('status', 'approved')->count(),
+            'approved' => Cart::where('user_id', Auth::id())->whereIn('status', ['approved', 'approved_partially'])->count(),
+            'approved_partially' => Cart::where('user_id', Auth::id())->where('status', 'approved_partially')->count(),
             'rejected' => Cart::where('user_id', Auth::id())->where('status', 'rejected')->count(),
         ];
 
@@ -150,10 +211,21 @@ class PermintaanController extends Controller
 
     public function detailPermintaan(string $id)
     {
-        $cart = Cart::with(['cartItems.item.category'])->findOrFail($id);
-        return view('role.pegawai.permintaan_detail', compact('cart'));
-    }
+        $status = request('status'); // ambil status dari URL
 
+        $cart = Cart::with(['cartItems.item.category'])->findOrFail($id);
+
+        if ($status === 'approved') {
+            $cart->cartItems = $cart->cartItems->where('status', 'approved');
+        }
+
+        if ($status === 'rejected') {
+            $cart->cartItems = $cart->cartItems->where('status', 'rejected');
+        }
+
+        // kalau status null → tampilkan semua
+        return view('role.pegawai.permintaan_detail', compact('cart', 'status'));
+    }
     public function updateQuantity(Request $request, string $id)
     {
         $validated = $request->validate([
@@ -174,14 +246,12 @@ class PermintaanController extends Controller
                 }
 
                 $item = $cartItem->item;
-                $diff = $validated['quantity'] - $cartItem->quantity;
-
-                if ($diff > 0 && $item->stock < $diff) {
-                    throw new \Exception("Stok tidak mencukupi! Sisa stok: {$item->stock}");
+                if ($item->stock <= 0) {
+                    throw new \Exception("Stok sudah habis!");
                 }
-
-                $item->decrement('stock', max($diff, 0));
-                $item->increment('stock', max(-$diff, 0));
+                if ($validated['quantity'] > $item->stock) {
+                    throw new \Exception("Stok tidak mencukupi! Sisa Stok: $item->stock");
+                }
 
                 $cartItem->update(['quantity' => $validated['quantity']]);
             });

@@ -17,6 +17,32 @@
                 ->get();
 
             $notifCount = $notifications->count();
+            $stockIssues = [
+                'out_of_stock' => [],
+                'insufficient' => []
+            ];
+            
+            if ($cartsitems && $cartsitems->cartItems) {
+                foreach ($cartsitems->cartItems as $cartItem) {
+                    $item = $cartItem->item;
+                    
+                    if ($item->stock <= 0) {
+                        $stockIssues['out_of_stock'][] = [
+                            'cart_item_id' => $cartItem->id,
+                            'name' => $item->name
+                        ];
+                    } elseif ($item->stock < $cartItem->quantity) {
+                        $stockIssues['insufficient'][] = [
+                            'cart_item_id' => $cartItem->id,
+                            'name' => $item->name,
+                            'requested' => $cartItem->quantity,
+                            'available' => $item->stock
+                        ];
+                    }
+                }
+            }
+            
+            $hasStockIssue = !empty($stockIssues['out_of_stock']) || !empty($stockIssues['insufficient']);
         @endphp
         <style>
             /* Override default offcanvas supaya lebih seperti floating panel */
@@ -51,6 +77,16 @@
             .offcanvas-end.show {
                 transform: translateX(0) !important;
                 opacity: 1;
+            }
+            .list-group-item input:disabled {
+                background-color: #f8f9fa;
+                cursor: not-allowed;
+                opacity: 0.7;
+            }
+            
+            .list-group-item button:disabled {
+                cursor: not-allowed;
+                opacity: 0.5;
             }
 
         </style>
@@ -111,6 +147,41 @@
                         </div>
                     @endif
                 </div>
+                @if(isset($hasStockIssue) && $hasStockIssue)
+                    <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+                        <h6 class="alert-heading fw-semibold mb-2">
+                            <i class="ri-error-warning-line me-2"></i>Peringatan Stok
+                        </h6>
+                        
+                        @if(!empty($stockIssues['out_of_stock']))
+                            <p class="mb-1 small fw-semibold">Stok Habis:</p>
+                            <ul class="mb-2 ps-3 small">
+                                @foreach($stockIssues['out_of_stock'] as $item)
+                                    <li>{{ $item['name'] }} <span class="badge bg-danger">Habis</span></li>
+                                @endforeach
+                            </ul>
+                        @endif
+                        
+                        @if(!empty($stockIssues['insufficient']))
+                            <p class="mb-1 small fw-semibold">Stok Tidak Mencukupi:</p>
+                            <ul class="mb-2 ps-3 small">
+                                @foreach($stockIssues['insufficient'] as $item)
+                                    <li class="mb-1">
+                                        {{ $item['name'] }}<br>
+                                        <small class="text-muted">Diminta: {{ $item['requested'] }} | Tersedia: {{ $item['available'] }}</small>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                        
+                        <hr class="my-2">
+                        <p class="mb-0 small">
+                            <i class="ri-information-line me-1"></i>
+                            Hapus barang yang habis sebelum mengajukan.
+                        </p>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
                 <h4 class="d-flex justify-content-between align-items-center mb-3">
                     <span class="text-warning">Keranjang</span>
                     <span class="badge rounded-pill" style="background-color: #FF7F00; color: #fff;">
@@ -121,10 +192,22 @@
                 <ul class="list-group mb-3">
                     @if($cartsitems && $cartsitems->cartItems->count() > 0)
                         @foreach($cartsitems->cartItems as $item)
-                            <li class="list-group-item">
+                            @php
+                                $isOutOfStock = $item->item->stock <= 0;
+                                $isInsufficient = $item->item->stock < $item->quantity && $item->item->stock > 0;
+                                $hasStockProblem = $isOutOfStock || $isInsufficient;
+                            @endphp
+                            <li class="list-group-item {{ $hasStockProblem ? 'bg-warning bg-opacity-10' : '' }}"  @if($hasStockProblem) style="opacity: 0.6;" @endif>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="flex-grow-1">
-                                        <h6 class="mb-1">{{ $item->item->name }}</h6>
+                                        <h6 class="mb-1">
+                                            {{ $item->item->name }}
+                                            @if($isOutOfStock)
+                                                <span class="badge bg-danger">Habis</span>
+                                            @elseif($isInsufficient)
+                                                <span class="badge bg-warning text-dark">Stok {{ $item->item->stock }}</span>
+                                            @endif
+                                        </h6>
                                         <small class="text-muted">Kategori: {{ $item->item->category->name ?? '-' }}</small>
                                     </div>
 
@@ -141,6 +224,7 @@
                                             data-original="{{ $item->quantity }}"
                                             min="1"
                                             class="form-control form-control-sm text-center qty-input"
+                                            {{ $hasStockProblem ? 'disabled' : '' }}
                                             style="width: 80px;" required
                                         >
                                         <button type="submit" class="btn btn-sm btn-outline-success btn-qty-check" style="display:none;">
@@ -172,6 +256,10 @@
                     @if($isLimitReached)
                         <button type="button" class="btn btn-secondary" disabled>
                             <i class="ri-error-warning-line me-1"></i> Batas Pengajuan Tercapai
+                        </button>
+                    @elseif(isset($hasStockIssue) && $hasStockIssue)
+                        <button type="button" class="btn btn-warning w-100" disabled>
+                            <i class="ri-alert-line me-1"></i> Sesuaikan Barang terlebih dahulu
                         </button>
                     @else
                         <form action="{{ route('pegawai.permintaan.submit', $cartsitems->id ?? 0) }}" method="POST" class=" confirm-form">

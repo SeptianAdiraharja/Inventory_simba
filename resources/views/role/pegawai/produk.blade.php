@@ -165,7 +165,49 @@
     </small>
   </div>
 </div>
-
+<div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+    {{-- Judul --}}
+    <div>
+      <h4 class="mb-1 fw-bold text-dark">
+        <i class="bi bi-grid-3x3-gap-fill me-2 text-warning"></i>Daftar Barang
+      </h4>
+      <small class="text-muted">Total {{ $items->total() }} produk tersedia</small>
+    </div>
+    
+    {{-- Filter Dropdown --}}
+    <div class="d-flex align-items-center gap-2">
+      <label class="text-muted small mb-0">Urutkan:</label>
+      <select name="sort" 
+              id="sortFilter"
+              class="form-select form-select-sm shadow-sm" 
+              style="width: 200px; border-radius: 50px; border: 2px solid #FF9800;"
+              onchange="applySortFilter(this.value)">
+        <option value="stok_terbanyak" {{ request('sort', 'stok_terbanyak') == 'stok_terbanyak' ? 'selected' : '' }}>
+          📦 Stok Terbanyak
+        </option>
+        <option value="stok_sedikit" {{ request('sort') == 'stok_sedikit' ? 'selected' : '' }}>
+          ⚠️ Stok Menipis
+        </option>
+        <option value="paling_laris" {{ request('sort') == 'paling_laris' ? 'selected' : '' }}>
+          🔥 Paling Laris
+        </option>
+        <option value="terbaru" {{ request('sort') == 'terbaru' ? 'selected' : '' }}>
+          🆕 Terbaru
+        </option>
+        <option value="terlama" {{ request('sort') == 'terlama' ? 'selected' : '' }}>
+          📅 Terlama
+        </option>
+        <option value="nama_az" {{ request('sort') == 'nama_az' ? 'selected' : '' }}>
+          🔤 A → Z
+        </option>
+        <option value="nama_za" {{ request('sort') == 'nama_za' ? 'selected' : '' }}>
+          🔤 Z → A
+        </option>
+      </select>
+    </div>
+  </div>
+</div>
 <!-- 🔔 Flash Message -->
 @if (session('success'))
   <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -190,10 +232,6 @@
 
 <!-- 📦 Grid Produk -->
 <div class="row gy-4">
-  @php
-    $items = $items->sortByDesc(fn($i) => $i->stock > 0)->sortByDesc(fn($i) => $i->stock);
-  @endphp
-
   @forelse ($items as $item)
     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
       <div class="card product-card position-relative">
@@ -247,3 +285,10 @@
   </div>
 @endif
 @endsection
+<script>
+function applySortFilter(sortValue) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('sort', sortValue);
+    window.location.href = url.toString();
+}
+</script>

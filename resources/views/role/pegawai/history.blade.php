@@ -226,6 +226,18 @@ body {
   .card-header h5{font-size:0.95rem;}
   .hover-card{padding:0.8rem 1rem;}
 }
+:root {
+    --orange-main: #ff7f32;
+    --orange-soft: #ffe6d1;
+}
+
+.text-orange {
+    color: var(--orange-main) !important;
+}
+
+.bg-orange {
+    background-color: var(--orange-main) !important;
+}
 </style>
 
 {{-- ======================== --}}
@@ -297,8 +309,12 @@ body {
                   <h6>{{ $cart->created_at->format('d M Y') }}</h6>
                   <small><i class="bi bi-clock me-1"></i>{{ $cart->created_at->format('H:i') }} WIB</small>
                 </div>
-                <span class="badge {{ $cart->status == 'approved' ? 'bg-success' :
-                      ($cart->status == 'pending' ? 'bg-warning' : 'bg-danger') }}">
+                @if($cart->status === 'approved_partially')
+                    @php
+                        $cart->status = 'Approved partially'
+                    @endphp
+                @endif
+                <span class="badge {{ $cart->status == 'approved' ? 'bg-success' : ($cart->status == 'pending' ? 'bg-warning' : ($cart->status == 'Approved partially' ? 'bg-orange tex-white' : 'bg-danger')) }}">
                   {{ ucfirst($cart->status) }}
                 </span>
               </div>
