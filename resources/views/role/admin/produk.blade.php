@@ -176,8 +176,13 @@
             Dashboard
           </a>
         </li>
+        <li class="breadcrumb-item">
+          <a href="{{ route('admin.guests.index') }}" class="text-decoration-none fw-semibold" style="color:#FF9800;">
+            Daftar Guest
+          </a>
+        </li>
         <li class="breadcrumb-item active fw-semibold text-dark" aria-current="page">
-          Daftar Produk Guest
+          Produk untuk Guest: {{ $guest->name ?? 'Unknown' }}
         </li>
       </ol>
     </nav>

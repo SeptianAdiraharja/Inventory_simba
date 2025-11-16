@@ -230,7 +230,7 @@
 <div class="modal fade" id="refundModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg rounded-4">
-      <form action="{{ route('admin.pegawai.refund') }}" method="POST">
+      <form id="refundFormPegawai" action="{{ route('admin.pegawai.refund') }}" method="POST">
         @csrf
         <div class="modal-header text-white" style="background:linear-gradient(90deg, #FF9800, #FFB74D);">
           <h5 class="modal-title fw-bold"><i class="bi bi-arrow-counterclockwise me-2"></i> Refund Barang</h5>
@@ -244,17 +244,23 @@
             <input type="text" class="form-control rounded-3" id="refundItemName" readonly>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Jumlah Refund</label>
-            <input type="number" name="qty" id="refundQty" class="form-control rounded-3" min="1" required>
-            <small class="text-muted">Maksimal: <span id="maxQty">0</span></small>
+            <label class="form-label fw-semibold">Jumlah Refund <span class="text-danger">*</span></label>
+            <input type="number" name="qty" id="refundQty" class="form-control rounded-3" min="1" required
+                   oninput="validateRefundQty(this)">
+            <div class="form-text">
+              <span class="text-muted">Maksimal refund: </span>
+              <span id="maxQty" class="fw-bold text-warning">0</span>
+              <span id="qtyError" class="text-danger small d-none">❌ Jumlah refund melebihi batas maksimal</span>
+            </div>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Kode Barang (Scan)</label>
+            <label class="form-label fw-semibold">Kode Barang (Scan) <span class="text-danger">*</span></label>
             <input type="text" name="code" class="form-control rounded-3" placeholder="Scan barcode barang" required>
           </div>
         </div>
         <div class="modal-footer bg-light">
-          <button type="submit" class="btn text-white rounded-pill fw-semibold px-3" style="background-color:#FF9800;">
+          <button type="submit" id="submitRefundPegawai" class="btn text-white rounded-pill fw-semibold px-3"
+                  style="background-color:#FF9800;" disabled>
             ✅ Proses Refund
           </button>
           <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Batal</button>
@@ -268,7 +274,7 @@
 <div class="modal fade" id="refundModalGuest" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg rounded-4">
-      <form action="{{ route('admin.guest.refund') }}" method="POST">
+      <form id="refundFormGuest" action="{{ route('admin.guest.refund') }}" method="POST">
         @csrf
         <div class="modal-header text-white" style="background:linear-gradient(90deg, #FF9800, #FFB74D);">
           <h5 class="modal-title fw-bold"><i class="bi bi-arrow-counterclockwise me-2"></i> Refund Barang Tamu</h5>
@@ -282,17 +288,23 @@
             <input type="text" class="form-control rounded-3" id="refundGuestItemName" readonly>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Jumlah Refund</label>
-            <input type="number" name="qty" id="refundGuestQty" class="form-control rounded-3" min="1" required>
-            <small class="text-muted">Maksimal: <span id="maxGuestQty">0</span></small>
+            <label class="form-label fw-semibold">Jumlah Refund <span class="text-danger">*</span></label>
+            <input type="number" name="qty" id="refundGuestQty" class="form-control rounded-3" min="1" required
+                   oninput="validateRefundGuestQty(this)">
+            <div class="form-text">
+              <span class="text-muted">Maksimal refund: </span>
+              <span id="maxGuestQty" class="fw-bold text-warning">0</span>
+              <span id="guestQtyError" class="text-danger small d-none">❌ Jumlah refund melebihi batas maksimal</span>
+            </div>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Kode Barang (Scan)</label>
+            <label class="form-label fw-semibold">Kode Barang (Scan) <span class="text-danger">*</span></label>
             <input type="text" name="code" class="form-control rounded-3" placeholder="Scan barcode barang" required>
           </div>
         </div>
         <div class="modal-footer bg-light">
-          <button type="submit" class="btn text-white rounded-pill fw-semibold px-3" style="background-color:#FF9800;">
+          <button type="submit" id="submitRefundGuest" class="btn text-white rounded-pill fw-semibold px-3"
+                  style="background-color:#FF9800;" disabled>
             ✅ Proses Refund
           </button>
           <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Batal</button>
@@ -301,7 +313,6 @@
     </div>
   </div>
 </div>
-
 {{-- MODAL EDIT PEGAWAI --}}
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">

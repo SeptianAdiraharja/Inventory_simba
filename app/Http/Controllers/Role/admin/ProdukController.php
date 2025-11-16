@@ -16,9 +16,6 @@ class ProdukController extends Controller
     /**
      * Tampilkan semua produk
      */
-    /**
-     * Tampilkan semua produk
-     */
     public function index(Request $request)
     {
         $query = $request->input('q');
@@ -43,10 +40,10 @@ class ProdukController extends Controller
                 // Hanya tampilkan barang dengan stok > 0 jika tidak sedang search
                 $q->where('stock', '>', 0);
             })
-            ->orderBy('stock', 'desc') // Urutkan dari stok terbanyak ke terkecil
-            ->latest()
+            ->orderBy('stock', 'desc') // 🔥 Urutkan dari stok terbanyak ke terkecil
+            ->latest() // Tetap pertahankan latest untuk barang baru
             ->paginate(12)
-            ->withQueryString(); // 🔥 menjaga query tetap ada saat pagination
+            ->withQueryString();
 
         // Ambil semua kategori untuk dropdown filter
         $categories = Category::all();
@@ -60,24 +57,41 @@ class ProdukController extends Controller
     /**
      * Tampilkan produk + cart guest
      */
-    public function showByGuest($id)
+    /**
+ * Tampilkan produk + cart guest
+ */
+    public function showByGuest($id, Request $request)
     {
-       $guest = Guest::with(['guestCart.items' => function ($q) {
-            $q->wherePivot('released_at', null);
+        $guest = Guest::with(['guestCart.items' => function($query) {
+            $query->wherePivot('released_at', null);
         }])->findOrFail($id);
 
-        $items = Item::with('category')
-            ->where('stock', '>', 0) // Hanya tampilkan barang dengan stok > 0
-            ->orderBy('stock', 'desc') // Urutkan dari stok terbanyak ke terkecil
-            ->paginate(12);
+        // Query dengan pencarian
+        $query = Item::with('category');
 
-        $cart = $guest->guestCart;
-        $cartItems = $cart?->items ?? collect();
+        // Filter berdasarkan pencarian
+        if ($request->has('q') && !empty($request->q)) {
+            $search = $request->q;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        // Filter berdasarkan kategori
+        if ($request->has('kategori') && $request->kategori != 'none') {
+            $query->whereHas('category', function($q) use ($request) {
+                $q->where('name', $request->kategori);
+            });
+        }
+
+        // 🔥 URUTKAN: Stok terbanyak ke terkecil, kemudian barang terbaru
+        $items = $query->orderBy('stock', 'desc')
+                    ->latest()
+                    ->paginate(12);
+
+        // Ambil cart items untuk guest melalui guestCart
+        $cartItems = $guest->guestCart ? $guest->guestCart->items : collect();
 
         return view('role.admin.produk', compact('guest', 'items', 'cartItems'));
     }
-
-
 
     /**
      * Scan item ke cart guest

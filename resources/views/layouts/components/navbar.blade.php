@@ -21,11 +21,11 @@
                 'out_of_stock' => [],
                 'insufficient' => []
             ];
-            
+
             if ($cartsitems && $cartsitems->cartItems) {
                 foreach ($cartsitems->cartItems as $cartItem) {
                     $item = $cartItem->item;
-                    
+
                     if ($item->stock <= 0) {
                         $stockIssues['out_of_stock'][] = [
                             'cart_item_id' => $cartItem->id,
@@ -41,7 +41,7 @@
                     }
                 }
             }
-            
+
             $hasStockIssue = !empty($stockIssues['out_of_stock']) || !empty($stockIssues['insufficient']);
         @endphp
         <style>
@@ -83,7 +83,7 @@
                 cursor: not-allowed;
                 opacity: 0.7;
             }
-            
+
             .list-group-item button:disabled {
                 cursor: not-allowed;
                 opacity: 0.5;
@@ -152,7 +152,7 @@
                         <h6 class="alert-heading fw-semibold mb-2">
                             <i class="ri-error-warning-line me-2"></i>Peringatan Stok
                         </h6>
-                        
+
                         @if(!empty($stockIssues['out_of_stock']))
                             <p class="mb-1 small fw-semibold">Stok Habis:</p>
                             <ul class="mb-2 ps-3 small">
@@ -161,7 +161,7 @@
                                 @endforeach
                             </ul>
                         @endif
-                        
+
                         @if(!empty($stockIssues['insufficient']))
                             <p class="mb-1 small fw-semibold">Stok Tidak Mencukupi:</p>
                             <ul class="mb-2 ps-3 small">
@@ -173,7 +173,7 @@
                                 @endforeach
                             </ul>
                         @endif
-                        
+
                         <hr class="my-2">
                         <p class="mb-0 small">
                             <i class="ri-information-line me-1"></i>
@@ -535,10 +535,16 @@
                                 if (request()->is('admin/guests*')) {
                                     $actionUrl = route('admin.guests.index');
                                 } elseif (request()->is('admin/produk*')) {
-                                    $actionUrl = route('admin.produk.index');
+                                    // PERBAIKAN: Cek apakah ini halaman produk guest dengan ID
+                                    if (request()->is('admin/produk/guest/*')) {
+                                        // Ambil ID guest dari URL
+                                        $guestId = request()->segment(4); // segment ke-4 adalah ID guest
+                                        $actionUrl = route('admin.produk.byGuest', $guestId);
+                                    } else {
+                                        $actionUrl = route('admin.produk.index');
+                                    }
                                 } elseif (request()->is('admin/pegawai/*/produk')) {
-                                    // Rute untuk produk pegawai - ambil ID dari URL
-                                    $pegawaiId = request()->segment(3); // segment ke-3 adalah ID pegawai
+                                    $pegawaiId = request()->segment(3);
                                     $actionUrl = url("admin/pegawai/{$pegawaiId}/produk");
                                 } elseif (request()->is('admin/request*')) {
                                     $actionUrl = route('admin.request.search');
@@ -549,7 +555,6 @@
                                 } elseif (request()->is('admin/rejects*')) {
                                     $actionUrl = route('admin.rejects.search');
                                 } else {
-                                    // Fallback untuk admin jika tidak ada yang cocok
                                     $actionUrl = '#';
                                 }
                             }
