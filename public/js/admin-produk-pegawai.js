@@ -279,10 +279,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Load cart content
+    // =========================================================
+    // 📦 LOAD CART - DIMODIFIKASI
+    // =========================================================
     async function loadCart() {
         try {
-            console.log("Loading cart from:", routes.cart); // Debug log
+            console.log("Loading cart from:", routes.cart);
 
             const res = await fetch(routes.cart, {
                 headers: {
@@ -292,37 +294,22 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const json = await res.json();
-            console.log("Cart response:", json); // Debug log
+            console.log("Cart response:", json);
 
             if (res.ok && json.success) {
-                updateCartUI(json.data.items);
+                // 🔥 PASS WEEKLY DATA KE UPDATE CART UI
+                updateCartUI(json.data.items, {
+                    weekly_request_count: json.data.weekly_request_count,
+                    has_reached_limit: json.data.has_reached_limit,
+                    limit_message: json.data.limit_message
+                });
 
                 // Tampilkan informasi limit
                 if (json.data.has_reached_limit) {
                     showToast("warning", json.data.limit_message);
-                    if (saveBtn) {
-                        saveBtn.disabled = true;
-                        saveBtn.innerHTML =
-                            '<i class="ri-alert-line me-1"></i> Batas Mingguan Tercapai';
-                    }
-                } else {
-                    if (saveBtn) {
-                        saveBtn.disabled = false;
-                        saveBtn.innerHTML =
-                            '<i class="ri-send-plane-line me-1"></i> Simpan Keranjang';
-                    }
-
-                    // Tampilkan info jumlah permintaan
-                    if (json.data.weekly_request_count > 0) {
-                        console.log(
-                            `Pegawai telah membuat ${
-                                json.data.weekly_request_count
-                            } permintaan minggu ini. Sisa: ${
-                                5 - json.data.weekly_request_count
-                            } permintaan.`
-                        );
-                    }
                 }
+
+                // 🔥 Progress bar sudah dihandle di updateCartUI
             } else {
                 console.error("Failed to load cart:", json);
                 showToast("error", "Gagal memuat keranjang");
@@ -334,13 +321,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =========================================================
-    // 📋 UPDATE CART UI
+    // 📋 UPDATE CART UI & PROGRESS BAR
     // =========================================================
-    function updateCartUI(items) {
+    function updateCartUI(items, weeklyData = {}) {
         const cartTableBody = document.getElementById("cartTableBody");
         if (!cartTableBody) return;
 
         console.log("Updating cart UI with items:", items); // Debug log
+        console.log("Weekly data:", weeklyData); // Debug log
+
+        // 🔥 UPDATE PROGRESS BAR
+        updateProgressBar(weeklyData);
 
         if (!items || items.length === 0) {
             cartTableBody.innerHTML = `
@@ -407,6 +398,60 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =========================================================
+    // 🔥 PROGRESS BAR FUNCTIONS - TAMBAHAN BARU
+    // =========================================================
+    function updateProgressBar(weeklyData = {}) {
+        const progressBar = document.getElementById("progressBar");
+        const progressText = document.getElementById("progressText");
+        const progressMessage = document.getElementById("progressMessage");
+        const saveBtn = document.getElementById("saveCartButton");
+
+        if (!progressBar || !progressText) return;
+
+        const currentCount = weeklyData.weekly_request_count || 0;
+        const maxLimit = 5;
+        const percentage = (currentCount / maxLimit) * 100;
+
+        // Update progress bar visual
+        progressBar.style.width = `${percentage}%`;
+        progressBar.setAttribute("aria-valuenow", currentCount);
+
+        // Update text
+        progressText.textContent = `${currentCount}/${maxLimit}`;
+
+        // Update message and button state based on limit
+        if (weeklyData.has_reached_limit) {
+            progressMessage.innerHTML =
+                '<span class="text-danger">❌ Batas mingguan tercapai! Tidak dapat menambah pengeluaran lagi.</span>';
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML =
+                    '<i class="ri-alert-line me-1"></i> Batas Tercapai';
+            }
+            progressBar.classList.remove("bg-warning", "bg-success");
+            progressBar.classList.add("bg-danger");
+        } else {
+            const remaining = maxLimit - currentCount;
+            if (currentCount >= 3) {
+                // Warning at 3 or more
+                progressMessage.innerHTML = `<span class="text-warning">⚠️ Hati-hati! Sisa pengeluaran: ${remaining} kali lagi</span>`;
+                progressBar.classList.remove("bg-success", "bg-danger");
+                progressBar.classList.add("bg-warning");
+            } else {
+                progressMessage.innerHTML = `<span class="text-success">✅ Sisa pengeluaran: ${remaining} kali lagi</span>`;
+                progressBar.classList.remove("bg-warning", "bg-danger");
+                progressBar.classList.add("bg-success");
+            }
+
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML =
+                    '<i class="ri-send-plane-line me-1"></i> Simpan Keranjang';
+            }
+        }
+    }
+
+    // =========================================================
     // 🔢 UPDATE CART BADGE COUNT
     // =========================================================
     function updateCartBadgeCount(count) {
@@ -424,11 +469,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const res = await fetch(routes.cart, {
                 headers: {
                     "X-Requested-With": "XMLHttpRequest",
-                    "Accept": "application/json"
+                    Accept: "application/json",
                 },
             });
             const json = await res.json();
-            const count = json.success ? (json.data?.items?.length || 0) : 0;
+            const count = json.success ? json.data?.items?.length || 0 : 0;
 
             updateCartBadgeCount(count);
         } catch (err) {
@@ -471,18 +516,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 try {
                     const itemId = btn.dataset.id;
-                    console.log('Deleting item:', itemId); // Debug log
+                    console.log("Deleting item:", itemId); // Debug log
 
                     const res = await fetch(routes.deleteItem(itemId), {
                         method: "DELETE",
                         headers: {
                             "X-CSRF-TOKEN": csrf,
-                            "Accept": "application/json",
+                            Accept: "application/json",
                         },
                     });
 
                     const result = await res.json();
-                    console.log('Delete response:', result); // Debug log
+                    console.log("Delete response:", result); // Debug log
 
                     if (result.success) {
                         // Remove from UI
@@ -495,13 +540,24 @@ document.addEventListener("DOMContentLoaded", () => {
                         updateCartBadge();
                         loadCart(); // Reload untuk update UI yang konsisten
 
-                        showToast("success", "Item berhasil dihapus dari keranjang!");
+                        showToast(
+                            "success",
+                            "Item berhasil dihapus dari keranjang!"
+                        );
                     } else {
-                        showAlert("error", "Gagal", result.message || "Tidak dapat menghapus item.");
+                        showAlert(
+                            "error",
+                            "Gagal",
+                            result.message || "Tidak dapat menghapus item."
+                        );
                     }
                 } catch (err) {
-                    console.error('Delete error:', err);
-                    showAlert("error", "Terjadi Kesalahan", "Silakan coba lagi.");
+                    console.error("Delete error:", err);
+                    showAlert(
+                        "error",
+                        "Terjadi Kesalahan",
+                        "Silakan coba lagi."
+                    );
                 }
             });
         });
@@ -516,11 +572,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load cart when modal opens
     if (cartModalEl) {
-        cartModalEl.addEventListener('show.bs.modal', () => {
+        cartModalEl.addEventListener("show.bs.modal", () => {
             loadCart();
         });
     }
-
 
     // Auto-focus barcode input when modal opens
     document.querySelectorAll(".modal").forEach((modalEl) => {

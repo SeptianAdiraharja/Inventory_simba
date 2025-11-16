@@ -14,70 +14,70 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // === Submit form scan barang ===
-document.querySelectorAll("form[id^='form-']").forEach((form) => {
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const url = form.action;
-        const btn = form.querySelector("button[type='submit']");
-        const modal = bootstrap.Modal.getInstance(form.closest(".modal"));
-        const formData = new FormData(form);
+    document.querySelectorAll("form[id^='form-']").forEach((form) => {
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const url = form.action;
+            const btn = form.querySelector("button[type='submit']");
+            const modal = bootstrap.Modal.getInstance(form.closest(".modal"));
+            const formData = new FormData(form);
 
-        btn.disabled = true;
-        btn.innerHTML =
-            "<i class='ri-loader-4-line spin me-1'></i> Menyimpan...";
+            btn.disabled = true;
+            btn.innerHTML = "<i class='ri-loader-4-line spin me-1'></i> Menyimpan...";
 
-        try {
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "X-Requested-With": "XMLHttpRequest" },
-                body: formData,
-            });
-            const data = await res.json();
+            try {
+                const res = await fetch(url, {
+                    method: "POST",
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                    body: formData,
+                });
+                const data = await res.json();
 
-            if (data.status === "success") {
-                // ✅ Tidak ada SweetAlert di sini, langsung tutup modal
-                modal.hide();
+                if (data.status === "success") {
+                    modal.hide();
 
-                // Update badge jumlah item di tombol cart
-                const badge = document.querySelector("#openCartModal .badge");
-                if (badge) {
-                    badge.textContent = parseInt(badge.textContent) + 1;
+                    // Update badge jumlah item di tombol cart
+                    const badge = document.querySelector("#openCartModal .badge");
+                    if (badge) {
+                        badge.textContent = parseInt(badge.textContent) + 1;
+                    } else {
+                        const btn = document.getElementById("openCartModal");
+                        const badgeEl = document.createElement("span");
+                        badgeEl.className = "position-absolute badge rounded-pill bg-danger";
+                        badgeEl.style.cssText = "top:-5px; right:-5px; font-size:0.8rem; padding:6px 8px;";
+                        badgeEl.textContent = "1";
+                        btn.appendChild(badgeEl);
+                    }
                 } else {
-                    const btn = document.getElementById("openCartModal");
-                    const badgeEl = document.createElement("span");
-                    badgeEl.className =
-                        "position-absolute badge rounded-pill bg-danger";
-                    badgeEl.style.cssText =
-                        "top:-5px; right:-5px; font-size:0.8rem; padding:6px 8px;";
-                    badgeEl.textContent = "1";
-                    btn.appendChild(badgeEl);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Gagal!",
+                        text: data.message || "Terjadi kesalahan.",
+                    });
                 }
-            } else {
+            } catch (err) {
                 Swal.fire({
                     icon: "error",
-                    title: "Gagal!",
-                    text: data.message || "Terjadi kesalahan.",
+                    title: "Kesalahan Koneksi",
+                    text: err.message,
                 });
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "<i class='ri-check-line me-1'></i> Simpan";
             }
-        } catch (err) {
-            Swal.fire({
-                icon: "error",
-                title: "Kesalahan Koneksi",
-                text: err.message,
-            });
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = "<i class='ri-check-line me-1'></i> Simpan";
-        }
+        });
     });
-});
-
 
     // === Buka Modal Cart ===
     const openCartBtn = document.getElementById("openCartModal");
     const cartTableBody = document.getElementById("cartTableBody");
     const releaseForm = document.getElementById("releaseForm");
     const cartModal = new bootstrap.Modal(document.getElementById("cartModal"));
+    const releaseProgressBar = document.getElementById("releaseProgressBar");
+    const releaseProgressText = document.getElementById("releaseProgressText");
+    const limitWarning = document.getElementById("limitWarning");
+    const limitWarningText = document.getElementById("limitWarningText");
+    const confirmReleaseBtn = document.getElementById("confirmReleaseBtn");
 
     if (openCartBtn) {
         openCartBtn.addEventListener("click", () => {
@@ -87,38 +87,105 @@ document.querySelectorAll("form[id^='form-']").forEach((form) => {
             fetch(`/admin/produk/guest/${guestId}/cart`)
                 .then((res) => res.json())
                 .then((data) => {
+                    // Update progress bar
+                    const progressPercentage = (data.releaseCountThisWeek / data.maxReleasePerWeek) * 100;
+                    releaseProgressBar.style.width = `${progressPercentage}%`;
+                    releaseProgressBar.setAttribute('aria-valuenow', progressPercentage);
+                    releaseProgressText.textContent = `${data.releaseCountThisWeek}/${data.maxReleasePerWeek} kali`;
+
+                    // Tampilkan warning jika batas tercapai
+                    if (data.isLimitReached) {
+                        releaseProgressBar.classList.remove('bg-warning');
+                        releaseProgressBar.classList.add('bg-danger');
+                        limitWarning.style.display = 'block';
+                        limitWarningText.textContent = `Guest telah mencapai batas maksimal pengeluaran barang (${data.maxReleasePerWeek} kali) dalam seminggu.`;
+                        confirmReleaseBtn.disabled = true;
+                        confirmReleaseBtn.innerHTML = '<i class="ri-error-warning-line me-1"></i> Batas Tercapai';
+                    } else {
+                        releaseProgressBar.classList.remove('bg-danger');
+                        releaseProgressBar.classList.add('bg-warning');
+                        limitWarning.style.display = 'none';
+                        confirmReleaseBtn.disabled = false;
+                        confirmReleaseBtn.innerHTML = '<i class="ri-send-plane-line me-1"></i> Keluarkan Semua';
+                    }
+
+                    // Update cart items
                     cartTableBody.innerHTML = "";
                     if (data.cartItems.length > 0) {
                         data.cartItems.forEach((item) => {
                             cartTableBody.innerHTML += `
-                <tr data-id="${item.id}">
-                  <td>${item.name}</td>
-                  <td>${item.code ?? "-"}</td>
-                  <td class="text-center">
-                    <input
-                      type="number"
-                      min="1"
-                      class="form-control form-control-sm text-center update-qty"
-                      value="${item.quantity}"
-                      style="width: 80px; margin: 0 auto;"
-                    >
-                  </td>
-                  <td class="text-center">
-                    <button class="btn btn-sm btn-danger rounded-pill delete-item">
-                      <i class="ri-delete-bin-line"></i>
-                    </button>
-                  </td>
-                </tr>`;
+                                <tr data-id="${item.id}">
+                                    <td>${item.name}</td>
+                                    <td>${item.code ?? "-"}</td>
+                                    <td class="text-center">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            class="form-control form-control-sm text-center update-qty"
+                                            value="${item.quantity}"
+                                            style="width: 80px; margin: 0 auto;"
+                                        >
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-danger rounded-pill delete-item">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    </td>
+                                </tr>`;
                         });
                     } else {
                         cartTableBody.innerHTML = `
-              <tr><td colspan="4" class="text-center text-muted py-3">
-                <i class='ri-information-line me-1'></i>Keranjang kosong
-              </td></tr>`;
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">
+                                    <i class='ri-information-line me-1'></i>Keranjang kosong
+                                </td>
+                            </tr>`;
                     }
 
                     releaseForm.action = `/admin/produk/guest/${guestId}/release`;
                     cartModal.show();
+                });
+        });
+    }
+
+    // === Konfirmasi saat klik "Keluarkan Semua" ===
+    if (confirmReleaseBtn) {
+        confirmReleaseBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+
+            const guestId = openCartBtn.dataset.guestId;
+
+            // Cek batas pengeluaran sebelum konfirmasi
+            fetch(`/admin/produk/guest/${guestId}/cart`)
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.isLimitReached) {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Batas Tercapai!",
+                            html: `Guest telah mencapai batas maksimal pengeluaran barang (${data.maxReleasePerWeek} kali) dalam seminggu.`,
+                            confirmButtonColor: "#d33",
+                            confirmButtonText: "Mengerti"
+                        });
+                        return;
+                    }
+
+                    // Jika belum mencapai batas, tampilkan konfirmasi biasa
+                    Swal.fire({
+                        title: "Yakin ingin mengeluarkan semua barang?",
+                        html: `Setelah ini stok akan langsung berkurang.<br>
+                               <small class="text-warning">Pengeluaran minggu ini: ${data.releaseCountThisWeek}/${data.maxReleasePerWeek} kali</small>`,
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#43A047",
+                        cancelButtonColor: "#d33",
+                        confirmButtonText: "Ya, keluarkan!",
+                        cancelButtonText: "Batal"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            releaseForm.submit();
+                        }
+                    });
                 });
         });
     }
@@ -133,19 +200,14 @@ document.querySelectorAll("form[id^='form-']").forEach((form) => {
         const guestId = openCartBtn.dataset.guestId;
 
         try {
-            const res = await fetch(
-                `/admin/produk/guest/${guestId}/cart/update`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": document.querySelector(
-                            'meta[name="csrf-token"]'
-                        ).content,
-                    },
-                    body: JSON.stringify({ item_id: itemId, quantity: newQty }),
-                }
-            );
+            const res = await fetch(`/admin/produk/guest/${guestId}/cart/update`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({ item_id: itemId, quantity: newQty }),
+            });
 
             const data = await res.json();
             if (data.status === "success") {
@@ -192,18 +254,13 @@ document.querySelectorAll("form[id^='form-']").forEach((form) => {
         if (!confirm.isConfirmed) return;
 
         try {
-            const res = await fetch(
-                `/admin/produk/guest/${guestId}/cart/item/${itemId}`,
-                {
-                    method: "DELETE",
-                    headers: {
-                        "X-CSRF-TOKEN": document.querySelector(
-                            'meta[name="csrf-token"]'
-                        ).content,
-                        "X-Requested-With": "XMLHttpRequest",
-                    },
-                }
-            );
+            const res = await fetch(`/admin/produk/guest/${guestId}/cart/item/${itemId}`, {
+                method: "DELETE",
+                headers: {
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            });
 
             const data = await res.json();
             if (data.status === "success") {
@@ -226,11 +283,11 @@ document.querySelectorAll("form[id^='form-']").forEach((form) => {
 
                 if (!cartTableBody.querySelector("tr")) {
                     cartTableBody.innerHTML = `
-            <tr>
-              <td colspan="4" class="text-center text-muted py-3">
-                <i class='ri-information-line me-1'></i>Keranjang kosong
-              </td>
-            </tr>`;
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3">
+                                <i class='ri-information-line me-1'></i>Keranjang kosong
+                            </td>
+                        </tr>`;
                 }
             }
         } catch (err) {
@@ -245,9 +302,7 @@ document.querySelectorAll("form[id^='form-']").forEach((form) => {
     // === Floating Cart Button (drag & move) ===
     const cartBtn = document.getElementById("openCartModal");
     if (cartBtn) {
-        let offsetX,
-            offsetY,
-            isDragging = false;
+        let offsetX, offsetY, isDragging = false;
 
         cartBtn.addEventListener("mousedown", (e) => {
             isDragging = true;

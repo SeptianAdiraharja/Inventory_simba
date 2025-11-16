@@ -275,45 +275,77 @@
 </div>
 
 <!-- === MODAL CART === -->
+<!-- === MODAL CART === -->
 <div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title fw-semibold"><i class="ri-shopping-cart-line me-2"></i>Keranjang Guest</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body bg-light">
-        <table class="table table-hover align-middle">
-          <thead>
-            <tr>
-              <th>Nama Barang</th>
-              <th>Kode</th>
-              <th class="text-center">Jumlah</th>
-              <th class="text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="cartTableBody">
-            <tr>
-              <td colspan="4" class="text-center text-muted py-3">
-                <i class="ri-information-line me-1"></i>Keranjang kosong
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="modal-footer">
-        <form id="releaseForm" action="{{ route('admin.produk.release', $guest->id ?? 0) }}" method="POST">
-          @csrf
-          <button type="button" id="confirmReleaseBtn" class="btn btn-success">
-            <i class="ri-send-plane-line me-1"></i> Keluarkan Semua
-          </button>
-        </form>
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-          <i class="ri-close-line me-1"></i> Tutup
-        </button>
-      </div>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold"><i class="ri-shopping-cart-line me-2"></i>Keranjang Guest</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light">
+
+                <!-- 🎯 PROGRESS BAR BATAS PENGELUARAN -->
+                <div class="p-3 border rounded-3 mb-3 bg-white shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 fw-semibold text-warning">
+                            <i class="ri-calendar-line me-2"></i>Pengeluaran Minggu Ini
+                        </h6>
+                        <span class="fw-bold text-warning" id="releaseProgressText">0/3 kali</span>
+                    </div>
+
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar bg-warning"
+                             role="progressbar"
+                             id="releaseProgressBar"
+                             style="width: 0%;"
+                             aria-valuenow="0"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning alert-dismissible fade show mt-3 py-2 px-3"
+                         id="limitWarning"
+                         style="display: none;"
+                         role="alert">
+                        <i class="ri-error-warning-line me-2"></i>
+                        <span id="limitWarningText">Guest telah mencapai batas maksimal pengeluaran barang.</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Nama Barang</th>
+                            <th>Kode</th>
+                            <th class="text-center">Jumlah</th>
+                            <th class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartTableBody">
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3">
+                                <i class="ri-information-line me-1"></i>Keranjang kosong
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <form id="releaseForm" action="{{ route('admin.produk.release', $guest->id ?? 0) }}" method="POST">
+                    @csrf
+                    <button type="button" id="confirmReleaseBtn" class="btn btn-success">
+                        <i class="ri-send-plane-line me-1"></i> Keluarkan Semua
+                    </button>
+                </form>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="ri-close-line me-1"></i> Tutup
+                </button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- 🧭 PAGINATION -->

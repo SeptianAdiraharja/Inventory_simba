@@ -6,6 +6,8 @@
     background-color: #f4f6f9;
   }
 
+
+
   /* === Breadcrumb === */
   .breadcrumb-icon {
     width: 38px; height: 38px;
@@ -366,6 +368,25 @@
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
+
+      <!-- 🔥 PROGRESS BAR - TAMBAHAN BARU -->
+      <div class="px-4 pt-3 border-bottom">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <small class="fw-semibold text-dark">Progress Pengeluaran Minggu Ini:</small>
+          <small class="fw-bold" id="progressText">0/5</small>
+        </div>
+        <div class="progress mb-3" style="height: 10px; border-radius: 10px;">
+          <div id="progressBar" class="progress-bar"
+               role="progressbar"
+               style="border-radius: 10px; transition: all 0.5s ease;"
+               aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div>
+        </div>
+        <small class="text-muted d-block mb-2">
+          <i class="ri-information-line me-1"></i>
+          <span id="progressMessage">Setiap pegawai dapat mengeluarkan barang maksimal 5 kali per minggu</span>
+        </small>
+      </div>
+
       <div class="modal-body bg-light">
         <div id="cartContent">
           <table class="table table-hover align-middle">

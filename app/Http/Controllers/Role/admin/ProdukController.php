@@ -10,6 +10,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 
 class ProdukController extends Controller
 {
@@ -54,12 +55,6 @@ class ProdukController extends Controller
     /**
      * Tampilkan produk + cart guest
      */
-    /**
-     * Tampilkan produk + cart guest
-     */
-    /**
- * Tampilkan produk + cart guest
- */
     public function showByGuest($id, Request $request)
     {
         $guest = Guest::with(['guestCart.items' => function($query) {
@@ -90,10 +85,35 @@ class ProdukController extends Controller
         // Ambil cart items untuk guest melalui guestCart
         $cartItems = $guest->guestCart ? $guest->guestCart->items : collect();
 
-        return view('role.admin.produk', compact('guest', 'items', 'cartItems'));
+        // Hitung jumlah pengeluaran minggu ini
+        $releaseCountThisWeek = $this->getReleaseCountThisWeek($guest->id);
+        $maxReleasePerWeek = 3;
+        $isLimitReached = $releaseCountThisWeek >= $maxReleasePerWeek;
+
+        return view('role.admin.produk', compact(
+            'guest',
+            'items',
+            'cartItems',
+            'releaseCountThisWeek',
+            'maxReleasePerWeek',
+            'isLimitReached'
+        ));
     }
 
     /**
+     * Hitung jumlah pengeluaran barang guest dalam 1 minggu terakhir
+     */
+    private function getReleaseCountThisWeek($guestId)
+    {
+        $startOfWeek = Carbon::now()->startOfWeek(); // Senin minggu ini
+        $endOfWeek = Carbon::now()->endOfWeek();     // Minggu minggu ini
+
+        return Item_out_guest::where('guest_id', $guestId)
+            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+            ->count();
+    }
+
+     /**
      * Scan item ke cart guest
      */
     public function scan(Request $request, $guestId)
@@ -172,7 +192,7 @@ class ProdukController extends Controller
     }
 
 
-    /**
+     /**
      * Ambil cart guest untuk modal (AJAX)
      */
    public function showCart($guestId)
@@ -191,17 +211,36 @@ class ProdukController extends Controller
             ];
         }) ?? collect();
 
-        return response()->json(['cartItems' => $cartItems]);
+        // Hitung jumlah pengeluaran minggu ini
+        $releaseCountThisWeek = $this->getReleaseCountThisWeek($guestId);
+        $maxReleasePerWeek = 3;
+        $isLimitReached = $releaseCountThisWeek >= $maxReleasePerWeek;
+
+        return response()->json([
+            'cartItems' => $cartItems,
+            'releaseCountThisWeek' => $releaseCountThisWeek,
+            'maxReleasePerWeek' => $maxReleasePerWeek,
+            'isLimitReached' => $isLimitReached
+        ]);
     }
 
 
-    /**
-     * ✅ Checkout / Release barang guest
-     * Tidak menghapus cart dan pivot, hanya menandai is_released = true
+     /**
+     * ✅ Checkout / Release barang guest dengan validasi batas mingguan
      */
     public function release($guestId)
     {
         $guest = Guest::with('guestCart.items')->findOrFail($guestId);
+
+        // Cek batas pengeluaran mingguan
+        $releaseCountThisWeek = $this->getReleaseCountThisWeek($guestId);
+        $maxReleasePerWeek = 3;
+
+        if ($releaseCountThisWeek >= $maxReleasePerWeek) {
+            return redirect()->back()->with('error',
+                "Guest telah mencapai batas maksimal pengeluaran barang ({$maxReleasePerWeek} kali) dalam seminggu."
+            );
+        }
 
         if (!$guest->guestCart || $guest->guestCart->items->isEmpty()) {
             return redirect()->back()->with('error', 'Keranjang guest kosong.');
@@ -335,7 +374,6 @@ class ProdukController extends Controller
                 return response()->json(['status' => 'error', 'message' => 'Item tidak ditemukan di cart.'], 404);
             }
 
-            // Hapus relasi item dari pivot
             $cart->items()->detach($itemId);
 
             return response()->json(['status' => 'success', 'message' => 'Item berhasil dihapus dari cart.']);
