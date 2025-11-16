@@ -39,7 +39,7 @@
         {{-- Item --}}
         <div class="mb-4">
           <label class="form-label fw-semibold text-dark">Barang</label>
-          <select name="item_id" class="form-select shadow-sm border-0"
+          <select name="item_id" class="form-select shadow-sm border-0 select2"
                   style="border-left:4px solid #FF9800 !important;" required>
             <option value="">-- Pilih Barang --</option>
             @foreach($items as $item)
@@ -52,7 +52,7 @@
         {{-- Supplier --}}
         <div class="mb-4">
           <label class="form-label fw-semibold text-dark">Supplier</label>
-          <select name="supplier_id" class="form-select shadow-sm border-0"
+          <select name="supplier_id" class="form-select shadow-sm border-0 select2"
                   style="border-left:4px solid #FF9800 !important;" required>
             <option value="">-- Pilih Supplier --</option>
             @foreach($suppliers as $supplier)
@@ -130,5 +130,54 @@
   transition: width 0.25s ease;
 }
 .breadcrumb-link:hover::after { width: 100%; }
+
+/* =============================== */
+/* 🎯 FIX SELECT2 – BIKIN SAMA */
+/* =============================== */
+.select2-container--default .select2-selection--single {
+    height: 47px !important;
+    padding: 8px 12px !important;
+    border: none !important;
+    border-radius: .375rem !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important;
+    border-left: 4px solid #FF9800 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.select2-container--default .select2-selection--single:focus,
+.select2-container--default.select2-container--focus .select2-selection--single {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(255,152,0,0.25) !important;
+    border-left: 4px solid #FF9800 !important;
+}
+
+.select2-container--default .select2-selection__arrow {
+    height: 100% !important;
+    right: 10px !important;
+}
+
+.select2-container .select2-selection--single .select2-selection__rendered {
+    padding-left: 0 !important;
+    color: #333 !important;
+    font-size: 14px !important;
+    line-height: 45px !important;
+}
 </style>
+
+{{-- ======================== --}}
+{{-- 📌 SELECT2 --}}
+{{-- ======================== --}}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+      $('.select2').select2({
+          width: '100%',
+          minimumResultsForSearch: 0,
+      });
+  });
+</script>
+
 @endsection
