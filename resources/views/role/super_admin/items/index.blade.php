@@ -276,7 +276,6 @@
   </div>
 </div>
 
-
 {{-- ======================== --}}
 {{-- MODAL IMPORT --}}
 {{-- ======================== --}}
@@ -332,6 +331,51 @@
   </div>
 </div>
 
+<style>
+html, body { background:#f8f9fb !important; }
+
+/* Hilangkan scroll horizontal */
+.table-responsive {
+  overflow-x: hidden !important;
+}
+
+.table {
+  width: 100% !important;
+  table-layout: auto !important;
+}
+
+/* Optimasi teks panjang */
+.text-truncate {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 200px;
+}
+
+.card-body {
+  overflow-x: hidden !important;
+}
+
+/* Pagination Orange */
+.pagination .page-link {
+  color:#FF9800; border:1px solid #FFCC80;
+}
+.pagination .page-link:hover {
+  background:#FFE0B2; color:#E68900;
+}
+.pagination .active .page-link {
+  background:#FF9800; border-color:#FF9800; color:white;
+}
+.pagination .page-item.disabled .page-link {
+  color:#FFCC80;
+}
+
+.smooth-fade{animation:fadeIn .6s ease;}
+.table-row-hover:hover{background:#FFF9E6!important;transform:translateX(3px);}
+.hover-glow:hover{background:#FFC107!important;box-shadow:0 0 12px rgba(255,152,0,.4);}
+.dropdown-item:hover{background:#FFF3E0;color:#FF9800;}
+</style>
+
 <script>
 document.getElementById('itemImportForm').addEventListener('submit', function (e) {
     const fileInput = document.querySelector('input[name="file"]');
@@ -351,42 +395,8 @@ document.getElementById('itemImportForm').addEventListener('submit', function (e
         e.preventDefault();
     }
 });
-</script>
 
-
-
-
-{{-- ======================== --}}
-{{-- STYLE TAMBAHAN --}}
-{{-- ======================== --}}
-<style>
-  html, body { background:#f8f9fb !important; }
-
-  /* Pagination Orange */
-  .pagination .page-link {
-    color:#FF9800; border:1px solid #FFCC80;
-  }
-  .pagination .page-link:hover {
-    background:#FFE0B2; color:#E68900;
-  }
-  .pagination .active .page-link {
-    background:#FF9800; border-color:#FF9800; color:white;
-  }
-  .pagination .page-item.disabled .page-link {
-    color:#FFCC80;
-  }
-
-  .smooth-fade{animation:fadeIn .6s ease;}
-  .table-row-hover:hover{background:#FFF9E6!important;transform:translateX(3px);}
-  .hover-glow:hover{background:#FFC107!important;box-shadow:0 0 12px rgba(255,152,0,.4);}
-  .dropdown-item:hover{background:#FFF3E0;color:#FF9800;}
-</style>
-
-
-{{-- ======================== --}}
-{{-- AUTO FILTER --}}
-{{-- ======================== --}}
-<script>
+// Auto filter script
 document.addEventListener('DOMContentLoaded',()=>{
   const f=document.getElementById('filterForm'),
         s=document.getElementById('autoSearchInput'),
@@ -404,5 +414,4 @@ document.addEventListener('DOMContentLoaded',()=>{
   st.addEventListener('change',go);
 });
 </script>
-
 @endsection
