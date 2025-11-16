@@ -101,7 +101,7 @@
                       $statusText = 'Hampir Expired';
                       $statusClass = 'bg-warning-subtle text-warning';
                   } else {
-                      $statusText = 'Aktif';
+                      $statusText = 'Belum Expired';
                       $statusClass = 'bg-success-subtle text-success';
                   }
 

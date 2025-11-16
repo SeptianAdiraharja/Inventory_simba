@@ -31,6 +31,7 @@
     border: none;
     background: #ffffff;
     transition: all 0.3s ease;
+    position: relative;
   }
   .card:hover {
     transform: translateY(-5px);
@@ -39,6 +40,39 @@
   .card-body h5 {
     font-size: 1.05rem;
     color: #5d4037;
+  }
+
+  /* === Label Stok === */
+  .stock-label {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    z-index: 2;
+  }
+
+  .stock-low {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+  }
+
+  .stock-out {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
+  .card-img-container {
+    position: relative;
+  }
+
+  .card[data-stock="0"] {
+    opacity: 0.7;
+    background-color: #f8f9fa;
   }
 
   .btn {
@@ -216,31 +250,59 @@
 <div class="row gy-4 mt-3 animate__animated animate__fadeInUp">
   @foreach ($items as $item)
   <div class="col-xl-3 col-lg-4 col-md-6">
-    <div class="card shadow-sm" data-item-id="{{ $item->id }}">
-      <img src="{{ asset('storage/' . $item->image) }}" class="card-img-top"
-           alt="{{ $item->name }}" style="height:220px; object-fit:cover; border-radius:1.25rem 1.25rem 0 0;">
+    <div class="card shadow-sm" data-item-id="{{ $item->id }}" data-stock="{{ $item->stock }}">
+      <div class="card-img-container">
+        <img src="{{ asset('storage/' . $item->image) }}" class="card-img-top"
+             alt="{{ $item->name }}" style="height:220px; object-fit:cover; border-radius:1.25rem 1.25rem 0 0;">
+
+        <!-- 🔥 LABEL STOK -->
+        @if($item->stock == 0)
+          <span class="stock-label stock-out">
+            <i class="ri-error-warning-line me-1"></i>Barang Habis
+          </span>
+        @elseif($item->stock <= 5)
+          <span class="stock-label stock-low">
+            <i class="ri-alert-line me-1"></i>Hampir Habis
+          </span>
+        @endif
+      </div>
+
       <div class="card-body d-flex flex-column justify-content-between">
         <div>
           <h5 class="fw-semibold mb-2">{{ $item->name }}</h5>
           <p class="small mb-1"><i class="ri-folder-line me-1"></i> Kategori:
             <span class="fw-semibold text-dark">{{ $item->category->name ?? '-' }}</span>
           </p>
-          <p class="small mb-0"><i class="ri-barcode-box-line me-1"></i> Stok:
-            <span class="{{ $item->stock > 0 ? 'text-success fw-bold' : 'text-danger fw-bold' }}">{{ $item->stock }}</span>
+          <p class="small mb-0">
+            <i class="ri-barcode-box-line me-1"></i> Stok:
+            <span class="fw-bold
+              @if($item->stock == 0) text-danger
+              @elseif($item->stock <= 5) text-warning
+              @else text-success
+              @endif">
+              {{ $item->stock }}
+            </span>
           </p>
         </div>
-        <button type="button" class="btn btn-primary mt-3 w-100 scan-btn"
-                data-bs-toggle="modal" data-bs-target="#scanModal-{{ $item->id }}"
-                data-item-id="{{ $item->id }}"
-                data-item-name="{{ $item->name }}"
-                {{ $item->stock == 0 ? 'disabled' : '' }}>
-          <i class="ri-scan-line me-1"></i> Keluarkan Barang
-        </button>
+
+        @if($item->stock > 0)
+          <button type="button" class="btn btn-primary mt-3 w-100 scan-btn"
+                  data-bs-toggle="modal" data-bs-target="#scanModal-{{ $item->id }}"
+                  data-item-id="{{ $item->id }}"
+                  data-item-name="{{ $item->name }}">
+            <i class="ri-scan-line me-1"></i> Keluarkan Barang
+          </button>
+        @else
+          <button type="button" class="btn btn-secondary mt-3 w-100" disabled>
+            <i class="ri-close-line me-1"></i> Stok Habis
+          </button>
+        @endif
       </div>
     </div>
   </div>
 
   <!-- 🔍 Modal Scan Barang -->
+  @if($item->stock > 0)
   <div class="modal fade" id="scanModal-{{ $item->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -249,6 +311,9 @@
           <div class="modal-header">
             <h5 class="modal-title fw-semibold">
               <i class="ri-scan-line me-2"></i>Scan Barang: {{ $item->name }}
+              @if($item->stock <= 5)
+                <span class="badge bg-warning ms-2">Stok Menipis</span>
+              @endif
             </h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
@@ -261,6 +326,11 @@
               <input type="number" name="quantity" class="form-control form-control-lg rounded-3 border-warning quantity-input"
                      min="1" max="{{ $item->stock }}" value="1" required>
               <small class="text-muted">Maksimum stok: <span class="stock-max">{{ $item->stock }}</span></small>
+              @if($item->stock <= 5)
+                <small class="text-warning d-block mt-1">
+                  <i class="ri-alert-line me-1"></i>Stok barang ini hampir habis!
+                </small>
+              @endif
             </div>
             <div class="mb-3">
               <label class="form-label fw-semibold">Masukkan / Scan Barcode</label>
@@ -282,6 +352,7 @@
       </div>
     </div>
   </div>
+  @endif
   @endforeach
 </div>
 

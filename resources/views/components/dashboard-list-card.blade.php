@@ -15,7 +15,7 @@
                  class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
             <div>
               <strong>{{ $item->item->name ?? '-' }}</strong>
-              <div class="text-muted small">Qty: {{ $item->quantity }}</div>
+              <div class="text-muted small">Jumlah: {{ $item->quantity }}</div>
             </div>
           @elseif($type === 'request')
             <img src="{{ asset('storage/' . ($item->items->first()->image ?? 'default.png')) }}"
@@ -23,7 +23,7 @@
                  class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
             <div>
               <strong>{{ $item->items->first()->name ?? '-' }}</strong>
-              <div class="text-muted small">By: {{ $item->user->name ?? 'Guest' }}</div>
+              <div class="text-muted small">oleh: {{ $item->user->name ?? 'Guest' }}</div>
             </div>
           @endif
         </li>

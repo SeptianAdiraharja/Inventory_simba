@@ -387,8 +387,33 @@
 
 @push('scripts')
 <script>
-// Refund Modal Pegawai
 document.addEventListener('DOMContentLoaded', function() {
+    // SweetAlert untuk pesan sukses/gagal dari session
+    @if(session('success'))
+    Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: '{{ session('success') }}',
+        confirmButtonText: 'Oke',
+        confirmButtonColor: '#FF9800',
+        background: '#fffaf4',
+        iconColor: '#4CAF50'
+    });
+    @endif
+
+    @if(session('error'))
+    Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        text: '{{ session('error') }}',
+        confirmButtonText: 'Oke',
+        confirmButtonColor: '#FF9800',
+        background: '#fffaf4',
+        iconColor: '#f44336'
+    });
+    @endif
+
+    // Refund Modal Pegawai
     const refundModal = document.getElementById('refundModal');
     if (refundModal) {
         refundModal.addEventListener('show.bs.modal', function(event) {
@@ -455,14 +480,60 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Reject Button Handler
-    document.querySelectorAll('.btn-reject').forEach(button => {
-        button.addEventListener('click', function() {
-            const itemCode = this.getAttribute('data-item-code');
-            if (confirm(`Apakah Anda yakin ingin reject barang dengan kode ${itemCode}?`)) {
-                // Implement reject logic here
-                alert('Fitur reject belum diimplementasikan');
+    // SweetAlert untuk konfirmasi refund
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const formType = this.getAttribute('action');
+
+            if (formType && (formType.includes('refund') || formType.includes('update'))) {
+                e.preventDefault();
+
+                const actionType = formType.includes('refund') ? 'refund' : 'edit';
+                const itemName = this.querySelector('input[readonly]')?.value || 'barang';
+
+                Swal.fire({
+                    title: `Konfirmasi ${actionType === 'refund' ? 'Refund' : 'Edit'}`,
+                    text: `Apakah Anda yakin ingin ${actionType === 'refund' ? 'melakukan refund pada' : 'mengedit'} ${itemName}?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Lanjutkan',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#FF9800',
+                    cancelButtonColor: '#6c757d',
+                    background: '#fffaf4'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Tampilkan loading
+                        Swal.fire({
+                            title: 'Memproses...',
+                            text: 'Sedang memproses permintaan Anda',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        // Submit form setelah konfirmasi
+                        this.submit();
+                    }
+                });
             }
+        });
+    });
+
+    // SweetAlert untuk error validasi form
+    document.querySelectorAll('input, select').forEach(input => {
+        input.addEventListener('invalid', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'warning',
+                title: 'Data Tidak Lengkap',
+                text: 'Harap lengkapi semua field yang wajib diisi',
+                confirmButtonText: 'Oke',
+                confirmButtonColor: '#FF9800',
+                background: '#fffaf4'
+            });
         });
     });
 });
