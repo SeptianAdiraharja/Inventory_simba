@@ -9,8 +9,9 @@ class UnitController extends Controller
 {
     public function index()
     {
-        $units = Unit::latest()->get();
-        return view('role.super_admin.units.index', compact('units'));
+        $units = Unit::paginate(10);
+        $totalUnits = Unit::count();
+        return view('role.super_admin.units.index', compact('units', 'totalUnits'));
     }
 
     public function create()

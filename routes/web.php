@@ -77,6 +77,7 @@ Route::get('/', function () {
 */
 Route::put('/users/{id}/ban', [UserController::class, 'ban'])->name('users.ban');
 Route::put('/users/{id}/unban', [UserController::class, 'unban'])->name('users.unban');
+Route::put('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
 
 /*
 |--------------------------------------------------------------------------
@@ -102,6 +103,11 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('/admin/dashboard/modal/{type}', [AdminController::class, 'loadModalData']);
         Route::get('/dashboard/modal/barang_keluar', [AdminController::class, 'barangKeluarModal'])
             ->name('dashboard.modal.barang_keluar');
+
+        Route::get('/items/download-template', [ItemController::class, 'downloadTemplate'])
+        ->name('items.template');
+        Route::get('/suppliers/download-template', [SupplierController::class, 'downloadTemplate'])
+        ->name('suppliers.template');
 
         // CRUD Master Data
         Route::resources([

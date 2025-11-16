@@ -10,34 +10,42 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        // 🔹 Ambil semua admin & super_admin (tetap tampil di atas)
+        // Admin tetap normal dan paginate
         $admins = User::whereIn('role', ['admin'])
-                      ->orderBy('name')
-                      ->get();
+                    ->orderBy('name')
+                    ->paginate(10)
+                    ->withQueryString();
 
-        // 🔹 Query khusus untuk pegawai saja
-        $query = User::where('role', 'pegawai');
+        // DEFAULT: Pegawai aktif (tanpa withTrashed)
+        $query = User::where('role', 'pegawai')->whereNull('deleted_at');
 
-        // 🔍 Filter status pegawai
+        // Filter
         if ($request->status === 'banned') {
-            $query->where('is_banned', true);
+            $query->where('is_banned', true)
+                ->whereNull('deleted_at');
         } elseif ($request->status === 'active') {
-            $query->where('is_banned', false);
+            $query->where('is_banned', false)
+                ->whereNull('deleted_at');
+        } elseif ($request->status === 'deleted') {
+            // Hanya yang soft deleted
+            $query = User::onlyTrashed()->where('role', 'pegawai');
         }
 
-        // 🔎 Pencarian berdasarkan nama / email (khusus pegawai)
+        // Search
         if ($request->filled('search')) {
             $search = $request->search;
+
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
-        // 🔹 Ambil hasil pegawai
-        $pegawai = $query->orderBy('name')->get();
+        // Paginate pegawai
+        $pegawai = $query->orderBy('name')
+                        ->paginate(10)
+                        ->withQueryString();
 
-        // 🔹 Kirim dua dataset terpisah ke view
         return view('role.super_admin.users.index', compact('admins', 'pegawai'));
     }
 
@@ -90,15 +98,22 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        $user->delete();
-        return redirect()->route('super_admin.users.index')
-                         ->with('success', 'Akun berhasil dihapus.');
+        // 🔥 SOFT DELETE KHUSUS PEGAWAI
+        if ($user->role === 'pegawai') {
+            $user->delete(); // Soft delete
+            return back()->with('success', 'Pegawai berhasil dihapus (soft delete).');
+        }
+
+        // 🔥 ADMIN & SUPER ADMIN = HARD DELETE
+        $user->forceDelete();
+
+        return back()->with('success', 'Akun admin berhasil dihapus permanen.');
     }
 
     // 🚫 BAN PEGAWAI
     public function ban($id)
     {
-        $user = User::findOrFail($id);
+        $user = User::withTrashed()->findOrFail($id);
 
         if ($user->role !== 'pegawai') {
             return back()->with('error', 'Hanya pegawai yang bisa diban!');
@@ -115,7 +130,7 @@ class UserController extends Controller
     // 🔓 UNBAN PEGAWAI
     public function unban($id)
     {
-        $user = User::findOrFail($id);
+        $user = User::withTrashed()->findOrFail($id);
 
         if ($user->role !== 'pegawai') {
             return back()->with('error', 'Hanya pegawai yang bisa di-unban!');
@@ -127,5 +142,19 @@ class UserController extends Controller
         ]);
 
         return back()->with('success', "Pegawai {$user->name} berhasil di-unban.");
+    }
+
+    // 🔁 RESTORE PEGAWAI
+    public function restore($id)
+    {
+        $user = User::withTrashed()->findOrFail($id);
+
+        if ($user->role !== 'pegawai') {
+            return back()->with('error', 'Hanya pegawai yang bisa dipulihkan!');
+        }
+
+        $user->restore();
+
+        return back()->with('success', "Pegawai {$user->name} berhasil dipulihkan.");
     }
 }

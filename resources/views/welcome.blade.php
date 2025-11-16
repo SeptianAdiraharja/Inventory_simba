@@ -103,6 +103,43 @@
   </div>
 </section>
 
+ <!-- 📘 TUTORIAL -->
+    <section id="tutorial" class="bg-white py-5 text-black">
+    <div class="container" data-aos="fade-up">
+        <div class="section-title text-center mb-5">
+        <h2 class="fw-bold">Tata Cara Penggunaan Bagi Pegawai</h2>
+        <p>Panduan langkah-langkah penggunaan sistem SIMBA untuk pegawai.</p>
+        </div>
+
+        <div class="row gy-5">
+        @php
+            $tutorials = [
+            ['judul' => 'Login ke Sistem', 'deskripsi' => 'Gunakan akun yang diberikan oleh admin untuk login ke sistem SIMBA.', 'gambar' => 'assets/img/tutorial/login-pegawai.png'],
+            ['judul' => 'Masuk ke Dashboard Pegawai', 'deskripsi' => 'Setelah login, Anda akan diarahkan ke Dashboard Pegawai untuk mengakses fitur utama.', 'gambar' => 'assets/img/tutorial/dashboard-pegawai.png'],
+            ['judul' => 'Pilih Barang dan Masukkan ke Keranjang', 'deskripsi' => 'Pilih barang yang dibutuhkan dan tambahkan ke keranjang untuk proses permintaan.', 'gambar' => 'assets/img/tutorial/keranjang.png'],
+            ['judul' => 'Lihat Status Barang', 'deskripsi' => 'Pantau status barang yang telah diajukan pada menu Status Barang.', 'gambar' => 'assets/img/tutorial/status-barang.png'],
+            ['judul' => 'Pengajuan Diterima', 'deskripsi' => 'Setelah diajukan, barang akan diproses oleh pihak gudang.', 'gambar' => 'assets/img/tutorial/laporan.png'],
+            ['judul' => 'Kelola Akun Pegawai', 'deskripsi' => 'Perbarui profil dan kelola informasi akun sesuai kebutuhan.', 'gambar' => 'assets/img/tutorial/akun.png'],
+            ];
+        @endphp
+
+        @foreach ($tutorials as $step)
+            <div class="col-lg-4 col-md-6 d-flex align-items-stretch" data-aos="fade-up">
+            <div class="card border-0 shadow-sm w-100 h-100 tutorial-card">
+                <div class="overflow-hidden rounded-top">
+                <img src="{{ asset($step['gambar']) }}" class="card-img-top tutorial-img" alt="{{ $step['judul'] }}">
+                </div>
+                <div class="card-body">
+                <h5 class="fw-bold text-dark">{{ $step['judul'] }}</h5>
+                <p class="text-muted">{{ $step['deskripsi'] }}</p>
+                </div>
+            </div>
+            </div>
+        @endforeach
+        </div>
+    </div>
+    </section>
+
 <!-- 📍 LOKASI -->
 <section id="lokasi" class="py-5 bg-white text-black">
   <div class="container" data-aos="fade-up">
@@ -126,43 +163,6 @@
       <p class="mt-2 text-muted small">
         Jl. Pasteur No.31, Pasir Kaliki, Kec. Cicendo, Kota Bandung, Jawa Barat 40171
       </p>
-    </div>
-  </div>
-</section>
-
-<!-- 📘 TUTORIAL -->
-<section id="tutorial" class="bg-white py-5 text-black">
-  <div class="container" data-aos="fade-up">
-    <div class="section-title text-center mb-5">
-      <h2 class="fw-bold">Tata Cara Penggunaan Bagi Pegawai</h2>
-      <p>Panduan langkah-langkah penggunaan sistem SIMBA untuk pegawai.</p>
-    </div>
-
-    <div class="row gy-5">
-      @php
-        $tutorials = [
-          ['judul' => 'Login ke Sistem', 'deskripsi' => 'Gunakan akun yang diberikan oleh admin untuk login ke sistem SIMBA.', 'gambar' => 'assets/img/tutorial/login-pegawai.png'],
-          ['judul' => 'Masuk ke Dashboard Pegawai', 'deskripsi' => 'Setelah login, Anda akan diarahkan ke Dashboard Pegawai untuk mengakses fitur utama.', 'gambar' => 'assets/img/tutorial/dashboard-pegawai.png'],
-          ['judul' => 'Pilih Barang dan Masukkan ke Keranjang', 'deskripsi' => 'Pilih barang yang dibutuhkan dan tambahkan ke keranjang untuk proses permintaan.', 'gambar' => 'assets/img/tutorial/keranjang.png'],
-          ['judul' => 'Lihat Status Barang', 'deskripsi' => 'Pantau status barang yang telah diajukan pada menu Status Barang.', 'gambar' => 'assets/img/tutorial/status-barang.png'],
-          ['judul' => 'Pengajuan Diterima', 'deskripsi' => 'Setelah diajukan, barang akan diproses oleh pihak gudang.', 'gambar' => 'assets/img/tutorial/laporan.png'],
-          ['judul' => 'Kelola Akun Pegawai', 'deskripsi' => 'Perbarui profil dan kelola informasi akun sesuai kebutuhan.', 'gambar' => 'assets/img/tutorial/akun.png'],
-        ];
-      @endphp
-
-      @foreach ($tutorials as $step)
-        <div class="col-lg-4 col-md-6 d-flex align-items-stretch" data-aos="fade-up">
-          <div class="card border-0 shadow-sm w-100 h-100 tutorial-card">
-            <div class="overflow-hidden rounded-top">
-              <img src="{{ asset($step['gambar']) }}" class="card-img-top tutorial-img" alt="{{ $step['judul'] }}">
-            </div>
-            <div class="card-body">
-              <h5 class="fw-bold text-dark">{{ $step['judul'] }}</h5>
-              <p class="text-muted">{{ $step['deskripsi'] }}</p>
-            </div>
-          </div>
-        </div>
-      @endforeach
     </div>
   </div>
 </section>

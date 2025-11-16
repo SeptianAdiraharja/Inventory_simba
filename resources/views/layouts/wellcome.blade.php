@@ -59,6 +59,7 @@
         }
 
         .brand-text {
+        font-family: 'p', sans-serif !important;
         font-weight: 900;
         font-size: 1.7rem;
         letter-spacing: 1px;
@@ -220,8 +221,8 @@
             <li class="nav-item"><a class="nav-link active" href="#awal">Beranda</a></li>
             <li class="nav-item"><a class="nav-link" href="#about">Tentang</a></li>
             <li class="nav-item"><a class="nav-link" href="#stats">Statistik</a></li>
-            <li class="nav-item"><a class="nav-link" href="#lokasi">Lokasi</a></li>
             <li class="nav-item"><a class="nav-link" href="#tutorial">Panduan</a></li>
+            <li class="nav-item"><a class="nav-link" href="#lokasi">Lokasi</a></li>
             </ul>
             <a href="{{ route('login') }}" class="btn-login ms-lg-4 mt-3 mt-lg-0">
             <i class="bi bi-box-arrow-in-right me-1"></i> Login
@@ -252,16 +253,16 @@
             <div class="col-md-5 text-md-end">
             <h6 class="fw-semibold mb-2">Ikuti Kami</h6>
             <div class="d-flex justify-content-center justify-content-md-end gap-3 fs-4">
-                <a href="https://www.instagram.com/" target="_blank" class="text-white" title="Instagram"><i class="bi bi-instagram"></i></a>
-                <a href="https://www.tiktok.com/" target="_blank" class="text-white" title="TikTok"><i class="bi bi-tiktok"></i></a>
-                <a href="https://www.youtube.com/" target="_blank" class="text-white" title="YouTube"><i class="bi bi-youtube"></i></a>
+                <a href="https://www.instagram.com/upelkes_jabar/" target="_blank" class="text-white" title="Instagram"><i class="bi bi-instagram"></i></a>
+                <a href="https://www.tiktok.com/@upelkes_jabar/" target="_blank" class="text-white" title="TikTok"><i class="bi bi-tiktok"></i></a>
+                <a href="https://www.youtube.com/upelkes_jabar" target="_blank" class="text-white" title="YouTube"><i class="bi bi-youtube"></i></a>
             </div>
             </div>
         </div>
 
         <hr class="border-light opacity-75 mt-4 mb-3">
         <div class="text-center small">
-            <p class="mb-0">© {{ date('Y') }} <strong>SIMBA</strong> — Sistem Inventaris Barang dan Aset. All rights reserved.</p>
+            <p class="mb-0">© {{ date('Y') }} <strong>SIMBA</strong> — Sistem Informasi Manajemen Barang. All rights reserved.</p>
         </div>
         </div>
     </footer>

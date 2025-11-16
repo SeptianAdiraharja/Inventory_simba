@@ -27,7 +27,7 @@
   {{-- 📊 RINGKASAN GRAFIK + KARTU --}}
   {{-- ======================== --}}
   <div class="row g-4 mb-4 align-items-stretch">
-    <!-- Grafik -->
+
     <div class="col-xl-9 col-md-12">
       <div class="card shadow-sm border-0 rounded-4 h-100 overflow-hidden">
         <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap">
@@ -35,6 +35,7 @@
             <h6 class="text-muted mb-1">Perbandingan Barang Masuk & Keluar</h6>
             <h5 class="fw-bold mb-0 text-dark">Statistik Barang</h5>
           </div>
+
           <div class="btn-group mt-2 mt-sm-0" id="chartFilterGroup">
             <button class="btn btn-sm rounded-pill px-3" data-period="daily">Harian</button>
             <button class="btn btn-sm rounded-pill px-3 active" data-period="weekly">Mingguan</button>
@@ -57,7 +58,6 @@
       </div>
     </div>
 
-    <!-- Kartu Ringkasan -->
     <div class="col-xl-3 col-md-6">
       <div class="d-flex flex-column gap-3 h-100">
         @php
@@ -69,31 +69,33 @@
         @endphp
 
         @foreach ($cards as $c)
-          <div class="card shadow-sm border-0 flex-fill position-relative overflow-hidden">
-            <div class="card-body">
-              <p class="position-absolute top-0 end-0 mt-2 me-3 fw-semibold {{ $c['diff'] >= 0 ? 'text-success' : 'text-danger' }}">
-                {{ $c['diff'] >= 0 ? '+' : '' }}{{ $c['diff'] }}%
-              </p>
-              <div class="d-flex align-items-center">
-                <div class="me-3 flex-shrink-0">
-                  <div class="d-flex align-items-center justify-content-center rounded-circle"
-                       style="background-color:{{ $c['color'] }};width:45px;height:45px;">
-                    <i class="{{ $c['icon'] }} fs-5 text-white"></i>
-                  </div>
+        <div class="card shadow-sm border-0 flex-fill position-relative overflow-hidden">
+          <div class="card-body">
+            <p class="position-absolute top-0 end-0 mt-2 me-3 fw-semibold {{ $c['diff'] >= 0 ? 'text-success' : 'text-danger' }}">
+              {{ $c['diff'] >= 0 ? '+' : '' }}{{ $c['diff'] }}%
+            </p>
+            <div class="d-flex align-items-center">
+              <div class="me-3 flex-shrink-0">
+                <div class="d-flex align-items-center justify-content-center rounded-circle"
+                     style="background-color:{{ $c['color'] }};width:45px;height:45px;">
+                  <i class="{{ $c['icon'] }} fs-5 text-white"></i>
                 </div>
-                <div>
-                  <h6 class="fw-semibold mb-1">{{ $c['title'] }}</h6>
-                  <h4 class="fw-bold mb-1">{{ $c['value'] }} <small class="text-muted">Total</small></h4>
-                  <small class="text-muted">
-                    {{ $c['diff'] > 0 ? 'Bertambah ' . $c['diff'] : ($c['diff'] < 0 ? 'Berkurang ' . abs($c['diff']) : 'Tidak berubah') }} dari kemarin
-                  </small>
-                </div>
+              </div>
+              <div>
+                <h6 class="fw-semibold mb-1">{{ $c['title'] }}</h6>
+                <h4 class="fw-bold mb-1">{{ $c['value'] }} <small class="text-muted">Total</small></h4>
+                <small class="text-muted">
+                  {{ $c['diff'] > 0 ? 'Bertambah ' . $c['diff'] : ($c['diff'] < 0 ? 'Berkurang ' . abs($c['diff']) : 'Tidak berubah') }} dari kemarin
+                </small>
               </div>
             </div>
           </div>
+        </div>
         @endforeach
+
       </div>
     </div>
+
   </div>
 
   {{-- ======================== --}}
@@ -115,29 +117,50 @@
           <div class="card-body">
             <h5 class="fw-bold mb-3"><i class="{{ $sec['icon'] }} me-1" style="color:{{ $sec['color'] }};"></i> {{ $sec['title'] }}</h5>
             <ul class="list-unstyled mb-0">
-              @forelse($sec['data'] as $item)
-                <li class="d-flex mb-3 align-items-center pb-2 border-bottom justify-content-between">
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1 fw-semibold">{{ $item->item->name ?? $item->name }}</h6>
-                        <small class="text-muted">
-                        @if(isset($item->quantity)) Jumlah: {{ $item->quantity }}<br>@endif
-                        @if(isset($item->stock)) Stok tersisa: {{ $item->stock }}<br>@endif
-                        {{ isset($item->created_at) ? 'Tanggal: ' . $item->created_at->format('d M Y') : '' }}
-                        </small>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge {{ $sec['badge'] }}">{{ $item->quantity ?? $item->stock }}</span>
 
-                        {{-- 🔍 Tombol Show --}}
-                        <a href="{{ route('super_admin.item_ins.index', ['search' => $item->item->name ?? $item->name]) }}"
-                        class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1">
-                        Cari
-                        </a>
-                    </div>
+              @forelse($sec['data'] as $item)
+
+                @php
+                    $nama = $item->item->name ?? $item->name ?? '-';
+                    $qty = $item->quantity ?? null;
+                    $stok = $item->stock ?? null;
+                    $tanggal = isset($item->created_at) ? $item->created_at->format('d M Y') : '-';
+                    $badgeValue = $qty ?? $stok ?? '-';
+                @endphp
+
+                <li class="d-flex mb-3 align-items-center pb-2 border-bottom justify-content-between">
+                  <div class="flex-grow-1">
+                    <h6 class="mb-1 fw-semibold">{{ $nama }}</h6>
+
+                    <small class="text-muted d-block">
+                      @if($qty !== null)
+                        Jumlah: {{ $qty }}<br>
+                      @endif
+
+                      @if($stok !== null)
+                        Stok tersisa: {{ $stok }}<br>
+                      @endif
+
+                      Tanggal: {{ $tanggal }}
+                    </small>
+                  </div>
+
+                  <div class="d-flex align-items-center gap-2">
+                      <span class="badge {{ $sec['badge'] }}">{{ $badgeValue }}</span>
+
+                      @if($sec['title'] === 'Barang Masuk')
+                      <a href="{{ route('super_admin.item_ins.index', ['search' => $nama]) }}"
+                          class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1">
+                          Cari
+                      </a>
+                      @endif
+                  </div>
                 </li>
+
               @empty
                 <li class="text-muted fst-italic">{{ $sec['empty'] }}</li>
               @endforelse
+
             </ul>
           </div>
         </div>
@@ -199,8 +222,8 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const ctx = document.getElementById('overviewChart').getContext('2d');
-const chartData = {
+const ctx=document.getElementById('overviewChart').getContext('2d');
+const chartData={
   daily:{labels:@json($dailyLabels),masuk:@json($dailyMasuk),keluar:@json($dailyKeluar)},
   weekly:{labels:@json($weeklyLabels),masuk:@json($weeklyMasuk),keluar:@json($weeklyKeluar)},
   monthly:{labels:@json($monthlyLabels),masuk:@json($monthlyMasuk),keluar:@json($monthlyKeluar)},
@@ -210,6 +233,7 @@ const chartData = {
 };
 
 let currentPeriod='weekly';
+
 const itemChart=new Chart(ctx,{
   type:'line',
   data:{
@@ -246,5 +270,32 @@ function updateChart(newData){
   itemChart.data.datasets[1].data=newData.keluar;
   itemChart.update();
 }
+
+// ===============================
+// 🔄 BUTTON REFRESH (FINAL)
+// ===============================
+document.addEventListener("DOMContentLoaded", function () {
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function () {
+
+            const icon = this.querySelector("i");
+            const text = this.querySelector("span");
+
+            // Animasi muter
+            icon.classList.add("spin-refresh");
+
+            // Disable tombol
+            refreshBtn.setAttribute("disabled", true);
+
+            // Ubah text
+            text.innerText = "Merefresh...";
+
+            // Reload otomatis
+            setTimeout(() => location.reload(), 700);
+        });
+    }
+});
 </script>
 @endpush

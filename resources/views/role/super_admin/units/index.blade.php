@@ -27,11 +27,10 @@
         <i class="ri ri-ruler-line me-1" style="color:#FF9800;"></i> Daftar Satuan Barang
       </h5>
       <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background:#FFF9E6;color:#FF9800;border:1px solid #FFE082;">
-        Total: {{ $units->count() }}
+        Total: {{ $totalUnits }}
       </span>
     </div>
 
-    <!-- NOTE: leave .table-responsive but allow overflow visible -->
     <div class="table-responsive text-nowrap position-relative">
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light text-center">
@@ -48,13 +47,11 @@
               <span class="fw-semibold text-dark">{{ $unit->name }}</span>
             </td>
             <td class="text-center">
-              <!-- Standard bootstrap dropdown (no custom JS) -->
               <div class="dropdown">
                 <button class="btn p-0 border-0 shadow-none" type="button" id="dropdownMenuBtn{{ $unit->id }}" data-bs-toggle="dropdown" aria-expanded="false">
                   <i class="ri ri-more-2-line fs-5 text-muted"></i>
                 </button>
 
-                <!-- dropdown-menu tetap di DOM; posisi absolute + z-index tinggi -->
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm rounded-3" aria-labelledby="dropdownMenuBtn{{ $unit->id }}">
                   <li>
                     <a class="dropdown-item d-flex align-items-center gap-2" href="{{ route('super_admin.units.edit', $unit->id) }}">
@@ -85,10 +82,34 @@
         </tbody>
       </table>
     </div>
+
+    {{-- ⭐ PAGINATION (TAMBAHAN) --}}
+    <div class="p-3">
+      {{ $units->links('pagination::bootstrap-5') }}
+    </div>
+
   </div>
 </div>
 
 <style>
+/* ===== Pagination Orange ===== */
+.pagination .page-link {
+  color: #FF9800;
+  border: 1px solid #FFCC80;
+}
+.pagination .page-link:hover {
+  background-color: #FFE0B2;
+  color: #E67E22;
+}
+.pagination .active .page-link {
+  background-color: #FF9800;
+  border-color: #FF9800;
+  color: white !important;
+}
+.pagination .page-item.disabled .page-link {
+  color: #FFCC80;
+}
+
 /* keep theme styles */
 .smooth-fade { animation: fadeIn 0.6s ease-in-out; }
 @keyframes fadeIn { from {opacity:0;transform:translateY(10px);} to {opacity:1;transform:translateY(0);} }
@@ -97,21 +118,17 @@
 .table-row-hover:hover { background-color: #FFF9E6 !important; transform: translateX(3px); }
 
 .hover-glow { transition: all 0.25s ease; }
-.hover-glow:hover { background-color: #FFC300 !important; color: #fff !important; box-shadow: 0 0 12px rgba(255,152,0,0.4); }
+.hover-glow:hover { background-color: #FFC300 !important; color:#fff !important; box-shadow: 0 0 12px rgba(255,152,0,0.4); }
 
 .breadcrumb-link { position: relative; transition: all 0.25s ease; }
-.breadcrumb-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 2px; background: #FF9800; transition: width 0.25s ease; }
-.breadcrumb-link:hover::after { width: 100%; }
+.breadcrumb-link::after { content:''; position:absolute; bottom:-2px; left:0; width:0; height:2px; background:#FF9800; transition:width 0.25s ease; }
+.breadcrumb-link:hover::after { width:100%; }
 
-/* KEY FIXES: allow dropdown to be fully visible and not clipped */
-.table-responsive { overflow: visible !important; }    /* allow dropdown to overflow table container */
-.dropdown-menu { position: absolute !important; z-index: 3000 !important; min-width: 160px; box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+.table-responsive { overflow: visible !important; }
+.dropdown-menu { position: absolute !important; z-index:3000 !important; min-width:160px; box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+.dropdown-item:hover { background-color:#FFF3CD !important; }
+.dropdown-item:active { background-color:#FFD54F !important; }
 
-/* dropdown hover/active styles */
-.dropdown-item:hover { background-color: #FFF3CD !important; }
-.dropdown-item:active { background-color: #FFD54F !important; }
-
-/* Table header */
-.table thead th { font-weight: 600; color: #444; background-color: #fff8e1 !important; }
+.table thead th { font-weight:600; color:#444; background-color:#fff8e1 !important; }
 </style>
 @endsection

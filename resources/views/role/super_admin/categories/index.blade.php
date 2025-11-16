@@ -94,6 +94,12 @@
         </tbody>
       </table>
     </div>
+
+    {{-- ⭐ PAGINATION (TAMBAHAN / TIDAK UBAH STRUKTUR) --}}
+    <div class="p-3">
+      {{ $categories->withQueryString()->links('pagination::bootstrap-5') }}
+    </div>
+
   </div>
 </div>
 
@@ -101,6 +107,25 @@
 {{-- 💅 STYLE --}}
 {{-- ======================== --}}
 <style>
+
+/* ===== PAGINATION ORANGE (TAMBAHAN) ===== */
+.pagination .page-link {
+  color: #FF9800;
+  border: 1px solid #FFCC80;
+}
+.pagination .page-link:hover {
+  background-color: #FFE0B2;
+  color: #E67E22;
+}
+.pagination .active .page-link {
+  background-color: #FF9800;
+  border-color: #FF9800;
+  color: #fff !important;
+}
+.pagination .page-item.disabled .page-link {
+  color: #FFCC80;
+}
+
 /* ===== Smooth Fade ===== */
 .smooth-fade { animation: fadeIn 0.6s ease-in-out; }
 @keyframes fadeIn { from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: translateY(0);} }

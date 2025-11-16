@@ -11,18 +11,12 @@
             class="relative flex flex-col justify-center items-center text-white px-6 sm:px-10 md:px-16 lg:px-24
                    w-full lg:w-[60%] bg-cover bg-center bg-no-repeat shadow-2xl overflow-hidden"
             style="background-image: url('{{ asset('assets/img/backgrounds/Login.png') }}');">
-
-            <div class="absolute inset-0 bg-gradient-to-br from-[#ff7a00]/80 via-[#ff9a00]/70 to-[#ffd24d]/40 z-0 transition-all duration-700 ease-in-out"></div>
-
             <div class="relative z-10 text-center max-w-lg flex flex-col justify-center h-full space-y-8 sm:space-y-10 py-10">
                 <div class="transition-all duration-700 ease-out">
                     <h1 class="text-[clamp(2.5rem,5vw,4.5rem)] simba-title">SIMBA</h1>
-                    <p class="text-[clamp(1rem,1.5vw,1.25rem)] text-gray-100 mt-2 font-medium">
-                        Sistem Inventaris Barang dan Aset
-                    </p>
                 </div>
 
-                <div class="bg-white/30 backdrop-blur-lg p-6 sm:p-8 rounded-2xl border border-white/70 shadow-2xl space-y-5 text-left hover:scale-[1.02] transition-transform duration-700 ease-out">
+                <div class="bg-black/30 backdrop-blur-lg p-6 sm:p-8 rounded-2xl border border-white/70 shadow-2xl space-y-5 text-left hover:scale-[1.02] transition-transform duration-700 ease-out">
                     @php
                         $features = [
                             ['icon' => '🧾', 'title' => 'Pendataan Aset & Barang', 'desc' => 'Mendata seluruh kebutuhan barang dan aset operasional UPELKES secara akurat dan terpusat.'],
@@ -74,7 +68,7 @@
                 </div>
 
                 <div class="flex justify-center">
-                    <img src="{{ asset('assets/img/icons/simba.jpg') }}" alt="SIMBA Logo"
+                    <img src="{{ asset('assets/img/icons/simba.png') }}" alt="SIMBA Logo"
                         class="w-20 h-20 sm:w-24 sm:h-24 rounded-full shadow-[0_0_25px_rgba(255,122,0,0.5)]">
                 </div>
 

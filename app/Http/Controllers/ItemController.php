@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\{Auth, Storage};
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ItemTemplateExport;
 use App\Imports\ItemsImport;
 
 class ItemController extends Controller
@@ -47,6 +48,7 @@ class ItemController extends Controller
 
         $items = $items->paginate(15);
 
+    
         return view('role.super_admin.items.index', compact('items'));
     }
 
@@ -211,6 +213,9 @@ class ItemController extends Controller
     /* =====================================================
        📤 IMPORT — UPLOAD DAN SIMPAN DATA BARANG DARI EXCEL
     ===================================================== */
+     /* =====================================================
+       📤 IMPORT — UPLOAD DAN SIMPAN DATA BARANG DARI EXCEL
+    ===================================================== */
     public function import(Request $request)
     {
         $request->validate([
@@ -222,4 +227,9 @@ class ItemController extends Controller
         return redirect()->route('super_admin.items.index')
             ->with('success', 'Data barang berhasil diimport!');
     }
+    public function downloadTemplate()
+    {
+        return Excel::download(new ItemTemplateExport, 'template_import_items.xlsx');
+    }
+
 }

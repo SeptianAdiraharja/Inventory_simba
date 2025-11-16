@@ -30,6 +30,7 @@
               value="{{ request('start_date') }}"
               style="border-left:4px solid #FF9800 !important;">
           </div>
+
           <div class="col-md-3 col-sm-6">
             <label class="form-label small text-muted mb-1">Sampai Tanggal</label>
             <input type="date" name="end_date" id="endDate"
@@ -37,6 +38,7 @@
               value="{{ request('end_date') }}"
               style="border-left:4px solid #FF9800 !important;">
           </div>
+
           <div class="col-md-3 col-sm-6">
             <label class="form-label small text-muted mb-1">Urutkan Stok</label>
             <select name="sort_stock" id="sortStock"
@@ -47,6 +49,7 @@
               <option value="asc" {{ request('sort_stock') == 'asc' ? 'selected' : '' }}>Paling Sedikit</option>
             </select>
           </div>
+
           <div class="col-md-2 col-sm-8">
             <label class="form-label small text-muted mb-1">Cari Barang/Supplier</label>
             <input type="text" name="search" id="autoSearchInput"
@@ -55,6 +58,7 @@
               value="{{ request('search') }}"
               style="border-left:4px solid #FF9800 !important;">
           </div>
+
           <div class="col-md-1 col-sm-4 d-flex align-items-end">
             @if(request('start_date') || request('end_date') || request('sort_stock') || request('search'))
             <a href="{{ route('super_admin.item_ins.index') }}"
@@ -95,13 +99,13 @@
                       $statusText = 'Tidak Berlaku';
                       $statusClass = 'bg-secondary-subtle text-secondary';
                   } elseif ($daysLeft < 0) {
-                      $statusText = 'Expired';
+                      $statusText = 'Kadaluarsa';
                       $statusClass = 'bg-danger-subtle text-danger';
                   } elseif ($daysLeft <= 10) {
-                      $statusText = 'Hampir Expired';
+                      $statusText = 'Hampir kadaluarsa';
                       $statusClass = 'bg-warning-subtle text-warning';
                   } else {
-                      $statusText = 'Aktif';
+                      $statusText = 'Belum Kadaluarsa';
                       $statusClass = 'bg-success-subtle text-success';
                   }
 
@@ -211,6 +215,7 @@
                   </div>
                 </div>
               </div>
+
             @empty
               <tr>
                 <td colspan="7" class="text-center py-4 text-muted">
@@ -222,6 +227,12 @@
         </table>
       </div>
     </div>
+
+    {{-- ⭐ PAGINATION --}}
+    <div class="p-3">
+      {{ $items_in->withQueryString()->links('pagination::bootstrap-5') }}
+    </div>
+
   </div>
 </div>
 
@@ -240,6 +251,27 @@
   });
 </script>
 @endif
+
+{{-- === PAGINATION ORANGE === --}}
+<style>
+.pagination .page-link {
+    color: #FF9800;
+    border: 1px solid #FFCC80;
+    border-radius: 50px !important;
+}
+.pagination .page-link:hover {
+    background-color: #FFE0B2;
+    color: #E68900;
+}
+.pagination .active .page-link {
+    background-color: #FF9800 !important;
+    border-color: #FF9800 !important;
+    color: white !important;
+}
+.pagination .page-item.disabled .page-link {
+    color: #FFCC80;
+}
+</style>
 
 <style>
 .glow-focus {
@@ -273,4 +305,5 @@ document.addEventListener('DOMContentLoaded', function() {
   sortStock.addEventListener('change', autoSubmit);
 });
 </script>
+
 @endsection
