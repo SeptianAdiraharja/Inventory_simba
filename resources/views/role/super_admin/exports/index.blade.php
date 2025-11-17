@@ -190,9 +190,6 @@
                           <td>{{ $row->role }}</td>
                           <td>
                               {{ optional($row->created_at)->format('d-m-Y H:i') }}
-                              @if($i == 0)
-                                  <span class="badge bg-info ms-1" title="Data Terbaru">NEW</span>
-                              @endif
                           </td>
                           <td>{{ $row->quantity }}</td>
                           <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
@@ -248,23 +245,27 @@ document.addEventListener('DOMContentLoaded', () => {
       previewDiv.innerHTML = `<em>Pilih kop surat untuk melihat preview</em>`;
       return;
     }
-    previewDiv.innerHTML = `
-      <table style="width:100%;border:none;">
-        <tr>
-          <td style="width:120px;text-align:center;">
-            <img src="${opt.dataset.logo}" style="width:90px;height:100px;object-fit:contain;">
-          </td>
-          <td style="text-align:center;line-height:1.5;">
-            <div style="font-size:14px;font-weight:600;">${opt.dataset.instansi.toUpperCase()}</div>
-            <div style="font-size:18px;font-weight:900;margin-top:4px;color:#FF9800;">${opt.dataset.unit.toUpperCase()}</div>
-            <div style="font-size:13px;margin-top:4px;">
-              ${opt.dataset.alamat}<br>
-              Telepon: ${opt.dataset.telepon} | Email: ${opt.dataset.email}<br>
-              ${opt.dataset.website ? `Website: ${opt.dataset.website}<br>` : ''}${opt.dataset.kota}
-            </div>
-          </td>
-        </tr>
-      </table>`;
+     // Update preview
+        previewDiv.innerHTML = `
+            <table style="width:100%; border:none;">
+                <tr>
+                    <td style="width:120px; text-align:center;">
+                        <img src="${opt.dataset.logo}" style="width:90px; height:100px; object-fit:contain;">
+                    </td>
+                    <td style="text-align:center; vertical-align:middle; line-height:1.5;">
+                        <div style="font-size:14px; font-weight:600;">${opt.dataset.instansi.toUpperCase()}</div>
+                        <div style="font-size:18px; font-weight:900; margin-top:4px;">${opt.dataset.unit.toUpperCase()}</div>
+                        <div style="font-size:13px; margin-top:4px;">
+                            ${opt.dataset.alamat}<br>
+                            Telepon: ${opt.dataset.telepon} <br> Website: ${opt.dataset.website} |
+                            ${opt.dataset.website ? `Email: ${opt.dataset.email}<br>` : ''}
+                            ${opt.dataset.kota}
+                        </div>
+                    </td>
+                    <td style="width:120px;"></td>
+                </tr>
+            </table>
+        `;
     updateExportLinks();
   });
 
