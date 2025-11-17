@@ -225,7 +225,11 @@ class SuperAdminController extends Controller
          * 🔹 INFORMASI TAMBAHAN
          * ============================
          */
-        $lowStockItems = Item::where('stock', '<', 11)->orderBy('stock', 'asc')->get();
+        $lowStockItems = Item::where('stock', '<', 11)
+                             ->whereIn('id', Item_in::pluck('item_id'))  // hanya item yang pernah masuk
+                             ->orderBy('stock', 'asc')
+                             ->take(5)
+                             ->get();
 
         $lastUpdateItemIn = Item_in::latest('updated_at')->value('updated_at');
         $lastUpdateExpired = Item_in::whereNotNull('expired_at')
