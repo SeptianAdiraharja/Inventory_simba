@@ -122,7 +122,6 @@ class ItemoutController extends Controller
      */
     public function release(Request $request, $cartId)
     {
-
         Log::info('DEBUG release payload', $request->all());
 
         $request->validate([
@@ -131,60 +130,56 @@ class ItemoutController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        $cart = Cart::with('cartItems')->findOrFail($cartId);
+        $cart = Cart::with('cartItems.item')->findOrFail($cartId);
         $items = $request->input('items', []);
 
         DB::beginTransaction();
 
         try {
+
             foreach ($items as $scannedItem) {
-                $item = Item::where('id', $scannedItem['id'])->lockForUpdate()->first();
-                if (!$item) continue;
 
-                $qty = (int) $scannedItem['quantity'];
-
-                if ($item->stock < $qty) {
-                    DB::rollBack();
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Stok tidak cukup untuk item {$item->name} (tersisa: {$item->stock})."
-                    ], 422);
-                }
-                $itemOut = new Item_out();
-                $itemOut->cart_id = $cart->id;
-                $itemOut->item_id = $item->id;
-                $itemOut->quantity = $qty;
-                $itemOut->unit_id = $item->unit_id;
-                $itemOut->released_at = now();
-                $itemOut->approved_by = Auth::id();
-                $itemOut->save();
-
-                $item->decrement('stock', $qty);
-
+                // 🔍 Ambil cart_item sesuai cart + item
                 $cartItem = CartItem::where('cart_id', $cart->id)
-                    ->where('item_id', $item->id)
+                    ->where('item_id', $scannedItem['id'])
                     ->first();
 
-                if ($cartItem) {
-                    $cartItem->update(['scanned_at' => now()]);
+                if (!$cartItem) {
+                    continue;
                 }
+
+                // 🆕 BUAT RECORD DI item_outs (TANPA KURANGI STOK)
+                $itemOut = new Item_out();
+                $itemOut->cart_id      = $cart->id;
+                $itemOut->item_id      = $cartItem->item_id;
+                $itemOut->quantity     = $cartItem->quantity;    // jumlah asli dari cart_items
+                $itemOut->unit_id      = $cartItem->item->unit_id;
+                $itemOut->approved_by  = Auth::id();
+                $itemOut->released_at  = now();
+                $itemOut->save();
+
+                // 🔄 UPDATE STATUS SCAN
+                $cartItem->update(['scanned_at' => now()]);
             }
 
+            // Tandai cart selesai diambil
             $cart->update(['picked_up_at' => now()]);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => '✅ Semua barang berhasil dikeluarkan.'
+                'message' => 'Hasil scan berhasil disimpan tanpa mengurangi stok.'
             ]);
+
         } catch (\Exception $e) {
+
             DB::rollBack();
             Log::error('Release error: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat memproses release.'
+                'message' => 'Terjadi kesalahan saat menyimpan hasil scan.'
             ], 500);
         }
     }

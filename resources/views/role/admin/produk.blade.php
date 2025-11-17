@@ -3,7 +3,7 @@
 
 <style>
   body {
-    background-color: #f4f6f9; /* Sama seperti halaman lain */
+    background-color: #f4f6f9;
   }
 
   /* === Breadcrumb Modern === */
@@ -28,6 +28,59 @@
     content: "›";
     color: #ffb74d;
     margin: 0 6px;
+  }
+
+  /* === Filter Section Styles === */
+  .filter-section {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+  }
+
+  .filter-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .filter-dropdown {
+    background: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    color: #374151;
+    font-weight: 500;
+    padding: 10px 16px;
+    width: 200px;
+    text-align: left;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .filter-dropdown:hover {
+    border-color: #FF9800;
+    background-color: #FFFBF5;
+  }
+
+  .filter-dropdown:focus {
+    border-color: #FF9800;
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+  }
+
+  .filter-dropdown::after {
+    content: "";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #6B7280;
   }
 
   /* === Card Produk === */
@@ -87,34 +140,32 @@
 
   /* === Floating Cart === */
   #openCartModal {
-  background: linear-gradient(90deg, #FF9800, #FFB74D);
-  border: none;
-  box-shadow: 0 10px 20px rgba(255, 152, 0, 0.4);
-  transition: all 0.3s ease;
-  position: relative; /* penting agar badge bisa diposisikan absolut */
-  overflow: visible;
-}
+    background: linear-gradient(90deg, #FF9800, #FFB74D);
+    border: none;
+    box-shadow: 0 10px 20px rgba(255, 152, 0, 0.4);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: visible;
+  }
 
-#openCartModal:hover {
-  transform: scale(1.1);
-  box-shadow: 0 12px 25px rgba(255, 152, 0, 0.5);
-}
+  #openCartModal:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 25px rgba(255, 152, 0, 0.5);
+  }
 
-/* === Badge di luar tombol === */
-#openCartModal .badge {
-  position: absolute;
-  top: -10px;        /* lebih keluar dari tombol */
-  right: -10px;      /* posisikan di luar lingkaran */
-  background-color: #e53935;
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 5px 7px;
-  border-radius: 10px;
-  box-shadow: 0 0 0 2px #fff; /* biar ada garis putih di sekeliling */
-  z-index: 10;
-}
-
+  #openCartModal .badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background-color: #e53935;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 5px 7px;
+    border-radius: 10px;
+    box-shadow: 0 0 0 2px #fff;
+    z-index: 10;
+  }
 
   /* === Modal === */
   .modal-content {
@@ -160,6 +211,8 @@
     .card-body h5 { font-size: 1rem; }
     #openCartModal { width: 60px; height: 60px; font-size: 1.2rem; }
     table { font-size: 0.9rem; }
+    .filter-dropdown { width: 100%; margin-bottom: 10px; }
+    .filter-section .d-flex { flex-direction: column; }
   }
 </style>
 
@@ -194,6 +247,60 @@
   </div>
 </div>
 
+<!-- 🔍 FILTER SECTION -->
+<div class="filter-section smooth-fade">
+  <form action="{{ route('admin.produk.byGuest', $guest->id ?? 0) }}" method="GET" id="filterForm">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <div class="d-flex flex-wrap align-items-center gap-4">
+
+          <!-- Sort Dropdown -->
+          <div>
+            <span class="filter-label">Urutkan:</span>
+            <select name="sort" class="form-select filter-dropdown" onchange="document.getElementById('filterForm').submit()">
+              <option value="stok_terbanyak" {{ request('sort', 'stok_terbanyak') == 'stok_terbanyak' ? 'selected' : '' }}>
+                📦 Stok Terbanyak
+              </option>
+              <option value="stok_menipis" {{ request('sort') == 'stok_menipis' ? 'selected' : '' }}>
+                ⚠️ Stok Menipis
+              </option>
+              <option value="paling_laris" {{ request('sort') == 'paling_laris' ? 'selected' : '' }}>
+                🔥 Paling Laris
+              </option>
+              <option value="terbaru" {{ request('sort') == 'terbaru' ? 'selected' : '' }}>
+                🆕 Terbaru
+              </option>
+              <option value="terlama" {{ request('sort') == 'terlama' ? 'selected' : '' }}>
+                📅 Terlama
+              </option>
+              <option value="a_z" {{ request('sort') == 'a_z' ? 'selected' : '' }}>
+                🔤 A → Z
+              </option>
+              <option value="z_a" {{ request('sort') == 'z_a' ? 'selected' : '' }}>
+                🔤 Z → A
+              </option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="col-md-4 text-end">
+        <div class="d-flex gap-2 justify-content-end">
+          <button type="submit" class="btn btn-warning text-white px-4">
+            <i class="ri-search-line me-1"></i> Terapkan
+          </button>
+          @if(request('q') || request('sort'))
+            <a href="{{ route('admin.produk.byGuest', $guest->id ?? 0) }}" class="btn btn-outline-secondary px-4">
+              <i class="ri-refresh-line me-1"></i> Reset
+            </a>
+          @endif
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
 <!-- === FLOATING CART BUTTON === -->
 <button class="btn btn-primary shadow-lg position-fixed rounded-circle d-flex align-items-center justify-content-center"
   id="openCartModal"
@@ -208,10 +315,9 @@
   @endif
 </button>
 
-
 <!-- === DAFTAR PRODUK === -->
 <div class="row gy-4 mt-3 animate__animated animate__fadeInUp">
-  @foreach ($items as $item)
+  @forelse ($items as $item)
   <div class="col-xl-3 col-lg-4 col-md-6">
     <div class="card shadow-sm">
       <img src="{{ asset('storage/' . $item->image) }}" class="card-img-top"
@@ -271,10 +377,17 @@
       </div>
     </div>
   </div>
-  @endforeach
+  @empty
+  <div class="col-12">
+    <div class="text-center py-5">
+      <i class="ri-inbox-line display-1 text-muted"></i>
+      <h4 class="text-muted mt-3">Tidak ada produk ditemukan</h4>
+      <p class="text-muted">Coba ubah filter pencarian Anda</p>
+    </div>
+  </div>
+  @endforelse
 </div>
 
-<!-- === MODAL CART === -->
 <!-- === MODAL CART === -->
 <div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -415,4 +528,3 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 @endpush
-

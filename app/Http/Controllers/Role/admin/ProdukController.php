@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
 
 class ProdukController extends Controller
 {
@@ -61,7 +62,7 @@ class ProdukController extends Controller
             $query->wherePivot('released_at', null);
         }])->findOrFail($id);
 
-        // Query dengan pencarian
+        // Query dengan pencarian dan filter
         $query = Item::with('category');
 
         // Filter berdasarkan pencarian
@@ -70,17 +71,46 @@ class ProdukController extends Controller
             $query->where('name', 'like', "%{$search}%");
         }
 
-        // Filter berdasarkan kategori
-        if ($request->has('kategori') && $request->kategori != 'none') {
-            $query->whereHas('category', function($q) use ($request) {
-                $q->where('name', $request->kategori);
-            });
+        // Sorting berdasarkan parameter
+        if ($request->has('sort')) {
+            switch ($request->sort) {
+                case 'stok_terbanyak':
+                    $query->orderBy('stock', 'desc');
+                    break;
+                case 'stok_menipis':
+                    $query->where('stock', '>', 0)->orderBy('stock', 'asc');
+                    break;
+                case 'paling_laris':
+                    // Jika ada kolom sold_count, gunakan itu. Jika tidak, gunakan created_at sebagai fallback
+                    if (Schema::hasColumn('items', 'sold_count')) {
+                        $query->orderBy('sold_count', 'desc');
+                    } else {
+                        $query->orderBy('created_at', 'desc');
+                    }
+                    break;
+                case 'terbaru':
+                    $query->latest();
+                    break;
+                case 'terlama':
+                    $query->oldest();
+                    break;
+                case 'a_z':
+                    $query->orderBy('name', 'asc');
+                    break;
+                case 'z_a':
+                    $query->orderBy('name', 'desc');
+                    break;
+                default:
+                    // Default: stok terbanyak ke terkecil
+                    $query->orderBy('stock', 'desc');
+                    break;
+            }
+        } else {
+            // Default: stok terbanyak ke terkecil
+            $query->orderBy('stock', 'desc');
         }
 
-        // 🔥 URUTKAN: Stok terbanyak ke terkecil, kemudian barang terbaru
-        $items = $query->orderBy('stock', 'desc')
-                    ->latest()
-                    ->paginate(12);
+        $items = $query->paginate(12);
 
         // Ambil cart items untuk guest melalui guestCart
         $cartItems = $guest->guestCart ? $guest->guestCart->items : collect();
@@ -105,8 +135,8 @@ class ProdukController extends Controller
      */
     private function getReleaseCountThisWeek($guestId)
     {
-        $startOfWeek = Carbon::now()->startOfWeek(); // Senin minggu ini
-        $endOfWeek = Carbon::now()->endOfWeek();     // Minggu minggu ini
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
 
         return Item_out_guest::where('guest_id', $guestId)
             ->whereBetween('created_at', [$startOfWeek, $endOfWeek])

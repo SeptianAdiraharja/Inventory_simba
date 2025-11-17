@@ -23,15 +23,24 @@ class TransaksiItemOutController extends Controller
     {
         $items = Item::all();
 
-        // 🔹 QUERY PEGAWAI YANG DIPERBAIKI - Tampilkan SEMUA transaksi selesai
+        // 🔹 QUERY PEGAWAI - Hanya tampilkan yang memiliki scanned_at di cart_items
         $finishedCarts = Cart::with([
-            'cartItems.item', // Selalu load item, regardless of status
+            'cartItems.item', // Load item tanpa filter scanned_at di sini
             'user'
         ])
         ->whereIn('status', ['approved', 'approved_partially', 'completed'])
-        ->whereHas('cartItems') // Pastikan punya item
+        ->whereHas('cartItems', function($query) {
+            $query->whereNotNull('scanned_at'); // Pastikan cart_items punya scanned_at
+        })
         ->orderBy('created_at', 'desc')
         ->get();
+
+        // 🔹 Filter cart items yang memiliki scanned_at
+        $finishedCarts->each(function($cart) {
+            $cart->cartItems = $cart->cartItems->filter(function($item) {
+                return !is_null($item->scanned_at); // Filter di collection, bukan di query
+            });
+        });
 
         // 🔹 Paginasi manual
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
@@ -46,11 +55,21 @@ class TransaksiItemOutController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
-        // 🔹 QUERY GUEST YANG DIPERBAIKI
+        // 🔹 QUERY GUEST - Hanya tampilkan yang memiliki scanned_at di guest_cart_items
         $guestItemOuts = Guest::with(['guestCart.guestCartItems.item'])
-            ->whereHas('guestCart.guestCartItems')
+            ->whereHas('guestCart.guestCartItems', function($query) {
+            })
             ->orderByDesc('created_at')
             ->paginate(10);
+
+        // 🔹 Filter guest cart items yang memiliki scanned_at
+        $guestItemOuts->getCollection()->transform(function($guest) {
+            if ($guest->guestCart && $guest->guestCart->guestCartItems) {
+                $guest->guestCart->guestCartItems = $guest->guestCart->guestCartItems->filter(function($item) {
+                });
+            }
+            return $guest;
+        });
 
         return view('role.admin.data_transaksi', [
             'finishedCarts' => $finishedCartsPaginated,
@@ -58,7 +77,6 @@ class TransaksiItemOutController extends Controller
             'items' => $items
         ]);
     }
-
     /**
      * 🔹 Proses Refund Barang
      */
