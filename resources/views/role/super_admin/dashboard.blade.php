@@ -112,59 +112,64 @@
     @endphp
 
     @foreach($sections as $sec)
-      <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm h-100 border-0 rounded-3 smooth-fade">
-          <div class="card-body">
-            <h5 class="fw-bold mb-3"><i class="{{ $sec['icon'] }} me-1" style="color:{{ $sec['color'] }};"></i> {{ $sec['title'] }}</h5>
-            <ul class="list-unstyled mb-0">
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm h-100 border-0 rounded-3 smooth-fade">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3"><i class="{{ $sec['icon'] }} me-1" style="color:{{ $sec['color'] }};"></i> {{ $sec['title'] }}</h5>
+                <ul class="list-unstyled mb-0">
 
-              @forelse($sec['data'] as $item)
+                @forelse($sec['data'] as $item)
 
-                @php
-                    $nama = $item->item->name ?? $item->name ?? '-';
-                    $qty = $item->quantity ?? null;
-                    $stok = $item->stock ?? null;
-                    $tanggal = isset($item->created_at) ? $item->created_at->format('d M Y') : '-';
-                    $badgeValue = $qty ?? $stok ?? '-';
-                @endphp
+                    @php
+                        $nama = $item->item->name ?? $item->name ?? '-';
+                        $qty = $item->quantity ?? null;
+                        $stok = $item->stock ?? null;
+                        $tanggal = isset($item->created_at) ? $item->created_at->format('d M Y') : '-';
+                        $badgeValue = $qty ?? $stok ?? '-';
+                    @endphp
 
-                <li class="d-flex mb-3 align-items-center pb-2 border-bottom justify-content-between">
-                  <div class="flex-grow-1">
-                    <h6 class="mb-1 fw-semibold">{{ $nama }}</h6>
+                    <li class="d-flex mb-3 align-items-center pb-2 border-bottom justify-content-between">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1 fw-semibold">{{ $nama }}</h6>
 
-                    <small class="text-muted d-block">
-                      @if($qty !== null)
-                        Jumlah: {{ $qty }}<br>
-                      @endif
+                        <small class="text-muted d-block">
+                        @if($qty !== null)
+                            Jumlah: {{ $qty }}<br>
+                        @endif
 
-                      @if($stok !== null)
-                        Stok tersisa: {{ $stok }}<br>
-                      @endif
+                        @if($stok !== null)
+                            Stok tersisa: {{ $stok }}<br>
+                        @endif
 
-                      Tanggal: {{ $tanggal }}
-                    </small>
-                  </div>
+                        Tanggal: {{ $tanggal }}
+                        </small>
+                    </div>
 
-                  <div class="d-flex align-items-center gap-2">
-                      <span class="badge {{ $sec['badge'] }}">{{ $badgeValue }}</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge {{ $sec['badge'] }}">{{ $badgeValue }}</span>
 
-                      @if($sec['title'] === 'Barang Masuk')
-                      <a href="{{ route('super_admin.item_ins.index', ['search' => $nama]) }}"
-                          class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1">
-                          Cari
-                      </a>
-                      @endif
-                  </div>
-                </li>
+                        {{-- TOMBOL CARI SUDAH DITAMBAHKAN UNTUK 3 JENIS --}}
+                        @if(
+                            $sec['title'] === 'Barang Masuk' ||
+                            $sec['title'] === 'Hampir Kedaluwarsa' ||
+                            $sec['title'] === 'Hampir Habis'
+                        )
+                            <a href="{{ route('super_admin.item_ins.index', ['search' => $nama]) }}"
+                                class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1">
+                                Cari
+                            </a>
+                        @endif
+                    </div>
+                    </li>
 
-              @empty
-                <li class="text-muted fst-italic">{{ $sec['empty'] }}</li>
-              @endforelse
+                @empty
+                    <li class="text-muted fst-italic">{{ $sec['empty'] }}</li>
+                @endforelse
 
-            </ul>
-          </div>
+                </ul>
+            </div>
+            </div>
         </div>
-      </div>
     @endforeach
   </div>
 

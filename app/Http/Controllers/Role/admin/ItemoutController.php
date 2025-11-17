@@ -184,6 +184,7 @@ class ItemoutController extends Controller
         }
     }
 
+
     /**
      * Cek apakah semua item sudah discan.
      */

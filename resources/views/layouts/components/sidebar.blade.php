@@ -6,7 +6,7 @@
             <h4 class="app-brand-text fw-bold ms-3 mt-4 text-white text-glow">SIMBA</h4>
         </a>
     </div>
-    <small class="d-block text-center text-light mb-3">Sistem Informasi Barang Dan Aset</small>
+    <small class="d-block text-center text-light mb-3">Sistem Informasi Manajemen Barang</small>
 
     <div class="menu-inner-shadow"></div>
 
