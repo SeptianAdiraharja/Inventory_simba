@@ -374,7 +374,7 @@ class ExportController extends Controller
         }
     }
 
-  public function exportBarangKeluarPdfAdmin(Request $request)
+    public function exportBarangKeluarPdfAdmin(Request $request)
     {
         // 🔹 Cek pilihan kop surat
         if (!$request->has('kop_surat') || empty($request->input('kop_surat'))) {
@@ -399,8 +399,17 @@ class ExportController extends Controller
             return back()->with('warning', 'Tidak ada data barang keluar pada periode ini.');
         }
 
+        // 🔹 KONFIGURASI DOMpdf YANG BENAR - GUNAKAN ARRAY
+        $options = [
+            'isPhpEnabled' => true, // 🔹 YANG INI PALING PENTING
+            'isRemoteEnabled' => true,
+            'defaultFont' => 'Helvetica',
+            'chroot' => public_path(),
+        ];
+
         $pdf = Pdf::loadView('role.admin.export.barang_keluar_pdf', $data);
         $pdf->setPaper('A4', 'landscape');
+        $pdf->setOptions($options); // 🔹 SET OPTIONS SEBAGAI ARRAY
 
         // Log export
         $fileName = $export->logExport('pdf');

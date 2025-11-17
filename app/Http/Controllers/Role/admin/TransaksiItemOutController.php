@@ -62,9 +62,6 @@ class TransaksiItemOutController extends Controller
     /**
      * 🔹 Proses Refund Barang
      */
-    /**
- * 🔹 Proses Refund Barang - VERSI FIXED
- */
     public function refundBarang(Request $request)
     {
         $request->validate([
@@ -76,7 +73,7 @@ class TransaksiItemOutController extends Controller
 
         DB::beginTransaction();
         try {
-            // Ambil cart item
+            // Ambil cart item dengan relasi
             $cartItem = CartItem::with(['item', 'cart'])->findOrFail($request->cart_item_id);
 
             // Validasi item_id match
@@ -97,46 +94,64 @@ class TransaksiItemOutController extends Controller
 
             // Validasi quantity
             if ($refundQty > $cartItem->quantity) {
-                return back()->with('error', 'Jumlah refund melebihi jumlah barang pada cart.');
+                return back()->with('error', 'Jumlah refund melebihi jumlah barang pada cart. Maksimal: ' . $cartItem->quantity);
             }
+
+            // 🔥 PERBAIKAN UTAMA: Ambil item yang akan di-refund
+            $itemToRefund = Item::findOrFail($request->item_id);
+
+            // 🔥 LOG SEBELUM REFUND
+            $stockBefore = $itemToRefund->stock;
+            Log::info("🔍 BEFORE REFUND - Item: {$itemToRefund->name}, Stock Before: {$stockBefore}, Refund Qty: {$refundQty}");
+
+            // 🔥 PERBAIKAN: Update stok barang - gunakan item yang sudah diambil
+            $itemToRefund->increment('stock', $refundQty);
+
+            // 🔥 LOG SETELAH REFUND
+            $stockAfter = $itemToRefund->stock;
+            Log::info("✅ AFTER REFUND - Item: {$itemToRefund->name}, Stock After: {$stockAfter}, Success: " . ($stockAfter - $stockBefore == $refundQty ? 'YES' : 'NO'));
 
             // Update cart item quantity
             $cartItem->quantity -= $refundQty;
 
+            // Jika refund jumlah penuh, HAPUS data cart item
             if ($cartItem->quantity <= 0) {
-                $cartItem->quantity = 0;
-                $cartItem->status = 'refunded';
-            }
-            $cartItem->save();
+                // Hapus cart item
+                $cartItem->delete();
 
-            // Update item stock
-            $scannedItem->increment('stock', $refundQty);
+                // Hapus juga dari item_out
+                Item_out::where('cart_id', $cartItem->cart_id)
+                    ->where('item_id', $cartItem->item_id)
+                    ->delete();
+            } else {
+                $cartItem->save();
 
-            // Update item_out record
-            $itemOut = Item_out::where('cart_id', $cartItem->cart_id)
-                ->where('item_id', $cartItem->item_id)
-                ->first();
+                // Update item_out record jika masih ada sisa
+                $itemOut = Item_out::where('cart_id', $cartItem->cart_id)
+                    ->where('item_id', $cartItem->item_id)
+                    ->first();
 
-            if ($itemOut) {
-                $itemOut->quantity -= $refundQty;
-                if ($itemOut->quantity <= 0) {
-                    $itemOut->delete();
-                } else {
-                    $itemOut->save();
+                if ($itemOut) {
+                    $itemOut->quantity -= $refundQty;
+                    if ($itemOut->quantity <= 0) {
+                        $itemOut->delete();
+                    } else {
+                        $itemOut->save();
+                    }
                 }
             }
 
-            // Check if all items in cart are refunded
-            $remainingItems = CartItem::where('cart_id', $cartItem->cart_id)
-                ->where('quantity', '>', 0)
-                ->count();
+            // Check if all items in cart are refunded/removed
+            $remainingItems = CartItem::where('cart_id', $cartItem->cart_id)->count();
 
             if ($remainingItems == 0) {
-                Cart::where('id', $cartItem->cart_id)->update(['status' => 'refunded']);
+                // Jika semua item di cart sudah dihapus, hapus cart juga
+                Cart::where('id', $cartItem->cart_id)->delete();
             }
 
             DB::commit();
-            return back()->with('success', 'Refund berhasil. Stok barang dikembalikan.');
+
+            return back()->with('success', "Refund berhasil. {$refundQty} stok {$itemToRefund->name} dikembalikan. Stok sebelumnya: {$stockBefore}, Stok setelah: {$stockAfter}");
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Refund error: ' . $e->getMessage());
@@ -259,23 +274,53 @@ class TransaksiItemOutController extends Controller
 
             // 🔹 Validasi qty refund
             if ($request->qty > $guestCartItem->quantity) {
-                throw new \Exception('Jumlah refund melebihi jumlah barang di cart.');
+                throw new \Exception('Jumlah refund melebihi jumlah barang di cart. Maksimal: ' . $guestCartItem->quantity);
             }
 
-            // 🔹 Kurangi jumlah barang di cart tamu
-            $guestCartItem->decrement('quantity', $request->qty);
+            $refundQty = (int) $request->qty;
 
-            // 🔹 Tambahkan stok barang
-            $item->increment('stock', $request->qty);
+            // 🔥 PERBAIKAN UTAMA: Log sebelum refund
+            $stockBefore = $item->stock;
+            Log::info("🔍 BEFORE GUEST REFUND - Item: {$item->name}, Stock Before: {$stockBefore}, Refund Qty: {$refundQty}");
 
-            // 🔹 Catat transaksi refund ke log (opsional)
+            // 🔥 PERBAIKAN: Update stok barang
+            $item->increment('stock', $refundQty);
+
+            // 🔥 LOG SETELAH REFUND
+            $stockAfter = $item->stock;
+            Log::info("✅ AFTER GUEST REFUND - Item: {$item->name}, Stock After: {$stockAfter}, Success: " . ($stockAfter - $stockBefore == $refundQty ? 'YES' : 'NO'));
+
+            // Jika refund jumlah penuh, HAPUS data guest cart item
+            if ($refundQty >= $guestCartItem->quantity) {
+                // Hapus guest cart item
+                $guestCartItem->delete();
+
+                // Check jika semua item di guest cart sudah dihapus
+                $remainingGuestItems = Guest_carts_item::where('guest_cart_id', $guestCartItem->guest_cart_id)->count();
+
+                if ($remainingGuestItems == 0) {
+                    // Hapus guest cart dan guest jika tidak ada item lagi
+                    $guestCart = Guest_carts::find($guestCartItem->guest_cart_id);
+                    if ($guestCart) {
+                        Guest::where('id', $guestCart->guest_id)->delete();
+                        $guestCart->delete();
+                    }
+                }
+            } else {
+                // Kurangi jumlah barang di cart tamu
+                $guestCartItem->decrement('quantity', $refundQty);
+            }
+
+            // 🔹 Catat transaksi refund ke log
             Item_out_guest::create([
                 'guest_id' => $guestCartItem->guestCart->guest_id,
                 'items' => json_encode([
                     'item_id' => $item->id,
                     'item_name' => $item->name,
                     'code' => $item->code,
-                    'refund_qty' => $request->qty,
+                    'refund_qty' => $refundQty,
+                    'stock_before' => $stockBefore,
+                    'stock_after' => $stockAfter,
                     'action' => 'refund',
                     'timestamp' => now()->toDateTimeString(),
                 ]),
@@ -283,14 +328,13 @@ class TransaksiItemOutController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'Refund barang tamu berhasil. Stok dikembalikan.');
+            return back()->with('success', "Refund barang tamu berhasil. {$refundQty} stok {$item->name} dikembalikan. Stok sebelumnya: {$stockBefore}, Stok setelah: {$stockAfter}");
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Refund Guest Error: ' . $e->getMessage());
             return back()->with('error', 'Refund gagal: ' . $e->getMessage());
         }
     }
-
     /**
      * 🔹 Update Barang & Qty untuk Guest
      */

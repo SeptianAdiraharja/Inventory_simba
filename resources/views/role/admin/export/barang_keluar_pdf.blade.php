@@ -4,18 +4,15 @@
     <meta charset="utf-8">
     <title>Laporan Barang Keluar</title>
 
-    <!-- Bootstrap -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-
     <style>
         @page {
-            size: A4 landscape;
-            margin: 40px 30px 70px 30px;
+            margin: 50px 30px 80px 30px;
         }
 
         body {
-            font-family: DejaVu Sans, sans-serif;
-            font-size: 11px;
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            color: #000;
         }
 
         /* ======================= */
@@ -89,24 +86,42 @@
             margin: 5px auto 20px auto;
         }
 
-        /* ======================= */
-        /*   TABLE LAPORAN         */
-        /* ======================= */
-        .data-table {
+        /* Container untuk tabel agar sejajar dengan garis pembatas */
+        .table-container {
             width: 90%;
             margin: 0 auto;
+        }
+
+        table {
+            width: 100%;
             border-collapse: collapse;
+            margin-top: 10px;
         }
 
-        .data-table th,
-        .data-table td {
-            border: 1px solid #000;
-            padding: 5px;
+        th, td {
+            border: 0.5px solid #000;
+            padding: 6px 8px;
+            text-align: center;
         }
 
-        .data-table th {
-            background: #f0f0f0;
+        th {
+            background: #f8f8f8;
             font-weight: bold;
+        }
+
+        .title {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 15pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 12pt;
+            margin-top: 3px;
+            margin-bottom: 10px;
         }
 
         .text-left {
@@ -121,34 +136,7 @@
             background: #fafafa;
             font-weight: bold;
         }
-
-        /* ======================= */
-        /*   TITLE & PERIOD        */
-        /* ======================= */
-        .report-title {
-            text-align: center;
-            margin: 0;
-        }
-
-        .report-period {
-            text-align: center;
-            margin: 3px 0 10px 0;
-        }
-
-        /* ======================= */
-        /*   FOOTER                */
-        /* ======================= */
-        .footer {
-            position: fixed;
-            bottom: 15px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 10px;
-            color: #444;
-        }
     </style>
-
 </head>
 <body>
 
@@ -207,99 +195,101 @@
     {{-- ======================== --}}
     {{-- TITLE --}}
     {{-- ======================== --}}
-    <h2 class="report-title">LAPORAN BARANG KELUAR</h2>
+    <h2 class="title">LAPORAN BARANG KELUAR</h2>
 
-    <p class="report-period">
+    <p class="subtitle">
         Periode:
-        {{ \Carbon\Carbon::parse($start)->format('d/m/Y') }}
-        -
-        {{ \Carbon\Carbon::parse($end)->format('d/m/Y') }}
+        {{ \Carbon\Carbon::parse($start)->format('d M Y') }}
+        s/d
+        {{ \Carbon\Carbon::parse($end)->format('d M Y') }}
     </p>
 
     {{-- ======================== --}}
     {{-- TABEL DATA --}}
     {{-- ======================== --}}
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th width="4%">NO</th>
-                <th width="32%">NAMA BARANG</th>
-                <th width="22%">PENERIMA</th>
-                <th width="10%">ROLE</th>
-                <th width="15%">TANGGAL</th>
-                <th width="10%">JUMLAH</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            @php $grandTotal = 0; @endphp
-
-            @foreach($items as $i => $item)
-                @php
-                    $grandTotal += $item->quantity;
-
-                    // Gunakan logika yang sama seperti di Excel
-                    $namaBarang = $item->item->name ?? 'Barang Dihapus';
-
-                    $penerima = $item->pengambil ?? (
-                        isset($item->type)
-                        ? ($item->type === 'pegawai'
-                            ? ($item->cart->user->name ?? 'Tamu/Non-User')
-                            : ($item->guestCart->guest->name ?? 'Tamu'))
-                        : ($item->cart->user->name ??
-                        $item->guestCart->guest->name ??
-                        'Tamu/Non-User')
-                    );
-
-                    $jenis = $item->type ?? (isset($item->cart) ? 'pegawai' : 'tamu');
-                    $role = $jenis === 'pegawai' ? 'Pegawai' : 'Tamu';
-
-                    $satuan = $item->item->unit->name ?? 'pcs';
-                @endphp
-
+    <div class="table-container">
+        <table>
+            <thead>
                 <tr>
-                    <td>{{ $i + 1 }}</td>
-                    <td class="text-left">{{ $namaBarang }}</td>
-                    <td class="text-left">{{ $penerima }}</td>
-                    <td>{{ $role }}</td>
-                    <td>{{ \Carbon\Carbon::parse($item->released_at ?? $item->created_at)->format('d-m-Y') }}</td>
-                    <td>{{ $item->quantity }} {{ $satuan }}</td>
+                    <th width="4%">NO</th>
+                    <th width="32%">NAMA BARANG</th>
+                    <th width="22%">PENERIMA</th>
+                    <th width="10%">ROLE</th>
+                    <th width="15%">TANGGAL</th>
+                    <th width="10%">JUMLAH</th>
                 </tr>
-            @endforeach
+            </thead>
 
-            @if($items->count() > 0)
-            <tr class="total-row">
-                <td colspan="5" class="text-right">TOTAL JUMLAH BARANG</td>
-                <td>{{ $grandTotal }}</td>
-            </tr>
-            @endif
-        </tbody>
-    </table>
+            <tbody>
+                @php $grandTotal = 0; @endphp
 
-    {{-- ======================== --}}
-    {{-- FOOTER --}}
-    {{-- ======================== --}}
-    <div class="footer">
-        Dicetak pada: {{ now()->format('d-m-Y H:i') }} —
-        Halaman <span class="page-number"></span>
+                @foreach($items as $i => $item)
+                    @php
+                        $grandTotal += $item->quantity;
+
+                        // Gunakan logika yang sama seperti di Excel
+                        $namaBarang = $item->item->name ?? 'Barang Dihapus';
+
+                        $penerima = $item->pengambil ?? (
+                            isset($item->type)
+                            ? ($item->type === 'pegawai'
+                                ? ($item->cart->user->name ?? 'Tamu/Non-User')
+                                : ($item->guestCart->guest->name ?? 'Tamu'))
+                            : ($item->cart->user->name ??
+                            $item->guestCart->guest->name ??
+                            'Tamu/Non-User')
+                        );
+
+                        $jenis = $item->type ?? (isset($item->cart) ? 'pegawai' : 'tamu');
+                        $role = $jenis === 'pegawai' ? 'Pegawai' : 'Tamu';
+
+                        $satuan = $item->item->unit->name ?? 'pcs';
+                    @endphp
+
+                    <tr>
+                        <td>{{ $i + 1 }}</td>
+                        <td class="text-left">{{ $namaBarang }}</td>
+                        <td class="text-left">{{ $penerima }}</td>
+                        <td>{{ $role }}</td>
+                        <td>{{ \Carbon\Carbon::parse($item->released_at ?? $item->created_at)->format('d-m-Y') }}</td>
+                        <td>{{ $item->quantity }} {{ $satuan }}</td>
+                    </tr>
+                @endforeach
+
+                @if($items->count() > 0)
+                <tr class="total-row">
+                    <td colspan="5" class="text-right">TOTAL JUMLAH BARANG</td>
+                    <td>{{ $grandTotal }}</td>
+                </tr>
+                @endif
+            </tbody>
+        </table>
     </div>
 
     <script type="text/php">
     if (isset($pdf)) {
-        $pdf->page_script('
-            $font = $fontMetrics->get_font("DejaVu Sans", "normal");
+        try {
+            // Gunakan font yang lebih umum
+            $font = $fontMetrics->get_font("Helvetica", "normal");
             $size = 9;
-            $pageText = "Halaman " . $PAGE_NUM . " dari " . $PAGE_COUNT;
 
-            $width = $pdf->get_width();
-            $textWidth = $fontMetrics->get_text_width($pageText, $font, $size);
-            $x = ($width - $textWidth) / 2;
-            $y = $pdf->get_height() - 30;
+            // Format tanggal
+            $date = "{{ now()->format('d-m-Y H:i') }}";
+            $pageText = "Dicetak pada: " . $date . " | Halaman " . $PAGE_NUM . " dari " . $PAGE_COUNT;
+
+            // Hitung posisi (untuk A4 landscape)
+            $width = $fontMetrics->get_text_width($pageText, $font, $size);
+            $x = ($pdf->get_width() - $width) / 2;
+            $y = $pdf->get_height() - 35; // Sedikit lebih tinggi
 
             $pdf->text($x, $y, $pageText, $font, $size);
-        ');
+
+        } catch (Exception $e) {
+            // Fallback sederhana jika ada error
+            $pdf->text(300, 570, "Dicetak: {{ now()->format('d-m-Y H:i') }}");
+        }
     }
-    </script>
+</script>
 
 </body>
 </html>

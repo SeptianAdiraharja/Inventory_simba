@@ -260,7 +260,7 @@
         </div>
         <div class="modal-footer bg-light">
           <button type="submit" id="submitRefundPegawai" class="btn text-white rounded-pill fw-semibold px-3"
-                  style="background-color:#FF9800;" disabled>
+                  style="background-color:#FF9800;">
             ✅ Proses Refund
           </button>
           <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Batal</button>
@@ -304,7 +304,7 @@
         </div>
         <div class="modal-footer bg-light">
           <button type="submit" id="submitRefundGuest" class="btn text-white rounded-pill fw-semibold px-3"
-                  style="background-color:#FF9800;" disabled>
+                  style="background-color:#FF9800;">
             ✅ Proses Refund
           </button>
           <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Batal</button>
@@ -313,6 +313,7 @@
     </div>
   </div>
 </div>
+
 {{-- MODAL EDIT PEGAWAI --}}
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -398,6 +399,42 @@
 
 @push('scripts')
 <script>
+// Fungsi validasi quantity refund untuk pegawai
+function validateRefundQty(input) {
+    const maxQty = parseInt(input.max);
+    const currentQty = parseInt(input.value);
+    const qtyError = document.getElementById('qtyError');
+    const submitBtn = document.getElementById('submitRefundPegawai');
+
+    if (currentQty > maxQty) {
+        qtyError.classList.remove('d-none');
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.6';
+    } else {
+        qtyError.classList.add('d-none');
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+    }
+}
+
+// Fungsi validasi quantity refund untuk guest
+function validateRefundGuestQty(input) {
+    const maxQty = parseInt(input.max);
+    const currentQty = parseInt(input.value);
+    const qtyError = document.getElementById('guestQtyError');
+    const submitBtn = document.getElementById('submitRefundGuest');
+
+    if (currentQty > maxQty) {
+        qtyError.classList.remove('d-none');
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.6';
+    } else {
+        qtyError.classList.add('d-none');
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // SweetAlert untuk pesan sukses/gagal dari session
     @if(session('success'))
@@ -424,6 +461,31 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     @endif
 
+    const modals = ['refundModal', 'refundModalGuest', 'editModal', 'editModalGuest'];
+    modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.addEventListener('hidden.bs.modal', function() {
+                const form = this.querySelector('form');
+                if (form) {
+                    form.reset();
+                    // Reset validation states
+                    const qtyError = document.getElementById('qtyError');
+                    const guestQtyError = document.getElementById('guestQtyError');
+                    if (qtyError) qtyError.classList.add('d-none');
+                    if (guestQtyError) guestQtyError.classList.add('d-none');
+
+                    // Enable submit buttons
+                    const submitBtns = form.querySelectorAll('button[type="submit"]');
+                    submitBtns.forEach(btn => {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    });
+                }
+            });
+        }
+    });
+
     // Refund Modal Pegawai
     const refundModal = document.getElementById('refundModal');
     if (refundModal) {
@@ -433,12 +495,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const itemId = button.getAttribute('data-item-id');
             const itemName = button.getAttribute('data-item-name');
             const maxQty = button.getAttribute('data-max-qty');
+
             document.getElementById('refundCartItemId').value = cartItemId;
             document.getElementById('refundItemId').value = itemId;
             document.getElementById('refundItemName').value = itemName;
             document.getElementById('refundQty').max = maxQty;
             document.getElementById('refundQty').value = 1;
             document.getElementById('maxQty').textContent = maxQty;
+
+            // Reset validation state
+            document.getElementById('qtyError').classList.add('d-none');
+            document.getElementById('submitRefundPegawai').disabled = false;
+            document.getElementById('submitRefundPegawai').style.opacity = '1';
         });
     }
 
@@ -458,6 +526,11 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('refundGuestQty').max = maxQty;
             document.getElementById('refundGuestQty').value = 1;
             document.getElementById('maxGuestQty').textContent = maxQty;
+
+            // Reset validation state
+            document.getElementById('guestQtyError').classList.add('d-none');
+            document.getElementById('submitRefundGuest').disabled = false;
+            document.getElementById('submitRefundGuest').style.opacity = '1';
         });
     }
 
@@ -491,10 +564,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // SweetAlert untuk konfirmasi refund
+    // Reset form ketika modal ditutup
+    $('#refundModal, #refundModalGuest, #editModal, #editModalGuest').on('hidden.bs.modal', function () {
+        const form = $(this).find('form')[0];
+        if (form) {
+            form.reset();
+        }
+    });
+
+    // SweetAlert untuk konfirmasi refund dan edit
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', function(e) {
-            const submitBtn = this.querySelector('button[type="submit"]');
             const formType = this.getAttribute('action');
 
             if (formType && (formType.includes('refund') || formType.includes('update'))) {
@@ -574,11 +654,22 @@ body { background-color: #fffaf4 !important; }
 
 .badge { font-size: 0.85rem; font-weight: 600; }
 
-.btn[disabled] { opacity: 0.6 !important; cursor: not-allowed !important; }
+/* Tambahan untuk modal */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
 
 @media (max-width: 768px) {
   .table { font-size: 0.9rem; }
   .btn { font-size: 0.8rem; }
+  .modal-dialog {
+      margin: 1rem;
+  }
 }
 </style>
 @endpush
