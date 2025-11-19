@@ -301,7 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 updateCartUI(json.data.items, {
                     weekly_request_count: json.data.weekly_request_count,
                     has_reached_limit: json.data.has_reached_limit,
-                    limit_message: json.data.limit_message
+                    limit_message: json.data.limit_message,
                 });
 
                 // Tampilkan informasi limit

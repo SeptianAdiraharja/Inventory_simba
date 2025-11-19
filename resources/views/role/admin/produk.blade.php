@@ -251,13 +251,16 @@
 <div class="filter-section smooth-fade">
   <form action="{{ route('admin.produk.byGuest', $guest->id ?? 0) }}" method="GET" id="filterForm">
     <div class="row align-items-center">
-      <div class="col-md-8">
+
+      <!-- BAGIAN KIRI (Dropdown Sorting) -->
+      <div class="col-md-9">
         <div class="d-flex flex-wrap align-items-center gap-4">
 
           <!-- Sort Dropdown -->
           <div>
             <span class="filter-label">Urutkan:</span>
-            <select name="sort" class="form-select filter-dropdown" onchange="document.getElementById('filterForm').submit()">
+            <select name="sort" class="form-select filter-dropdown"
+                    onchange="document.getElementById('filterForm').submit()">
               <option value="stok_terbanyak" {{ request('sort', 'stok_terbanyak') == 'stok_terbanyak' ? 'selected' : '' }}>
                 📦 Stok Terbanyak
               </option>
@@ -285,21 +288,26 @@
         </div>
       </div>
 
-      <div class="col-md-4 text-end">
-        <div class="d-flex gap-2 justify-content-end">
-          <button type="submit" class="btn btn-warning text-white px-4">
-            <i class="ri-search-line me-1"></i> Terapkan
-          </button>
-          @if(request('q') || request('sort'))
-            <a href="{{ route('admin.produk.byGuest', $guest->id ?? 0) }}" class="btn btn-outline-secondary px-4">
-              <i class="ri-refresh-line me-1"></i> Reset
-            </a>
-          @endif
-        </div>
+      <!-- BAGIAN KANAN (Button Refresh) -->
+      <div class="col-md-3 d-flex justify-content-end">
+        <button type="button" class="btn btn-outline-warning refresh-btn"
+                onclick="resetFilters()"
+                style="border-radius: 12px; padding: 10px 16px; border: 2px solid #FF9800; color: #FF9800; font-weight: 500; transition: all 0.3s ease;">
+          <i class="ri-refresh-line me-1"></i> Refresh
+        </button>
       </div>
+
     </div>
   </form>
 </div>
+
+<script>
+function resetFilters() {
+  const baseUrl = "{{ route('admin.produk.byGuest', $guest->id ?? 0) }}";
+  window.location.href = baseUrl; // Reset sempurna
+}
+</script>
+
 
 <!-- === FLOATING CART BUTTON === -->
 <button class="btn btn-primary shadow-lg position-fixed rounded-circle d-flex align-items-center justify-content-center"

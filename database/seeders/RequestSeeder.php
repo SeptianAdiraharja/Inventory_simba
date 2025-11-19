@@ -51,7 +51,7 @@ class RequestSeeder extends Seeder
         for ($i = 1; $i <= 50; $i++) {
             $cart = Cart::create([
                 'user_id' => $user->id,
-                'status' => 'approved',
+                'status' => 'pending',
             ]);
 
             // Ambil 2 item acak untuk tiap permintaan
@@ -62,7 +62,7 @@ class RequestSeeder extends Seeder
                     'cart_id' => $cart->id,
                     'item_id' => $item->id,
                     'quantity' => rand(1, 3),
-                    'status' => 'approved',
+                    'status' => 'pending',
                 ]);
             }
         }

@@ -326,14 +326,14 @@
         </div>
         <div class="modal-body">
           <input type="hidden" name="cart_item_id" id="editCartItemId">
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Pilih Barang</label>
-            <select name="item_id" class="form-select rounded-3" id="editItemId" required>
-              <option value="">-- Pilih Barang --</option>
-              @foreach($items as $item)
-                <option value="{{ $item->id }}" data-code="{{ $item->code }}">{{ $item->name }} ({{ $item->code }})</option>
-              @endforeach
-            </select>
+         <div class="mb-3">
+              <label class="form-label fw-semibold">Pilih Barang</label>
+              <select name="item_id" class="form-select select2-item-search rounded-3" id="editItemId" required>
+                  <option value="">-- Pilih Barang --</option>
+                  @foreach($items as $item)
+                      <option value="{{ $item->id }}" data-code="{{ $item->code }}">{{ $item->name }} ({{ $item->code }})</option>
+                  @endforeach
+              </select>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Jumlah</label>
@@ -368,13 +368,13 @@
         <div class="modal-body">
           <input type="hidden" name="guest_cart_item_id" id="editGuestCartItemId">
           <div class="mb-3">
-            <label class="form-label fw-semibold">Pilih Barang</label>
-            <select name="item_id" class="form-select rounded-3" id="editGuestItemId" required>
-              <option value="">-- Pilih Barang --</option>
-              @foreach($items as $item)
-                <option value="{{ $item->id }}" data-code="{{ $item->code }}">{{ $item->name }} ({{ $item->code }})</option>
-              @endforeach
-            </select>
+              <label class="form-label fw-semibold">Pilih Barang</label>
+              <select name="item_id" class="form-select select2-item-search rounded-3" id="editGuestItemId" required>
+                  <option value="">-- Pilih Barang --</option>
+                  @foreach($items as $item)
+                      <option value="{{ $item->id }}" data-code="{{ $item->code }}">{{ $item->name }} ({{ $item->code }})</option>
+                  @endforeach
+              </select>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Jumlah</label>
@@ -398,7 +398,26 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <script>
+// Inisialisasi Select2
+function initializeSelect2() {
+    $('.select2-item-search').select2({
+        placeholder: "Cari barang...",
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('.modal-content'),
+        language: {
+            noResults: function() {
+                return "Barang tidak ditemukan";
+            },
+            searching: function() {
+                return "Mencari...";
+            }
+        }
+    });
+}
+
 // Fungsi validasi quantity refund untuk pegawai
 function validateRefundQty(input) {
     const maxQty = parseInt(input.max);
@@ -436,6 +455,9 @@ function validateRefundGuestQty(input) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Inisialisasi Select2 saat dokumen ready
+    initializeSelect2();
+
     // SweetAlert untuk pesan sukses/gagal dari session
     @if(session('success'))
     Swal.fire({
@@ -469,6 +491,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const form = this.querySelector('form');
                 if (form) {
                     form.reset();
+                    // Reset Select2
+                    $(this).find('.select2-item-search').val('').trigger('change');
+
                     // Reset validation states
                     const qtyError = document.getElementById('qtyError');
                     const guestQtyError = document.getElementById('guestQtyError');
@@ -482,6 +507,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         btn.style.opacity = '1';
                     });
                 }
+            });
+
+            // Re-inisialisasi Select2 ketika modal dibuka
+            modal.addEventListener('show.bs.modal', function() {
+                setTimeout(() => {
+                    $(this).find('.select2-item-search').select2({
+                        placeholder: "Cari barang...",
+                        allowClear: true,
+                        width: '100%',
+                        dropdownParent: $(this).find('.modal-content'),
+                        language: {
+                            noResults: function() {
+                                return "Barang tidak ditemukan";
+                            },
+                            searching: function() {
+                                return "Mencari...";
+                            }
+                        }
+                    });
+                }, 100);
             });
         }
     });
@@ -544,8 +589,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const qty = button.getAttribute('data-qty');
 
             document.getElementById('editCartItemId').value = cartItemId;
-            document.getElementById('editItemId').value = itemId;
             document.getElementById('editQty').value = qty;
+
+            // Set nilai Select2 setelah modal terbuka
+            setTimeout(() => {
+                $('#editItemId').val(itemId).trigger('change');
+            }, 100);
         });
     }
 
@@ -559,18 +608,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const qty = button.getAttribute('data-qty');
 
             document.getElementById('editGuestCartItemId').value = guestCartItemId;
-            document.getElementById('editGuestItemId').value = itemId;
             document.getElementById('editGuestQty').value = qty;
+
+            // Set nilai Select2 setelah modal terbuka
+            setTimeout(() => {
+                $('#editGuestItemId').val(itemId).trigger('change');
+            }, 100);
         });
     }
-
-    // Reset form ketika modal ditutup
-    $('#refundModal, #refundModalGuest, #editModal, #editModalGuest').on('hidden.bs.modal', function () {
-        const form = $(this).find('form')[0];
-        if (form) {
-            form.reset();
-        }
-    });
 
     // SweetAlert untuk konfirmasi refund dan edit
     document.querySelectorAll('form').forEach(form => {
@@ -581,7 +626,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
 
                 const actionType = formType.includes('refund') ? 'refund' : 'edit';
-                const itemName = this.querySelector('input[readonly]')?.value || 'barang';
+                const itemName = this.querySelector('input[readonly]')?.value ||
+                               this.querySelector('.select2-item-search option:selected')?.text ||
+                               'barang';
 
                 Swal.fire({
                     title: `Konfirmasi ${actionType === 'refund' ? 'Refund' : 'Edit'}`,
@@ -657,6 +704,47 @@ body { background-color: #fffaf4 !important; }
 /* Tambahan untuk modal */
 .modal-backdrop {
     background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Select2 Custom Styling */
+.select2-container--default .select2-selection--single {
+    border: 1px solid #ced4da;
+    border-radius: 0.5rem;
+    height: 45px;
+    padding: 0.375rem 0.75rem;
+    background-color: #fff;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 35px;
+    color: #495057;
+    padding-left: 0;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 43px;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #FF9800;
+    color: white;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.select2-container--default .select2-results__option[aria-selected=true] {
+    background-color: #FFF3E0;
+    color: #5d4037;
+}
+
+.select2-dropdown {
+    border: 1px solid #ced4da;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
 .modal-content {
