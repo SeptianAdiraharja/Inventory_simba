@@ -12,4 +12,10 @@ class Category extends Model
     {
         return $this->hasMany(Item::class);
     }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'category_user');
+    }
+
 }
