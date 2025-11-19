@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Category; // ⬅️ Tambahan
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -51,7 +52,10 @@ class UserController extends Controller
 
     public function create()
     {
-        return view('role.super_admin.users.create');
+        $categories = Category::all();
+        $user = null;
+
+        return view('role.super_admin.users.create', compact('categories', 'user'));
     }
 
     public function store(Request $request)
@@ -61,10 +65,16 @@ class UserController extends Controller
             'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
             'role'     => 'required|in:super_admin,admin,pegawai',
+            'categories' => 'array', // ⬅️ Tambahan
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
-        User::create($validated);
+        $user = User::create($validated);
+
+        // ⬅️ Tambahan many-to-many
+        if ($request->has('categories')) {
+            $user->categories()->sync($request->categories);
+        }
 
         return redirect()->route('super_admin.users.index')
                          ->with('success', 'Akun berhasil dibuat.');
@@ -72,7 +82,9 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        return view('role.super_admin.users.edit', compact('user'));
+        $categories = Category::all(); // ⬅️ Tambahan
+
+        return view('role.super_admin.users.edit', compact('user', 'categories')); // ⬅️ Tambahan
     }
 
     public function update(Request $request, User $user)
@@ -82,6 +94,7 @@ class UserController extends Controller
             'email'    => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6|confirmed',
             'role'     => 'required|in:super_admin,admin,pegawai',
+            'categories' => 'array', // ⬅️ Tambahan
         ]);
 
         if ($request->filled('password')) {
@@ -91,6 +104,9 @@ class UserController extends Controller
         }
 
         $user->update($validated);
+
+        // ⬅️ Tambahan many-to-many
+        $user->categories()->sync($request->categories ?? []);
 
         return redirect()->route('super_admin.users.index')
                          ->with('success', 'Akun berhasil diperbarui.');

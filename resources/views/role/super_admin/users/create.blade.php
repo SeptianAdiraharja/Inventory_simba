@@ -77,6 +77,53 @@
           </select>
         </div>
 
+        {{-- Kategori --}}
+        <div class="mb-4">
+          <label class="form-label fw-semibold text-dark">Kategori</label>
+
+          <div class="p-3 border rounded-3 shadow-sm kategori-columns"
+              style="border-left:4px solid #FF9800 !important; background:#fff;">
+              
+              @foreach($categories as $category)
+                <div class="form-check mb-2">
+                  <input class="form-check-input"
+                        type="checkbox"
+                        id="cat{{ $category->id }}"
+                        name="categories[]"
+                        value="{{ $category->id }}"
+                        {{ !empty($user) && $user->categories->contains($category->id) ? 'checked' : '' }}>
+                  
+                  <label class="form-check-label" for="cat{{ $category->id }}">
+                    {{ $category->name }}
+                  </label>
+                </div>
+              @endforeach
+
+          </div>
+
+          @error('categories')
+            <small class="text-danger">{{ $message }}</small>
+          @enderror
+        </div>
+
+        {{-- Style khusus kategori --}}
+        <style>
+          .kategori-columns {
+              columns: 3;              /* 3 baris ke bawah, sisanya pindah ke samping */
+              -webkit-columns: 3;
+              -moz-columns: 3;
+          }
+
+          .kategori-columns .form-check {
+              break-inside: avoid;     /* biar checkbox tidak terpotong kolom */
+          }
+
+          /* Optional: Jarak antar kolom */
+          .kategori-columns {
+              column-gap: 30px;
+          }
+        </style>
+
         {{-- Tombol --}}
         <div class="d-flex justify-content-end gap-2 mt-4">
           <button type="submit" class="btn btn-sm rounded-pill px-4 hover-glow shadow-sm"

@@ -60,4 +60,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(KopSurat::class);
     }
+
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'category_user');
+    }
+
 }
