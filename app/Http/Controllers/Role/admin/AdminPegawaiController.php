@@ -65,8 +65,20 @@ class AdminPegawaiController extends Controller
         // Ambil data pegawai berdasarkan ID
         $pegawai = User::findOrFail($id);
 
+        // 🔥 AMBIL KATEGORI YANG DI-ASSIGN KE PEGAWAI
+        $assignedCategories = $pegawai->categories;
+
+        // Jika pegawai memiliki kategori yang di-assign, gunakan hanya kategori tersebut
+        // Jika tidak, tampilkan semua kategori
+        $categories = $assignedCategories->isNotEmpty() ? $assignedCategories : Category::all();
+
         // Query untuk produk
         $itemsQuery = Item::with('category');
+
+        // 🔥 FILTER BERDASARKAN KATEGORI YANG DI-ASSIGN KE PEGAWAI
+        if ($assignedCategories->isNotEmpty()) {
+            $itemsQuery->whereIn('category_id', $assignedCategories->pluck('id'));
+        }
 
         // 🔥 PERBAIKAN: Filter berdasarkan pencarian (jika ada)
         if ($request->has('q') && !empty($request->q)) {
@@ -131,10 +143,6 @@ class AdminPegawaiController extends Controller
             $itemsQuery->orderBy('created_at', 'desc');
         }
 
-
-        // Ambil semua kategori untuk dropdown
-        $categories = Category::all();
-
         // Pagination dengan menyimpan parameter query
         $items = $itemsQuery->paginate(12)->appends($request->except('page'));
 
@@ -152,7 +160,12 @@ class AdminPegawaiController extends Controller
         }
 
         // Tampilkan ke view produk pegawai
-        return view('role.admin.produk_pegawai', compact('pegawai', 'items', 'categories'));
+        return view('role.admin.produk_pegawai', compact(
+            'pegawai',
+            'items',
+            'categories',
+            'assignedCategories' 
+        ));
     }
 
     public function scan(Request $request, $pegawaiId)

@@ -82,9 +82,8 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $categories = Category::all(); // ⬅️ Tambahan
-
-        return view('role.super_admin.users.edit', compact('user', 'categories')); // ⬅️ Tambahan
+        $categories = Category::all();
+        return view('role.super_admin.users.edit', compact('user', 'categories'));
     }
 
     public function update(Request $request, User $user)
@@ -94,7 +93,7 @@ class UserController extends Controller
             'email'    => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6|confirmed',
             'role'     => 'required|in:super_admin,admin,pegawai',
-            'categories' => 'array', // ⬅️ Tambahan
+            'categories' => 'array',
         ]);
 
         if ($request->filled('password')) {
@@ -105,11 +104,11 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        // ⬅️ Tambahan many-to-many
+        // Sync kategori yang dipilih oleh super admin
         $user->categories()->sync($request->categories ?? []);
 
         return redirect()->route('super_admin.users.index')
-                         ->with('success', 'Akun berhasil diperbarui.');
+                        ->with('success', 'Akun berhasil diperbarui.');
     }
 
     public function destroy(User $user)

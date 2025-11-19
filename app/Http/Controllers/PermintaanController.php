@@ -14,11 +14,18 @@ class PermintaanController extends Controller
 {
     public function index(Request $request)
     {
-        $categories = Category::all();
+        // Ambil kategori yang di-assign ke user (jika ada)
+        $assignedCategories = Auth::check() ? Auth::user()->getAssignedCategories() : collect();
+
+        // Jika user memiliki kategori yang di-assign, gunakan hanya kategori tersebut
+        // Jika tidak, tampilkan semua kategori
+        $categories = $assignedCategories->isNotEmpty() ? $assignedCategories : Category::all();
+
         $query = Item::with('category');
 
-        if (Auth::check() && Auth::user()->categories->isNotEmpty()) {
-            $query->whereIn('category_id', Auth::user()->categories->pluck('id'));
+        // Filter berdasarkan kategori yang di-assign ke user
+        if (Auth::check() && $assignedCategories->isNotEmpty()) {
+            $query->whereIn('category_id', $assignedCategories->pluck('id'));
         }
 
         $sort = $request->get('sort', 'stok_terbanyak');
@@ -53,8 +60,9 @@ class PermintaanController extends Controller
 
         $items = $query->paginate(12)->appends($request->all());
 
-        return view('role.pegawai.produk', compact('categories', 'items'));
+        return view('role.pegawai.produk', compact('categories', 'items', 'assignedCategories'));
     }
+
 
     public function createPermintaan(Request $request)
     {

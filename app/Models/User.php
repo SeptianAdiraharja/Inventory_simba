@@ -24,9 +24,9 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected $dates = [
-        'deleted_at',
-        'banned_at',
+    protected $casts = [
+        'banned_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     // ========= RELASI =========
@@ -66,4 +66,33 @@ class User extends Authenticatable
         return $this->belongsToMany(Category::class, 'category_user');
     }
 
+    // Scope untuk mendapatkan kategori yang di-assign ke user
+    public function scopeWithAssignedCategories($query)
+    {
+        return $query->with('categories');
+    }
+
+    // Method untuk mengecek apakah user memiliki kategori tertentu
+    public function hasCategory($categoryId)
+    {
+        return $this->categories()->where('category_id', $categoryId)->exists();
+    }
+
+    // Method untuk mendapatkan hanya kategori yang di-assign
+    public function getAssignedCategories()
+    {
+        return $this->categories;
+    }
+
+    // Method untuk mendapatkan ID kategori yang di-assign
+    public function getAssignedCategoryIds()
+    {
+        return $this->categories->pluck('id');
+    }
+
+    // Method untuk mengecek apakah user memiliki kategori yang di-assign
+    public function hasAssignedCategories()
+    {
+        return $this->categories->isNotEmpty();
+    }
 }
