@@ -18,41 +18,41 @@ class PermintaanController extends Controller
         $query = Item::with('category');
         $sort = $request->get('sort', 'stok_terbanyak');
         $query->where('stock', '>', 0);
-    
+
         switch ($sort) {
             case 'stok_terbanyak':
                 $query->orderBy('stock', 'desc');
                 break;
-                
+
             case 'stok_sedikit':
                 $query->orderBy('stock', 'asc');
                 break;
-                
+
             case 'paling_laris':
                 $query->withSum('cartItems as total_dibeli', 'quantity')
                     ->orderByDesc('total_dibeli');
                 break;
-                
+
             case 'terbaru':
                 $query->latest('created_at');
                 break;
-                
+
             case 'terlama':
                 $query->oldest('created_at');
                 break;
-                
+
             case 'nama_az':
                 $query->orderBy('name', 'asc');
                 break;
-                
+
             case 'nama_za':
                 $query->orderBy('name', 'desc');
                 break;
-                
+
             default:
                 $query->orderBy('stock', 'desc');
         }
-    
+
         $items = $query->paginate(12)->appends($request->all());
         return view('role.pegawai.produk', compact('categories', 'items'));
     }
@@ -140,24 +140,21 @@ class PermintaanController extends Controller
             DB::transaction(function () use ($cart) {
                 foreach ($cart->cartItems as $cartItem) {
                     $item = Item::lockForUpdate()->findOrFail($cartItem->item_id);
-                    
+
                     // Validasi stok masih cukup saat checkout
                     if ($item->stock <= 0) {
                         throw new \Exception("Stok {$item->name} sudah habis. Silakan hapus dari keranjang.");
                     }
-                    
+
                     if ($cartItem->quantity > $item->stock) {
                         throw new \Exception("Stok {$item->name} tidak mencukupi (tersedia: {$item->stock}, diminta: {$cartItem->quantity}). Silakan sesuaikan jumlah.");
                     }
-                    
-                    // 🔹 KURANGI STOK DI SINI
-                    $item->decrement('stock', $cartItem->quantity);
                 }
-                
+
                 // Update status cart
                 $cart->update(['status' => 'pending']);
             });
-            
+
             return redirect()->back()->with([
                 'swal' => [
                     'icon' => 'success',
@@ -168,7 +165,7 @@ class PermintaanController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with([
                 'error' => $e->getMessage(),
-                'refresh_cart' => true 
+                'refresh_cart' => true
             ]);
         }
     }

@@ -289,7 +289,7 @@
                 ->with('cartItems.item')
                 ->first();
 
-            $categories = \App\Models\Category::all();
+            $categories = \App\Models\Category::whereNotIn('name', ['Alat Dapur', 'Alat Kebersihan', 'Perabot', 'Peralatan Keamanan'])->get();
             $cartexceptactive = \App\Models\Cart::withCount('cartItems')
                 ->where('user_id', Auth::id())
                 ->where('status', '!=', 'active');
@@ -574,7 +574,6 @@
                                         style="width: 150px; font-size: 14px; outline: none; box-shadow: none;"
                                         onchange="this.form.submit()">
                                     <option value="none">Pilih Kategori</option>
-                                    <option value="none" {{ request('kategori') == 'none' ? 'selected' : '' }}>Semua</option>
                                     @foreach($categories as $category)
                                         <option value="{{ $category->name }}" {{ request('kategori') == $category->name ? 'selected' : '' }}>
                                             {{ $category->name }}

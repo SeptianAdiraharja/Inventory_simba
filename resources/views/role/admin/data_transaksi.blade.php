@@ -1,7 +1,7 @@
 @extends('layouts.index')
 
 @section('content')
-<div class="container-fluid py-4 animate__animated animate__fadeIn">
+<div class="container-fluid py-4 animate_animated animate_fadeIn">
 
   {{-- 🧭 MODERN BREADCRUMB --}}
   <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 smooth-fade">
@@ -45,7 +45,7 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link py-2 px-4" id="guest-tab" data-bs-toggle="tab"
                   data-bs-target="#guest" type="button" role="tab"
-                  style="color:#FF9800;">🧍‍♂️ Tamu</button>
+                  style="color:#FF9800;">🧍‍♂ Tamu</button>
         </li>
       </ul>
 
@@ -118,7 +118,7 @@
                                     data-bs-toggle="modal" data-bs-target="#editModal"
                                     data-cart-item-id="{{ $item->id }}" data-item-id="{{ $item->item->id }}"
                                     data-qty="{{ $item->quantity }}">
-                              ✏️ Edit
+                              ✏ Edit
                             </button>
                           </td>
                         </tr>
@@ -200,7 +200,7 @@
                                     data-bs-toggle="modal" data-bs-target="#editModalGuest"
                                     data-guest-cart-item-id="{{ $item->id }}" data-item-id="{{ $item->item->id }}"
                                     data-qty="{{ $item->quantity }}">
-                              ✏️ Edit
+                              ✏ Edit
                             </button>
                           </td>
                         </tr>
@@ -584,8 +584,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const itemName = this.querySelector('input[readonly]')?.value || 'barang';
 
                 Swal.fire({
-                    title: `Konfirmasi ${actionType === 'refund' ? 'Refund' : 'Edit'}`,
-                    text: `Apakah Anda yakin ingin ${actionType === 'refund' ? 'melakukan refund pada' : 'mengedit'} ${itemName}?`,
+                    title: Konfirmasi ${actionType === 'refund' ? 'Refund' : 'Edit'},
+                    text: Apakah Anda yakin ingin ${actionType === 'refund' ? 'melakukan refund pada' : 'mengedit'} ${itemName}?,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonText: 'Ya, Lanjutkan',

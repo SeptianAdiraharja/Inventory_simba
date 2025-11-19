@@ -8,8 +8,7 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use Notifiable;
-    use SoftDeletes;
+    use Notifiable, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -18,13 +17,19 @@ class User extends Authenticatable
         'role',
         'is_banned',
         'banned_at',
-        'deleted_at',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
     ];
+
+    protected $dates = [
+        'deleted_at',
+        'banned_at',
+    ];
+
+    // ========= RELASI =========
 
     public function guests()
     {
@@ -50,9 +55,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(ExportLog::class, 'super_admin_id');
     }
+
     public function kopSurats()
     {
         return $this->hasMany(KopSurat::class);
     }
-
 }

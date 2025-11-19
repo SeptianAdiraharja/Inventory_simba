@@ -19,7 +19,7 @@
                 <div class="bg-black/30 backdrop-blur-lg p-6 sm:p-8 rounded-2xl border border-white/70 shadow-2xl space-y-5 text-left hover:scale-[1.02] transition-transform duration-700 ease-out">
                     @php
                         $features = [
-                            ['icon' => '🧾', 'title' => 'Pendataan Aset & Barang', 'desc' => 'Mendata seluruh kebutuhan barang dan aset operasional UPELKES secara akurat dan terpusat.'],
+                            ['icon' => '🧾', 'title' => 'Pendataan Barang', 'desc' => 'Mendata seluruh kebutuhan barang operasional UPELKES secara akurat dan terpusat.'],
                             ['icon' => '📊', 'title' => 'Laporan & Monitoring Cepat', 'desc' => 'Pantau kondisi dan ketersediaan barang dengan laporan real-time yang mudah dipahami.'],
                             ['icon' => '🏢', 'title' => 'Efisiensi Manajemen Unit', 'desc' => 'Mendukung efisiensi pengelolaan kebutuhan pelatihan, fasilitas, dan logistik.'],
                             ['icon' => '🔒', 'title' => 'Keamanan & Integritas Data', 'desc' => 'Menjamin keamanan data inventaris dengan sistem autentikasi transparan.'],

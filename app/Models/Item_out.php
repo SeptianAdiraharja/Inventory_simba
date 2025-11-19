@@ -3,6 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Cart;
+use App\Models\User;
+use App\Models\Item;
+use App\Models\Unit;
 
 class Item_out extends Model
 {
@@ -29,12 +33,7 @@ class Item_out extends Model
 
     public function approver()
     {
-        return $this->belongsTo(User::class, 'approved_by');
-    }
-
-    public function getTotalValueRupiahAttribute()
-    {
-        return 'Rp ' . number_format($this->quantity * ($this->item->price ?? 0), 0, ',', '.');
+        return $this->belongsTo(User::class, 'approved_by')->withTrashed();
     }
 
     public function unit()
@@ -42,4 +41,8 @@ class Item_out extends Model
         return $this->belongsTo(Unit::class, 'unit_id');
     }
 
+    public function getTotalValueRupiahAttribute()
+    {
+        return 'Rp ' . number_format($this->quantity * ($this->item->price ?? 0), 0, ',', '.');
+    }
 }

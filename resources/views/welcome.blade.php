@@ -11,7 +11,7 @@
     <div class="row align-items-center justify-content-start gy-5">
       <div class="col-lg-8" data-aos="fade-up" data-aos-delay="200">
         <div class="bg-white bg-opacity-75 rounded-4 p-4 shadow">
-          <h1 class="fw-bold text-dark mb-3">Sistem Inventaris Barang dan Aset</h1>
+          <h1 class="fw-bold text-dark mb-3">Sistem Informasi Manajemen Barang</h1>
           <p class="text-dark mb-4">
             Sistem digital untuk mengelola data aset UPTD Pelatihan Kesehatan agar lebih efisien, transparan, dan terintegrasi.
           </p>
@@ -29,7 +29,7 @@
   <div class="container" data-aos="fade-up">
     <div class="section-title text-center mb-5">
       <h2 class="fw-bold">Tentang Sistem</h2>
-      <p>Digitalisasi pengelolaan aset dan barang untuk efisiensi, akurasi, serta transparansi dalam kinerja UPTD Pelatihan Kesehatan.</p>
+      <p>Digitalisasi pengelolaan barang untuk efisiensi, akurasi, serta transparansi dalam kinerja UPTD Pelatihan Kesehatan.</p>
     </div>
 
     <div class="row align-items-center justify-content-center gy-5">

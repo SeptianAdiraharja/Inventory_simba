@@ -48,7 +48,7 @@ class ItemController extends Controller
 
         $items = $items->paginate(15);
 
-    
+
         return view('role.super_admin.items.index', compact('items'));
     }
 
