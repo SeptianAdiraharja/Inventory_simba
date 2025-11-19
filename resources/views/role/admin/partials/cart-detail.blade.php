@@ -1,4 +1,4 @@
-<div class="row detail-content-wrapper p-6" data-cart-id="{{ $cart->id }}">
+<div class="row detail-content-wrapper p-3" data-cart-id="{{ $cart->id }}">
 
     {{-- ============================= --}}
     {{-- 🧾 HEADER PERMINTAAN --}}
@@ -73,63 +73,66 @@
                     <th style="width: 160px;">Aksi Item</th>
                 </tr>
             </thead>
-
             <tbody>
                 @forelse($cartItems as $i => $item)
-                    <tr class="text-center" data-item-id="{{ $item->id }}">
-                        <td>{{ $i + 1 }}</td>
-                        <td class="text-start">{{ $item->item_name }}</td>
-                        <td>{{ $item->item_code }}</td>
-                        <td class="fw-semibold">{{ $item->quantity }}</td>
+                @php
+                    $itemStock = \App\Models\Item::where('id', $item->item_id)->value('stock') ?? 0;
+                    $isStockSufficient = $itemStock >= $item->quantity;
+                @endphp
+                <tr class="text-center" data-item-id="{{ $item->id }}">
+                    <td>{{ $i + 1 }}</td>
+                    <td class="text-start">{{ $item->item_name }}</td>
+                    <td>{{ $item->item_code }}</td>
+                    <td class="fw-semibold">{{ $item->quantity }}</td>
 
-                        {{-- ✅ STATUS ITEM --}}
-                        <td class="item-status-cell">
-                            <span class="badge
-                                @if($item->status == 'pending') bg-warning text-dark
-                                @elseif($item->status == 'approved') bg-success
-                                @elseif($item->status == 'rejected') bg-danger
-                                @endif">
-                                {{ ucfirst($item->status) }}
+                    {{-- ✅ STATUS ITEM --}}
+                    <td class="item-status-cell">
+                        <span class="badge
+                            @if($item->status == 'pending') bg-warning text-dark
+                            @elseif($item->status == 'approved') bg-success
+                            @elseif($item->status == 'rejected') bg-danger
+                            @endif">
+                            {{ ucfirst($item->status) }}
+                        </span>
+                    </td>
+
+                    {{-- ✅ AKSI ITEM --}}
+                    <td class="item-action-cell">
+                        @if($item->status == 'pending')
+                            {{-- Setujui --}}
+                            <button type="button"
+                                    class="btn btn-success btn-sm d-inline-flex align-items-center item-approve-btn"
+                                    data-item-id="{{ $item->id }}"
+                                    title="Setujui Item">
+                                <i class="bi bi-check-lg me-1"></i> Setujui
+                            </button>
+                            {{-- Tolak --}}
+                            <button type="button"
+                                    class="btn btn-outline-danger btn-sm d-inline-flex align-items-center item-reject-btn"
+                                    data-item-id="{{ $item->id }}"
+                                    title="Tolak Item">
+                                <i class="bi bi-x-lg me-1"></i> Tolak
+                            </button>
+                        @elseif($item->status == 'approved')
+                            <span class="text-success fw-semibold">
+                                <i class="bi bi-check-circle me-1"></i> Approved
                             </span>
-                        </td>
-
-                        {{-- ✅ AKSI ITEM --}}
-                        <td class="item-action-cell">
-                            @if($item->status == 'pending')
-                                {{-- Setujui --}}
-                                <button type="button"
-                                        class="btn btn-success btn-sm d-inline-flex align-items-center item-approve-btn"
-                                        data-item-id="{{ $item->id }}"
-                                        title="Setujui Item">
-                                    <i class="bi bi-check-lg me-1"></i> Setujui
-                                </button>
-
-                                {{-- Tolak --}}
-                                <button type="button"
-                                        class="btn btn-outline-danger btn-sm d-inline-flex align-items-center item-reject-btn"
-                                        data-item-id="{{ $item->id }}"
-                                        title="Tolak Item">
-                                    <i class="bi bi-x-lg me-1"></i> Tolak
-                                </button>
-
-                            @elseif($item->status == 'approved')
-                                <span class="text-success fw-semibold">
-                                    <i class="bi bi-check-circle me-1"></i> Approved
-                                </span>
-
-                            @elseif($item->status == 'rejected')
-                                <span class="text-danger fw-semibold">
-                                    <i class="bi bi-x-octagon me-1"></i> Rejected
-                                </span>
-                            @endif
-                        </td>
-                    </tr>
+                        @elseif($item->status == 'rejected')
+                            <span class="text-danger fw-semibold">
+                                <i class="bi bi-x-octagon me-1"></i> Rejected
+                                @if($item->rejection_reason)
+                                <br><small class="text-muted fst-italic">Alasan: {{ $item->rejection_reason }}</small>
+                                @endif
+                            </span>
+                        @endif
+                    </td>
+                </tr>
                 @empty
-                    <tr>
-                        <td colspan="6" class="text-center text-muted py-3">
-                            Tidak ada item dalam permintaan ini.
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-3">
+                        Tidak ada item dalam permintaan ini.
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>

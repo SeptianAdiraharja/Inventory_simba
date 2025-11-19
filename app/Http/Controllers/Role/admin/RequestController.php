@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Role\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\{Cart, CartItem, Notification};
+use App\Models\{Cart, CartItem, Notification, Item};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Log};
 use Exception;
@@ -98,33 +98,63 @@ class RequestController extends Controller
     ======================================================== */
     public function show(string $id)
     {
-        $cart = DB::table('carts')
-            ->join('users', 'carts.user_id', '=', 'users.id')
-            ->select('carts.*', 'users.name as user_name')
-            ->where('carts.id', $id)
-            ->first();
+        try {
+            Log::info('DEBUG SHOW METHOD - Memuat detail cart', ['cart_id' => $id]);
 
-        if (!$cart) {
-            return response()->json(['error' => 'Permintaan tidak ditemukan'], 404);
+            $cart = DB::table('carts')
+                ->join('users', 'carts.user_id', '=', 'users.id')
+                ->select('carts.*', 'users.name as user_name')
+                ->where('carts.id', $id)
+                ->first();
+
+            if (!$cart) {
+                Log::warning('DEBUG SHOW METHOD - Cart tidak ditemukan', ['cart_id' => $id]);
+                return response()->json(['error' => 'Permintaan tidak ditemukan'], 404);
+            }
+
+            Log::info('DEBUG SHOW METHOD - Cart ditemukan', ['cart_id' => $id, 'user_name' => $cart->user_name]);
+
+            $cartItems = DB::table('cart_items')
+                ->join('items', 'cart_items.item_id', '=', 'items.id')
+                ->select(
+                    'cart_items.id',
+                    'cart_items.quantity',
+                    'cart_items.status',
+                    'cart_items.rejection_reason',
+                    'items.name as item_name',
+                    'items.code as item_code',
+                    'items.id as item_id' // Pastikan item_id ada
+                )
+                ->where('cart_items.cart_id', $id)
+                ->get();
+
+            Log::info('DEBUG SHOW METHOD - Cart items loaded', [
+                'cart_id' => $id,
+                'total_items' => $cartItems->count()
+            ]);
+
+            $total = $cartItems->count();
+            $processed = $cartItems->whereIn('status', ['approved', 'rejected'])->count();
+
+            $scan_status = $processed === $total
+                ? 'Selesai'
+                : ($processed > 0 ? 'Sebagian' : 'Belum diproses');
+
+            Log::info('DEBUG SHOW METHOD - Menampilkan view', ['cart_id' => $id]);
+
+            return view('role.admin.partials.cart-detail', compact('cart', 'cartItems', 'scan_status'));
+
+        } catch (\Exception $e) {
+            Log::error('DEBUG SHOW METHOD - ERROR', [
+                'cart_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Terjadi kesalahan server: ' . $e->getMessage()
+            ], 500);
         }
-
-        $cartItems = DB::table('cart_items')
-            ->join('items', 'cart_items.item_id', '=', 'items.id')
-            ->select(
-                'cart_items.id', 'cart_items.quantity', 'cart_items.status',
-                'cart_items.rejection_reason', 'items.name as item_name', 'items.code as item_code'
-            )
-            ->where('cart_items.cart_id', $id)
-            ->get();
-
-        $total = $cartItems->count();
-        $processed = $cartItems->whereIn('status', ['approved', 'rejected'])->count();
-
-        $scan_status = $processed === $total
-            ? 'Selesai'
-            : ($processed > 0 ? 'Sebagian' : 'Belum diproses');
-
-        return view('role.admin.partials.cart-detail', compact('cart', 'cartItems', 'scan_status'));
     }
 
 
@@ -156,6 +186,9 @@ class RequestController extends Controller
         try {
             DB::beginTransaction();
 
+            // Ambil semua item di cart sebelum update
+            $cartItems = DB::table('cart_items')->where('cart_id', $id)->get();
+
             // 🟢 Update semua item di cart_items
             DB::table('cart_items')
                 ->where('cart_id', $id)
@@ -175,13 +208,24 @@ class RequestController extends Controller
                     'updated_at' => now(),
                 ]);
 
-            // 🔹 Jika semua ditolak → kembalikan stok semua item
-            if ($newStatus === 'rejected') {
-                $cartItems = DB::table('cart_items')->where('cart_id', $id)->get();
-                foreach ($cartItems as $item) {
-                    DB::table('items')
-                        ->where('id', $item->item_id)
-                        ->increment('stock', $item->quantity);
+            // 🔹 Update stok berdasarkan status
+            foreach ($cartItems as $item) {
+                $itemModel = Item::find($item->item_id);
+                if ($itemModel) {
+                    if ($newStatus === 'approved') {
+                        // Kurangi stok saat approve
+                        if ($itemModel->stock >= $item->quantity) {
+                            $itemModel->decrement('stock', $item->quantity);
+                        } else {
+                            throw new Exception("Stok {$itemModel->name} tidak mencukupi.");
+                        }
+                    } elseif ($newStatus === 'rejected') {
+                        // Kembalikan stok saat reject - HANYA jika sebelumnya approved
+                        if ($item->status === 'approved') {
+                            $itemModel->increment('stock', $item->quantity);
+                        }
+                        // Jika sebelumnya pending, tidak perlu kembalikan stok
+                    }
                 }
             }
 
@@ -254,6 +298,9 @@ class RequestController extends Controller
         try {
             // CASE 1: Approve / Reject Semua
             if ($status) {
+                $cartItems = DB::table('cart_items')->where('cart_id', $cartId)->get();
+
+                // Update status cart_items
                 DB::table('cart_items')
                     ->where('cart_id', $cartId)
                     ->update([
@@ -264,13 +311,30 @@ class RequestController extends Controller
                         'updated_at' => now(),
                     ]);
 
-                // 🔹 Jika semua ditolak → kembalikan stok semua item
-                if ($status === 'rejected') {
-                    $cartItems = DB::table('cart_items')->where('cart_id', $cartId)->get();
-                    foreach ($cartItems as $item) {
-                        DB::table('items')
-                            ->where('id', $item->item_id)
-                            ->increment('stock', $item->quantity);
+                // 🔹 Update stok untuk semua item
+                foreach ($cartItems as $item) {
+                    $itemModel = Item::find($item->item_id);
+                    if ($itemModel) {
+                        if ($status === 'approved') {
+                            // Kurangi stok saat approve
+                            if ($itemModel->stock >= $item->quantity) {
+                                $itemModel->decrement('stock', $item->quantity);
+                            } else {
+                                throw new Exception("Stok {$itemModel->name} tidak mencukupi.");
+                            }
+                        } elseif ($status === 'rejected') {
+                            // Kembalikan stok saat reject - PERBAIKAN LOGIC
+                            // Jika sebelumnya approved, kembalikan stok
+                            if ($item->status === 'approved') {
+                                $itemModel->increment('stock', $item->quantity);
+                                Log::info('Stok dikembalikan untuk item yang direject', [
+                                    'item_id' => $item->item_id,
+                                    'quantity' => $item->quantity,
+                                    'previous_status' => $item->status
+                                ]);
+                            }
+                            // Jika sebelumnya pending, tidak perlu ubah stok karena belum dikurangi
+                        }
                     }
                 }
             }
@@ -278,25 +342,61 @@ class RequestController extends Controller
             // CASE 2: Perubahan per item (changes)
             if (is_array($changes) || is_object($changes)) {
                 foreach ($changes as $itemId => $change) {
-                    DB::table('cart_items')
-                        ->where('id', $itemId)
-                        ->where('cart_id', $cartId)
-                        ->update([
-                            'status' => $change['status'],
-                            'rejection_reason' => $change['status'] === 'rejected'
-                                ? ($change['reason'] ?? 'Ditolak oleh admin.')
-                                : null,
-                            'updated_at' => now(),
-                        ]);
+                    $cartItem = DB::table('cart_items')->where('id', $itemId)->first();
 
-                    // 🔹 Jika item ditolak → kembalikan stok item tersebut
-                    if ($change['status'] === 'rejected') {
-                        $cartItem = DB::table('cart_items')->where('id', $itemId)->first();
-                        if ($cartItem) {
-                            DB::table('items')
-                                ->where('id', $cartItem->item_id)
-                                ->increment('stock', $cartItem->quantity);
+                    if ($cartItem) {
+                        $itemModel = Item::find($cartItem->item_id);
+
+                        // 🔹 Logika update stok berdasarkan perubahan status
+                        if ($cartItem->status === 'pending') {
+                            if ($change['status'] === 'approved' && $itemModel) {
+                                // Kurangi stok saat approve dari pending
+                                if ($itemModel->stock >= $cartItem->quantity) {
+                                    $itemModel->decrement('stock', $cartItem->quantity);
+                                    Log::info('Stok dikurangi untuk item yang diapprove dari pending', [
+                                        'item_id' => $cartItem->item_id,
+                                        'quantity' => $cartItem->quantity
+                                    ]);
+                                } else {
+                                    throw new Exception("Stok {$itemModel->name} tidak mencukupi.");
+                                }
+                            }
+                            // Jika dari pending ke rejected, tidak perlu ubah stok karena belum dikurangi
                         }
+                        // 🔹 Jika status berubah dari approved ke rejected
+                        elseif ($cartItem->status === 'approved' && $change['status'] === 'rejected' && $itemModel) {
+                            // Kembalikan stok yang sebelumnya dikurangi
+                            $itemModel->increment('stock', $cartItem->quantity);
+                            Log::info('Stok dikembalikan untuk item yang direject dari approved', [
+                                'item_id' => $cartItem->item_id,
+                                'quantity' => $cartItem->quantity
+                            ]);
+                        }
+                        // 🔹 Jika status berubah dari rejected ke approved
+                        elseif ($cartItem->status === 'rejected' && $change['status'] === 'approved' && $itemModel) {
+                            // Kurangi stok untuk approve
+                            if ($itemModel->stock >= $cartItem->quantity) {
+                                $itemModel->decrement('stock', $cartItem->quantity);
+                                Log::info('Stok dikurangi untuk item yang diapprove dari rejected', [
+                                    'item_id' => $cartItem->item_id,
+                                    'quantity' => $cartItem->quantity
+                                ]);
+                            } else {
+                                throw new Exception("Stok {$itemModel->name} tidak mencukupi.");
+                            }
+                        }
+
+                        // Update status cart_item
+                        DB::table('cart_items')
+                            ->where('id', $itemId)
+                            ->where('cart_id', $cartId)
+                            ->update([
+                                'status' => $change['status'],
+                                'rejection_reason' => $change['status'] === 'rejected'
+                                    ? ($change['reason'] ?? 'Ditolak oleh admin.')
+                                    : null,
+                                'updated_at' => now(),
+                            ]);
                     }
                 }
             }
@@ -319,7 +419,7 @@ class RequestController extends Controller
                     'updated_at' => now(),
                 ]);
 
-            // Tambahkan ini di akhir sebelum "DB::commit()" di bulkUpdate()
+            // Notifikasi
             $cart = DB::table('carts')->find($cartId);
             if ($cart) {
                 $notifTitle = '';
@@ -363,6 +463,11 @@ class RequestController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error dalam bulkUpdate', [
+                'cart_id' => $cartId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
@@ -393,20 +498,60 @@ class RequestController extends Controller
     {
         $item = CartItem::with(['cart', 'item'])->findOrFail($cartItemId);
         $cart = $item->cart;
-        $product = $item->item; // ambil data barang dari relasi
+        $product = $item->item;
 
         DB::beginTransaction();
         try {
+            // 🔹 Update stok berdasarkan perubahan status
+            if ($item->status === 'pending' && $newStatus === 'approved') {
+                // Kurangi stok saat approve dari pending
+                if ($product->stock >= $item->quantity) {
+                    $product->decrement('stock', $item->quantity);
+                    Log::info('Stok dikurangi untuk item yang diapprove dari pending', [
+                        'item_id' => $product->id,
+                        'quantity' => $item->quantity,
+                        'new_stock' => $product->stock - $item->quantity
+                    ]);
+                } else {
+                    throw new Exception("Stok {$product->name} tidak mencukupi.");
+                }
+            } elseif ($item->status === 'approved' && $newStatus === 'rejected') {
+                // Kembalikan stok saat reject dari approved
+                $product->increment('stock', $item->quantity);
+                Log::info('Stok dikembalikan untuk item yang direject dari approved', [
+                    'item_id' => $product->id,
+                    'quantity' => $item->quantity,
+                    'new_stock' => $product->stock + $item->quantity
+                ]);
+            } elseif ($item->status === 'rejected' && $newStatus === 'approved') {
+                // Kurangi stok saat approve dari rejected
+                if ($product->stock >= $item->quantity) {
+                    $product->decrement('stock', $item->quantity);
+                    Log::info('Stok dikurangi untuk item yang diapprove dari rejected', [
+                        'item_id' => $product->id,
+                        'quantity' => $item->quantity,
+                        'new_stock' => $product->stock - $item->quantity
+                    ]);
+                } else {
+                    throw new Exception("Stok {$product->name} tidak mencukupi.");
+                }
+            }
+            // Jika dari pending ke rejected, tidak perlu ubah stok karena belum dikurangi
+
+            // Simpan status sebelumnya untuk logging
+            $oldStatus = $item->status;
+
             // Ubah status item
             $item->status = $newStatus;
             $item->save();
 
-            // Jika reject → kembalikan stok ke tabel items
-            if ($newStatus === 'rejected') {
-                DB::table('items')
-                    ->where('id', $product->id)
-                    ->increment('stock', $item->quantity);
-            }
+            Log::info('Status item berubah', [
+                'cart_item_id' => $item->id,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'item_id' => $product->id,
+                'quantity' => $item->quantity
+            ]);
 
             // Hitung ulang status cart berdasarkan semua item
             $cartItems = $cart->cartItems;
@@ -437,8 +582,15 @@ class RequestController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Gagal memperbarui status item', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => 'Gagal memperbarui status item.']);
+            Log::error('Gagal memperbarui status item', [
+                'cart_item_id' => $cartItemId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui status item: ' . $e->getMessage()
+            ]);
         }
     }
 }

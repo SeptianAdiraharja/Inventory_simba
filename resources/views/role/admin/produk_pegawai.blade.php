@@ -6,7 +6,79 @@
     background-color: #f4f6f9;
   }
 
+  /* === Empty State === */
+.empty-state {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 2rem 0;
+}
 
+.empty-state i {
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+
+.empty-state h4 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+  .filter-section {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+  }
+
+  .filter-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .filter-dropdown {
+    background: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    color: #374151;
+    font-weight: 500;
+    padding: 10px 16px;
+    width: 200px;
+    text-align: left;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .filter-dropdown:hover {
+    border-color: #FF9800;
+    background-color: #FFFBF5;
+  }
+
+  .filter-dropdown:focus {
+    border-color: #FF9800;
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+  }
+
+  .filter-dropdown::after {
+    content: "";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #6B7280;
+  }
 
   /* === Breadcrumb === */
   .breadcrumb-icon {
@@ -234,6 +306,74 @@
   </div>
 </div>
 
+<div class="filter-section smooth-fade">
+  <form action="{{ route('admin.pegawai.produk', ['id' => $pegawai->id]) }}" method="GET" id="filterForm">
+    <div class="row align-items-center">
+
+      <!-- Bagian kiri (dropdown sort + hidden input) -->
+      <div class="col-md-9">
+        <div class="d-flex flex-wrap align-items-center gap-4">
+
+          <!-- Sort Dropdown -->
+          <div>
+            <span class="filter-label">Urutkan:</span>
+            <select name="sort" class="form-select filter-dropdown"
+                    onchange="document.getElementById('filterForm').submit()">
+              <option value="stok_terbanyak" {{ request('sort', 'stok_terbanyak') == 'stok_terbanyak' ? 'selected' : '' }}>
+                📦 Stok Terbanyak
+              </option>
+              <option value="stok_menipis" {{ request('sort') == 'stok_menipis' ? 'selected' : '' }}>
+                ⚠️ Stok Menipis
+              </option>
+              <option value="paling_laris" {{ request('sort') == 'paling_laris' ? 'selected' : '' }}>
+                🔥 Paling Laris
+              </option>
+              <option value="terbaru" {{ request('sort') == 'terbaru' ? 'selected' : '' }}>
+                🆕 Terbaru
+              </option>
+              <option value="terlama" {{ request('sort') == 'terlama' ? 'selected' : '' }}>
+                📅 Terlama
+              </option>
+              <option value="a_z" {{ request('sort') == 'a_z' ? 'selected' : '' }}>
+                🔤 A → Z
+              </option>
+              <option value="z_a" {{ request('sort') == 'z_a' ? 'selected' : '' }}>
+                🔤 Z → A
+              </option>
+            </select>
+          </div>
+
+          @if(request('q'))
+            <input type="hidden" name="q" value="{{ request('q') }}">
+          @endif
+          @if(request('kategori'))
+            <input type="hidden" name="kategori" value="{{ request('kategori') }}">
+          @endif
+
+        </div>
+      </div>
+
+      <!-- Bagian kanan (Refresh button) -->
+      <div class="col-md-3 d-flex justify-content-end">
+        <button type="button" class="btn btn-outline-warning refresh-btn"
+                onclick="resetFilters()"
+                style="border-radius: 12px; padding: 10px 20px; border: 2px solid #FF9800; color: #FF9800; font-weight: 500; transition: all 0.3s ease;">
+          <i class="ri-refresh-line me-1"></i> Refresh
+        </button>
+      </div>
+
+    </div>
+  </form>
+</div>
+
+<script>
+function resetFilters() {
+  const baseUrl = "{{ route('admin.pegawai.produk', ['id' => $pegawai->id]) }}";
+  window.location.href = baseUrl;
+}
+</script>
+
+
 <!-- 🛒 Floating Cart Button - DIPERBAIKI -->
 <div class="position-fixed" style="bottom:25px; right:25px; z-index:1050;">
   <button class="btn btn-primary shadow-lg rounded-circle d-flex align-items-center justify-content-center"
@@ -249,113 +389,150 @@
 </div>
 
 <!-- 📦 Daftar Produk -->
+<!-- 📦 Daftar Produk -->
 <div class="row gy-4 mt-3 animate__animated animate__fadeInUp">
-  @foreach ($items as $item)
-  <div class="col-xl-3 col-lg-4 col-md-6">
-    <div class="card shadow-sm" data-item-id="{{ $item->id }}" data-stock="{{ $item->stock }}">
-      <div class="card-img-container">
-        <img src="{{ asset('storage/' . $item->image) }}" class="card-img-top"
-             alt="{{ $item->name }}" style="height:220px; object-fit:cover; border-radius:1.25rem 1.25rem 0 0;">
 
-        <!-- 🔥 LABEL STOK -->
-        @if($item->stock == 0)
-          <span class="stock-label stock-out">
-            <i class="ri-error-warning-line me-1"></i>Barang Habis
-          </span>
-        @elseif($item->stock <= 5)
-          <span class="stock-label stock-low">
-            <i class="ri-alert-line me-1"></i>Hampir Habis
-          </span>
+  {{-- 🔥 TAMBAHKAN: Empty State ketika tidak ada produk --}}
+  @if($items->isEmpty())
+    <div class="col-12 text-center py-5">
+      <div class="empty-state">
+        <i class="ri-inbox-line display-1 text-muted"></i>
+        <h4 class="mt-3 text-muted">
+          @if(request('sort') == 'stok_menipis')
+            🎉 Tidak Ada Barang dengan Stok Menipis
+          @elseif(request('q'))
+            Tidak ada barang yang cocok dengan pencarian "{{ request('q') }}"
+          @else
+            Belum ada barang yang tersedia
+          @endif
+        </h4>
+        <p class="text-muted mb-4">
+          @if(request('sort') == 'stok_menipis')
+            Yeay! Semua barang memiliki stok yang cukup saat ini.
+          @else
+            Silakan coba dengan kriteria pencarian yang berbeda.
+          @endif
+        </p>
+
+        {{-- Tombol reset filter --}}
+        @if(request('sort') || request('q') || request('kategori'))
+          <a href="{{ route('admin.pegawai.produk', ['id' => $pegawai->id]) }}"
+             class="btn btn-primary">
+            <i class="ri-refresh-line me-1"></i> Tampilkan Semua Barang
+          </a>
         @endif
       </div>
+    </div>
+  @else
+    {{-- Tampilkan items seperti biasa --}}
+    @foreach ($items as $item)
+    <div class="col-xl-3 col-lg-4 col-md-6">
+      <div class="card shadow-sm" data-item-id="{{ $item->id }}" data-stock="{{ $item->stock }}">
+        <div class="card-img-container">
+          <img src="{{ asset('storage/' . $item->image) }}" class="card-img-top"
+               alt="{{ $item->name }}" style="height:220px; object-fit:cover; border-radius:1.25rem 1.25rem 0 0;">
 
-      <div class="card-body d-flex flex-column justify-content-between">
-        <div>
-          <h5 class="fw-semibold mb-2">{{ $item->name }}</h5>
-          <p class="small mb-1"><i class="ri-folder-line me-1"></i> Kategori:
-            <span class="fw-semibold text-dark">{{ $item->category->name ?? '-' }}</span>
-          </p>
-          <p class="small mb-0">
-            <i class="ri-barcode-box-line me-1"></i> Stok:
-            <span class="fw-bold
-              @if($item->stock == 0) text-danger
-              @elseif($item->stock <= 5) text-warning
-              @else text-success
-              @endif">
-              {{ $item->stock }}
+          <!-- 🔥 LABEL STOK -->
+          @if($item->stock == 0)
+            <span class="stock-label stock-out">
+              <i class="ri-error-warning-line me-1"></i>Barang Habis
             </span>
-          </p>
+          @elseif($item->stock <= 5)
+            <span class="stock-label stock-low">
+              <i class="ri-alert-line me-1"></i>Hampir Habis
+            </span>
+          @endif
         </div>
 
-        @if($item->stock > 0)
-          <button type="button" class="btn btn-primary mt-3 w-100 scan-btn"
-                  data-bs-toggle="modal" data-bs-target="#scanModal-{{ $item->id }}"
-                  data-item-id="{{ $item->id }}"
-                  data-item-name="{{ $item->name }}">
-            <i class="ri-scan-line me-1"></i> Keluarkan Barang
-          </button>
-        @else
-          <button type="button" class="btn btn-secondary mt-3 w-100" disabled>
-            <i class="ri-close-line me-1"></i> Stok Habis
-          </button>
-        @endif
+        <div class="card-body d-flex flex-column justify-content-between">
+          <div>
+            <h5 class="fw-semibold mb-2">{{ $item->name }}</h5>
+            <p class="small mb-1"><i class="ri-folder-line me-1"></i> Kategori:
+              <span class="fw-semibold text-dark">{{ $item->category->name ?? '-' }}</span>
+            </p>
+            <p class="small mb-0">
+              <i class="ri-barcode-box-line me-1"></i> Stok:
+              <span class="fw-bold
+                @if($item->stock == 0) text-danger
+                @elseif($item->stock <= 5) text-warning
+                @else text-success
+                @endif">
+                {{ $item->stock }}
+              </span>
+            </p>
+          </div>
+
+          @if($item->stock > 0)
+            <button type="button" class="btn btn-primary mt-3 w-100 scan-btn"
+                    data-bs-toggle="modal" data-bs-target="#scanModal-{{ $item->id }}"
+                    data-item-id="{{ $item->id }}"
+                    data-item-name="{{ $item->name }}">
+              <i class="ri-scan-line me-1"></i> Keluarkan Barang
+            </button>
+          @else
+            <button type="button" class="btn btn-secondary mt-3 w-100" disabled>
+              <i class="ri-close-line me-1"></i> Stok Habis
+            </button>
+          @endif
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- 🔍 Modal Scan Barang -->
-  @if($item->stock > 0)
-  <div class="modal fade" id="scanModal-{{ $item->id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <form class="scan-form" method="POST" action="{{ route('admin.pegawai.scan', ['id' => $pegawai->id ?? 0]) }}" data-item-id="{{ $item->id }}">
-          @csrf
-          <div class="modal-header">
-            <h5 class="modal-title fw-semibold">
-              <i class="ri-scan-line me-2"></i>Scan Barang: {{ $item->name }}
-              @if($item->stock <= 5)
-                <span class="badge bg-warning ms-2">Stok Menipis</span>
-              @endif
-            </h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-          </div>
-
-          <div class="modal-body">
-            <input type="hidden" name="pegawai_id" value="{{ $pegawai->id ?? '' }}">
-            <input type="hidden" name="item_id" value="{{ $item->id }}">
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Jumlah Barang</label>
-              <input type="number" name="quantity" class="form-control form-control-lg rounded-3 border-warning quantity-input"
-                     min="1" max="{{ $item->stock }}" value="1" required>
-              <small class="text-muted">Maksimum stok: <span class="stock-max">{{ $item->stock }}</span></small>
-              @if($item->stock <= 5)
-                <small class="text-warning d-block mt-1">
-                  <i class="ri-alert-line me-1"></i>Stok barang ini hampir habis!
-                </small>
-              @endif
+    <!-- 🔍 Modal Scan Barang -->
+    @if($item->stock > 0)
+    <div class="modal fade" id="scanModal-{{ $item->id }}" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form class="scan-form" method="POST" action="{{ route('admin.pegawai.scan', ['id' => $pegawai->id ?? 0]) }}" data-item-id="{{ $item->id }}">
+            @csrf
+            <div class="modal-header">
+              <h5 class="modal-title fw-semibold">
+                <i class="ri-scan-line me-2"></i>Scan Barang: {{ $item->name }}
+                @if($item->stock <= 5)
+                  <span class="badge bg-warning ms-2">Stok Menipis</span>
+                @endif
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Masukkan / Scan Barcode</label>
-              <input type="text" name="barcode" class="form-control form-control-lg rounded-3 border-warning barcode-input"
-                     placeholder="Arahkan scanner ke sini..." required autofocus>
-              <small class="text-muted">Tekan Enter setelah scan untuk menyimpan data.</small>
-            </div>
-          </div>
 
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-success submit-btn">
-              <i class="ri-check-line me-1"></i> Simpan
-            </button>
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-              <i class="ri-close-line me-1"></i> Batal
-            </button>
-          </div>
-        </form>
+            <div class="modal-body">
+              <input type="hidden" name="pegawai_id" value="{{ $pegawai->id ?? '' }}">
+              <input type="hidden" name="item_id" value="{{ $item->id }}">
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Jumlah Barang</label>
+                <input type="number" name="quantity" class="form-control form-control-lg rounded-3 border-warning quantity-input"
+                       min="1" max="{{ $item->stock }}" value="1" required>
+                <small class="text-muted">Maksimum stok: <span class="stock-max">{{ $item->stock }}</span></small>
+                @if($item->stock <= 5)
+                  <small class="text-warning d-block mt-1">
+                    <i class="ri-alert-line me-1"></i>Stok barang ini hampir habis!
+                  </small>
+                @endif
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Masukkan / Scan Barcode</label>
+                <input type="text" name="barcode" class="form-control form-control-lg rounded-3 border-warning barcode-input"
+                       placeholder="Arahkan scanner ke sini..." required autofocus>
+                <small class="text-muted">Tekan Enter setelah scan untuk menyimpan data.</small>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-success submit-btn">
+                <i class="ri-check-line me-1"></i> Simpan
+              </button>
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                <i class="ri-close-line me-1"></i> Batal
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
-  </div>
+    @endif
+    @endforeach
   @endif
-  @endforeach
+
 </div>
 
 <!-- 🧾 Modal Cart -->
