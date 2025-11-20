@@ -231,22 +231,23 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg rounded-4">
       <form id="refundFormPegawai" action="{{ route('admin.pegawai.refund') }}" method="POST">
-        @csrf
+      @csrf
+        <input type="hidden" name="cart_item_id" id="refundCartItemId">
+        <input type="hidden" name="item_id" id="refundItemId">
+
         <div class="modal-header text-white" style="background:linear-gradient(90deg, #FF9800, #FFB74D);">
           <h5 class="modal-title fw-bold"><i class="bi bi-arrow-counterclockwise me-2"></i> Refund Barang</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
+
         <div class="modal-body">
-          <input type="hidden" name="cart_item_id" id="refundCartItemId">
-          <input type="hidden" name="item_id" id="refundItemId">
           <div class="mb-3">
             <label class="form-label fw-semibold">Nama Barang</label>
             <input type="text" class="form-control rounded-3" id="refundItemName" readonly>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Jumlah Refund <span class="text-danger">*</span></label>
-            <input type="number" name="qty" id="refundQty" class="form-control rounded-3" min="1" required
-                   oninput="validateRefundQty(this)">
+            <input type="number" name="qty" id="refundQty" class="form-control rounded-3" min="1" required>
             <div class="form-text">
               <span class="text-muted">Maksimal refund: </span>
               <span id="maxQty" class="fw-bold text-warning">0</span>
@@ -258,6 +259,7 @@
             <input type="text" name="code" class="form-control rounded-3" placeholder="Scan barcode barang" required>
           </div>
         </div>
+
         <div class="modal-footer bg-light">
           <button type="submit" id="submitRefundPegawai" class="btn text-white rounded-pill fw-semibold px-3"
                   style="background-color:#FF9800;">
@@ -320,20 +322,22 @@
     <div class="modal-content border-0 shadow-lg rounded-4">
       <form action="{{ route('admin.pegawai.updateItem') }}" method="POST">
         @csrf
+        <input type="hidden" name="cart_item_id" id="editCartItemId">
+
         <div class="modal-header text-white" style="background:linear-gradient(90deg, #FF9800, #FFB74D);">
           <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Barang</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
+
         <div class="modal-body">
-          <input type="hidden" name="cart_item_id" id="editCartItemId">
-         <div class="mb-3">
-              <label class="form-label fw-semibold">Pilih Barang</label>
-              <select name="item_id" class="form-select select2-item-search rounded-3" id="editItemId" required>
-                  <option value="">-- Pilih Barang --</option>
-                  @foreach($items as $item)
-                      <option value="{{ $item->id }}" data-code="{{ $item->code }}">{{ $item->name }} ({{ $item->code }})</option>
-                  @endforeach
-              </select>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Pilih Barang</label>
+            <select name="item_id" class="form-select select2-item-search rounded-3" id="editItemId" required>
+              <option value="">-- Pilih Barang --</option>
+              @foreach($items as $item)
+                <option value="{{ $item->id }}" data-code="{{ $item->code }}">{{ $item->name }} ({{ $item->code }})</option>
+              @endforeach
+            </select>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Jumlah</label>
@@ -344,6 +348,7 @@
             <input type="text" name="code" class="form-control rounded-3" placeholder="Scan barcode barang" required>
           </div>
         </div>
+
         <div class="modal-footer bg-light">
           <button type="submit" class="btn text-white rounded-pill fw-semibold px-3" style="background-color:#FF9800;">
             💾 Simpan Perubahan
@@ -359,7 +364,7 @@
 <div class="modal fade" id="editModalGuest" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg rounded-4">
-      <form action="{{ route('admin.guest.updateItem') }}" method="POST">
+     <form action="{{ route('admin.guest.updateItem') }}" method="POST">
         @csrf
         <div class="modal-header text-white" style="background:linear-gradient(90deg, #FF9800, #FFB74D);">
           <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Barang Tamu</h5>
@@ -407,12 +412,16 @@ function initializeSelect2() {
         allowClear: true,
         width: '100%',
         dropdownParent: $('.modal-content'),
+        minimumResultsForSearch: 1, // 🔥 PERBAIKAN: Tampilkan search hanya jika ada hasil
         language: {
             noResults: function() {
                 return "Barang tidak ditemukan";
             },
+            inputTooShort: function () {
+                return "Ketikan minimal 1 karakter";
+            },
             searching: function() {
-                return "Mencari...";
+                return "Sedang mencari...";
             }
         }
     });
@@ -483,54 +492,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     @endif
 
-    const modals = ['refundModal', 'refundModalGuest', 'editModal', 'editModalGuest'];
-    modals.forEach(modalId => {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.addEventListener('hidden.bs.modal', function() {
-                const form = this.querySelector('form');
-                if (form) {
-                    form.reset();
-                    // Reset Select2
-                    $(this).find('.select2-item-search').val('').trigger('change');
-
-                    // Reset validation states
-                    const qtyError = document.getElementById('qtyError');
-                    const guestQtyError = document.getElementById('guestQtyError');
-                    if (qtyError) qtyError.classList.add('d-none');
-                    if (guestQtyError) guestQtyError.classList.add('d-none');
-
-                    // Enable submit buttons
-                    const submitBtns = form.querySelectorAll('button[type="submit"]');
-                    submitBtns.forEach(btn => {
-                        btn.disabled = false;
-                        btn.style.opacity = '1';
-                    });
-                }
-            });
-
-            // Re-inisialisasi Select2 ketika modal dibuka
-            modal.addEventListener('show.bs.modal', function() {
-                setTimeout(() => {
-                    $(this).find('.select2-item-search').select2({
-                        placeholder: "Cari barang...",
-                        allowClear: true,
-                        width: '100%',
-                        dropdownParent: $(this).find('.modal-content'),
-                        language: {
-                            noResults: function() {
-                                return "Barang tidak ditemukan";
-                            },
-                            searching: function() {
-                                return "Mencari...";
-                            }
-                        }
-                    });
-                }, 100);
-            });
-        }
-    });
-
     // Refund Modal Pegawai
     const refundModal = document.getElementById('refundModal');
     if (refundModal) {
@@ -549,9 +510,13 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('maxQty').textContent = maxQty;
 
             // Reset validation state
-            document.getElementById('qtyError').classList.add('d-none');
-            document.getElementById('submitRefundPegawai').disabled = false;
-            document.getElementById('submitRefundPegawai').style.opacity = '1';
+            const qtyError = document.getElementById('qtyError');
+            const submitBtn = document.getElementById('submitRefundPegawai');
+            if (qtyError) qtyError.classList.add('d-none');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            }
         });
     }
 
@@ -573,9 +538,13 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('maxGuestQty').textContent = maxQty;
 
             // Reset validation state
-            document.getElementById('guestQtyError').classList.add('d-none');
-            document.getElementById('submitRefundGuest').disabled = false;
-            document.getElementById('submitRefundGuest').style.opacity = '1';
+            const qtyError = document.getElementById('guestQtyError');
+            const submitBtn = document.getElementById('submitRefundGuest');
+            if (qtyError) qtyError.classList.add('d-none');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            }
         });
     }
 
@@ -591,9 +560,26 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('editCartItemId').value = cartItemId;
             document.getElementById('editQty').value = qty;
 
-            // Set nilai Select2 setelah modal terbuka
+            // 🔥 PERBAIKAN: Inisialisasi ulang Select2 dengan konfigurasi yang benar
             setTimeout(() => {
-                $('#editItemId').val(itemId).trigger('change');
+                $('#editItemId').select2({
+                    placeholder: "Cari barang...",
+                    allowClear: true,
+                    width: '100%',
+                    dropdownParent: $('#editModal .modal-content'),
+                    minimumResultsForSearch: 1,
+                    language: {
+                        noResults: function() {
+                            return "Barang tidak ditemukan";
+                        },
+                        inputTooShort: function () {
+                            return "Ketikan minimal 1 karakter";
+                        },
+                        searching: function() {
+                            return "Sedang mencari...";
+                        }
+                    }
+                }).val(itemId).trigger('change');
             }, 100);
         });
     }
@@ -610,29 +596,101 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('editGuestCartItemId').value = guestCartItemId;
             document.getElementById('editGuestQty').value = qty;
 
-            // Set nilai Select2 setelah modal terbuka
+            // 🔥 PERBAIKAN: Inisialisasi ulang Select2 dengan konfigurasi yang benar
             setTimeout(() => {
-                $('#editGuestItemId').val(itemId).trigger('change');
+                $('#editGuestItemId').select2({
+                    placeholder: "Cari barang...",
+                    allowClear: true,
+                    width: '100%',
+                    dropdownParent: $('#editModalGuest .modal-content'),
+                    minimumResultsForSearch: 1,
+                    language: {
+                        noResults: function() {
+                            return "Barang tidak ditemukan";
+                        },
+                        inputTooShort: function () {
+                            return "Ketikan minimal 1 karakter";
+                        },
+                        searching: function() {
+                            return "Sedang mencari...";
+                        }
+                    }
+                }).val(itemId).trigger('change');
             }, 100);
         });
     }
 
+    // Reset form ketika modal ditutup
+    const modals = ['refundModal', 'refundModalGuest', 'editModal', 'editModalGuest'];
+    modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.addEventListener('hidden.bs.modal', function() {
+                const form = this.querySelector('form');
+                if (form) {
+                    form.reset();
+                    // Reset Select2 dengan benar
+                    $(this).find('.select2-item-search').val('').trigger('change');
+
+                    // 🔥 PERBAIKAN: Hancurkan dan buat ulang Select2
+                    $(this).find('.select2-item-search').select2('destroy');
+                    initializeSelect2();
+                }
+            });
+
+            // 🔥 PERBAIKAN: Inisialisasi ulang Select2 saat modal dibuka
+            modal.addEventListener('shown.bs.modal', function() {
+                setTimeout(() => {
+                    $(this).find('.select2-item-search').select2({
+                        placeholder: "Cari barang...",
+                        allowClear: true,
+                        width: '100%',
+                        dropdownParent: $(this).find('.modal-content'),
+                        minimumResultsForSearch: 1,
+                        language: {
+                            noResults: function() {
+                                return "Barang tidak ditemukan";
+                            },
+                            inputTooShort: function () {
+                                return "Ketikan minimal 1 karakter";
+                            },
+                            searching: function() {
+                                return "Sedang mencari...";
+                            }
+                        }
+                    });
+                }, 50);
+            });
+        }
+    });
+
     // SweetAlert untuk konfirmasi refund dan edit
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', function(e) {
-            const formType = this.getAttribute('action');
+            const formAction = this.getAttribute('action');
 
-            if (formType && (formType.includes('refund') || formType.includes('update'))) {
+            // Periksa apakah form adalah refund atau edit
+            if (formAction && (formAction.includes('refund') || formAction.includes('updateItem'))) {
                 e.preventDefault();
 
-                const actionType = formType.includes('refund') ? 'refund' : 'edit';
-                const itemName = this.querySelector('input[readonly]')?.value ||
-                               this.querySelector('.select2-item-search option:selected')?.text ||
-                               'barang';
+                // Debug
+                console.log('Form submit intercepted', formAction);
+
+                // Tentukan jenis aksi
+                const isRefund = formAction.includes('refund');
+                let itemName = '';
+
+                if (isRefund) {
+                    const input = this.querySelector('input[readonly]');
+                    if (input) itemName = input.value;
+                } else {
+                    const selectedOption = this.querySelector('.select2-item-search option:selected');
+                    if (selectedOption) itemName = selectedOption.text.split(' (')[0];
+                }
 
                 Swal.fire({
-                    title: Konfirmasi ${actionType === 'refund' ? 'Refund' : 'Edit'},
-                    text: Apakah Anda yakin ingin ${actionType === 'refund' ? 'melakukan refund pada' : 'mengedit'} ${itemName}?,
+                    title: `Konfirmasi ${isRefund ? 'Refund' : 'Edit'}`,
+                    text: `Apakah Anda yakin ingin ${isRefund ? 'melakukan refund pada' : 'mengedit'} ${itemName}?`,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonText: 'Ya, Lanjutkan',
@@ -642,7 +700,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     background: '#fffaf4'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Tampilkan loading
                         Swal.fire({
                             title: 'Memproses...',
                             text: 'Sedang memproses permintaan Anda',
@@ -651,8 +708,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 Swal.showLoading();
                             }
                         });
-
-                        // Submit form setelah konfirmasi
+                        // Submit form secara manual
                         this.submit();
                     }
                 });

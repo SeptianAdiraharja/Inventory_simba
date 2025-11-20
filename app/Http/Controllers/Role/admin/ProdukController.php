@@ -143,8 +143,8 @@ class ProdukController extends Controller
             ->count();
     }
 
-     /**
-     * Scan item ke cart guest
+    /**
+     * Scan item ke cart guest (TIDAK langsung mengurangi stok)
      */
     public function scan(Request $request, $guestId)
     {
@@ -165,7 +165,7 @@ class ProdukController extends Controller
                 : back()->with('error', $message);
         }
 
-        // 🧩 Cek stok
+        // 🧩 Cek stok (hanya validasi, tidak mengurangi stok)
         if ($request->quantity > $item->stock) {
             $message = "⚠️ Stok untuk <b>{$item->name}</b> hanya tersedia <b>{$item->stock}</b>.";
             return $request->ajax()
@@ -179,11 +179,12 @@ class ProdukController extends Controller
             ['session_id' => session()->getId()]
         );
 
-        $existing = $cart->items()->where('items.id', $item->id)->first();
+        $existing = $cart->items()->where('items.id', $item->id)->wherePivot('released_at', null)->first();
 
         if ($existing) {
             $newQty = $existing->pivot->quantity + $request->quantity;
 
+            // Validasi stok untuk quantity baru
             if ($newQty > $item->stock) {
                 $message = "❗ Jumlah total untuk <b>{$item->name}</b> melebihi stok tersedia (<b>{$item->stock}</b>).";
                 return $request->ajax()
@@ -207,7 +208,7 @@ class ProdukController extends Controller
         }
 
         // 🔄 Jika AJAX, kirim JSON agar tidak reload halaman
-       if ($request->ajax()) {
+        if ($request->ajax()) {
             return response()->json([
                 'status' => 'success',
                 'message' => $message,
@@ -221,11 +222,10 @@ class ProdukController extends Controller
         return back()->with('success', $message);
     }
 
-
-     /**
+    /**
      * Ambil cart guest untuk modal (AJAX)
      */
-   public function showCart($guestId)
+    public function showCart($guestId)
     {
         $guest = Guest::with(['guestCart.items' => function ($q) {
             // hanya ambil item yang belum direlease
@@ -238,6 +238,7 @@ class ProdukController extends Controller
                 'name'     => $item->name,
                 'code'     => $item->code,
                 'quantity' => $item->pivot->quantity,
+                'stock'    => $item->stock, // Tambahkan info stok untuk validasi
             ];
         }) ?? collect();
 
@@ -254,13 +255,15 @@ class ProdukController extends Controller
         ]);
     }
 
-
-     /**
+    /**
      * ✅ Checkout / Release barang guest dengan validasi batas mingguan
+     * SEKARANG mengurangi stok dan menyimpan ke item_out_guest
      */
     public function release($guestId)
     {
-        $guest = Guest::with('guestCart.items')->findOrFail($guestId);
+        $guest = Guest::with(['guestCart.items' => function($query) {
+            $query->wherePivot('released_at', null);
+        }])->findOrFail($guestId);
 
         // Cek batas pengeluaran mingguan
         $releaseCountThisWeek = $this->getReleaseCountThisWeek($guestId);
@@ -276,58 +279,68 @@ class ProdukController extends Controller
             return redirect()->back()->with('error', 'Keranjang guest kosong.');
         }
 
-        if ($guest->guestCart->is_released ?? false) {
-            return redirect()->back()->with('warning', 'Barang untuk guest ini sudah pernah dikeluarkan.');
-        }
-
         DB::beginTransaction();
         try {
+            // Validasi stok sebelum proses release
+            foreach ($guest->guestCart->items as $item) {
+                if ($item->stock < $item->pivot->quantity) {
+                    throw new \Exception("Stok untuk {$item->name} tidak mencukupi. Stok tersedia: {$item->stock}, butuh: {$item->pivot->quantity}");
+                }
+            }
+
+            // Simpan data ke item_out_guest
             $itemsData = $guest->guestCart->items->map(function ($item) {
                 return [
                     'item_id'  => $item->id,
                     'name'     => $item->name,
                     'quantity' => $item->pivot->quantity,
+                    'code'     => $item->code,
                 ];
             })->toArray();
 
-            Item_out_guest::create([
+            $itemOutGuest = Item_out_guest::create([
                 'guest_id'   => $guest->id,
                 'items'      => json_encode($itemsData),
                 'printed_at' => now(),
             ]);
 
+            // Kurangi stok dan tandai item sebagai released
             foreach ($guest->guestCart->items as $item) {
-                if ($item->stock < $item->pivot->quantity) {
-                    throw new \Exception("Stok untuk {$item->name} tidak mencukupi.");
-                }
-
                 $item->decrement('stock', $item->pivot->quantity);
 
-                // 🔹 Tambahkan baris ini agar released_at terisi
+                // Tandai item sebagai released
                 DB::table('guest_cart_items')
                     ->where('guest_cart_id', $guest->guestCart->id)
                     ->where('item_id', $item->id)
+                    ->whereNull('released_at')
                     ->update(['released_at' => now()]);
             }
 
-            // Tandai cart sudah direlease
-            $guest->guestCart->update(['is_released' => true]);
+            // Tandai cart sudah direlease (opsional, tergantung kebutuhan bisnis)
+            // $guest->guestCart->update(['is_released' => true]);
 
             DB::commit();
 
             return redirect()
                 ->route('admin.produk.byGuest', $guest->id)
-                ->with('success', 'Barang berhasil dikeluarkan.');
+                ->with('success', 'Barang berhasil dikeluarkan dan stok telah diperbarui.');
         } catch (\Throwable $e) {
             DB::rollBack();
+            Log::error('Release error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
+    /**
+     * Update quantity di cart
+     */
     public function updateCart(Request $request, $guestId)
     {
         try {
-            $guest = \App\Models\Guest::with('guestCart.items')->findOrFail($guestId);
+            $guest = Guest::with(['guestCart.items' => function($query) {
+                $query->wherePivot('released_at', null);
+            }])->findOrFail($guestId);
+
             $cart = $guest->guestCart;
 
             if (!$cart) {
@@ -356,7 +369,7 @@ class ProdukController extends Controller
                 ], 404);
             }
 
-            // Cek stok sebelum update
+            // Cek stok sebelum update (hanya validasi)
             if ($quantity > $item->stock) {
                 return response()->json([
                     'status' => 'error',
@@ -384,12 +397,9 @@ class ProdukController extends Controller
         }
     }
 
-    // Resource method bawaan
-    public function create() {}
-    public function store(Request $request) {}
-    public function show(string $id) {}
-    public function edit(string $id) {}
-    public function update(Request $request, string $id) {}
+    /**
+     * Hapus item dari cart
+     */
     public function destroy($guestId, $itemId) {
         try {
             $guest = Guest::with('guestCart.items')->findOrFail($guestId);
@@ -399,7 +409,7 @@ class ProdukController extends Controller
                 return response()->json(['status' => 'error', 'message' => 'Cart tidak ditemukan.'], 404);
             }
 
-            $item = $cart->items()->where('items.id', $itemId)->first();
+            $item = $cart->items()->where('items.id', $itemId)->wherePivot('released_at', null)->first();
             if (!$item) {
                 return response()->json(['status' => 'error', 'message' => 'Item tidak ditemukan di cart.'], 404);
             }
@@ -412,4 +422,11 @@ class ProdukController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
     }
+
+    // Resource method bawaan
+    public function create() {}
+    public function store(Request $request) {}
+    public function show(string $id) {}
+    public function edit(string $id) {}
+    public function update(Request $request, string $id) {}
 }

@@ -1,20 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
     // === Fokus & submit otomatis barcode ===
-    document.querySelectorAll("input[id^='barcode-']").forEach((input) => {
-        const modalId = input.id.replace("barcode-", "");
-        $(`#scanModal-${modalId}`).on("shown.bs.modal", () => input.focus());
+    document.querySelectorAll("input[name='barcode']").forEach((input) => {
+        const modal = input.closest('.modal');
+        $(modal).on("shown.bs.modal", () => input.focus());
+
         input.addEventListener("keypress", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
-                document
-                    .getElementById(`form-${modalId}`)
-                    .dispatchEvent(new Event("submit"));
+                const form = input.closest('form');
+                form.dispatchEvent(new Event("submit"));
             }
         });
     });
 
     // === Submit form scan barang ===
-    document.querySelectorAll("form[id^='form-']").forEach((form) => {
+    document.querySelectorAll("form[action*='scan']").forEach((form) => {
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
             const url = form.action;
@@ -28,31 +28,38 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 const res = await fetch(url, {
                     method: "POST",
-                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                    },
                     body: formData,
                 });
                 const data = await res.json();
 
                 if (data.status === "success") {
+                    // Tutup modal
                     modal.hide();
 
+                    // Tampilkan pesan sukses
+                    Swal.fire({
+                        icon: "success",
+                        title: "Berhasil!",
+                        html: data.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
                     // Update badge jumlah item di tombol cart
-                    const badge = document.querySelector("#openCartModal .badge");
-                    if (badge) {
-                        badge.textContent = parseInt(badge.textContent) + 1;
-                    } else {
-                        const btn = document.getElementById("openCartModal");
-                        const badgeEl = document.createElement("span");
-                        badgeEl.className = "position-absolute badge rounded-pill bg-danger";
-                        badgeEl.style.cssText = "top:-5px; right:-5px; font-size:0.8rem; padding:6px 8px;";
-                        badgeEl.textContent = "1";
-                        btn.appendChild(badgeEl);
-                    }
+                    updateCartBadge();
+
+                    // Reset form
+                    form.reset();
+
                 } else {
                     Swal.fire({
                         icon: "error",
                         title: "Gagal!",
-                        text: data.message || "Terjadi kesalahan.",
+                        html: data.message,
                     });
                 }
             } catch (err) {
@@ -110,42 +117,85 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
 
                     // Update cart items
-                    cartTableBody.innerHTML = "";
-                    if (data.cartItems.length > 0) {
-                        data.cartItems.forEach((item) => {
-                            cartTableBody.innerHTML += `
-                                <tr data-id="${item.id}">
-                                    <td>${item.name}</td>
-                                    <td>${item.code ?? "-"}</td>
-                                    <td class="text-center">
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            class="form-control form-control-sm text-center update-qty"
-                                            value="${item.quantity}"
-                                            style="width: 80px; margin: 0 auto;"
-                                        >
-                                    </td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-danger rounded-pill delete-item">
-                                            <i class="ri-delete-bin-line"></i>
-                                        </button>
-                                    </td>
-                                </tr>`;
-                        });
-                    } else {
-                        cartTableBody.innerHTML = `
-                            <tr>
-                                <td colspan="4" class="text-center text-muted py-3">
-                                    <i class='ri-information-line me-1'></i>Keranjang kosong
-                                </td>
-                            </tr>`;
-                    }
+                    updateCartTable(data.cartItems);
 
                     releaseForm.action = `/admin/produk/guest/${guestId}/release`;
                     cartModal.show();
+                })
+                .catch(err => {
+                    console.error('Error loading cart:', err);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Gagal memuat keranjang",
+                        text: "Terjadi kesalahan saat memuat data keranjang.",
+                    });
                 });
         });
+    }
+
+    // === Fungsi untuk update cart table ===
+    function updateCartTable(cartItems) {
+        cartTableBody.innerHTML = "";
+        if (cartItems.length > 0) {
+            cartItems.forEach((item) => {
+                cartTableBody.innerHTML += `
+                    <tr data-id="${item.id}">
+                        <td>${item.name}</td>
+                        <td>${item.code ?? "-"}</td>
+                        <td class="text-center">
+                            <input
+                                type="number"
+                                min="1"
+                                max="${item.stock}"
+                                class="form-control form-control-sm text-center update-qty"
+                                value="${item.quantity}"
+                                style="width: 80px; margin: 0 auto;"
+                            >
+                            <small class="text-muted">Stok: ${item.stock}</small>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-danger rounded-pill delete-item">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+        } else {
+            cartTableBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-3">
+                        <i class='ri-information-line me-1'></i>Keranjang kosong
+                    </td>
+                </tr>`;
+        }
+    }
+
+    // === Fungsi untuk update cart badge ===
+    function updateCartBadge() {
+        const guestId = openCartBtn.dataset.guestId;
+        if (!guestId) return;
+
+        fetch(`/admin/produk/guest/${guestId}/cart`)
+            .then((res) => res.json())
+            .then((data) => {
+                const badge = document.querySelector("#openCartModal .badge");
+                const itemCount = data.cartItems.length;
+
+                if (itemCount > 0) {
+                    if (badge) {
+                        badge.textContent = itemCount;
+                    } else {
+                        const btn = document.getElementById("openCartModal");
+                        const badgeEl = document.createElement("span");
+                        badgeEl.className = "position-absolute badge rounded-pill bg-danger";
+                        badgeEl.style.cssText = "top:-5px; right:-5px; font-size:0.8rem; padding:6px 8px;";
+                        badgeEl.textContent = itemCount;
+                        btn.appendChild(badgeEl);
+                    }
+                } else if (badge) {
+                    badge.remove();
+                }
+            });
     }
 
     // === Konfirmasi saat klik "Keluarkan Semua" ===
@@ -170,10 +220,27 @@ document.addEventListener("DOMContentLoaded", () => {
                         return;
                     }
 
-                    // Jika belum mencapai batas, tampilkan konfirmasi biasa
+                    // Validasi stok sebelum release
+                    const outOfStockItems = data.cartItems.filter(item => item.quantity > item.stock);
+                    if (outOfStockItems.length > 0) {
+                        const itemNames = outOfStockItems.map(item =>
+                            `${item.name} (butuh: ${item.quantity}, stok: ${item.stock})`
+                        ).join('<br>');
+
+                        Swal.fire({
+                            icon: "error",
+                            title: "Stok Tidak Cukup!",
+                            html: `Beberapa barang melebihi stok tersedia:<br>${itemNames}`,
+                            confirmButtonColor: "#d33",
+                            confirmButtonText: "Mengerti"
+                        });
+                        return;
+                    }
+
+                    // Jika belum mencapai batas dan stok cukup, tampilkan konfirmasi
                     Swal.fire({
                         title: "Yakin ingin mengeluarkan semua barang?",
-                        html: `Setelah ini stok akan langsung berkurang.<br>
+                        html: `Setelah ini stok akan langsung berkurang dan data akan disimpan permanen.<br>
                                <small class="text-warning">Pengeluaran minggu ini: ${data.releaseCountThisWeek}/${data.maxReleasePerWeek} kali</small>`,
                         icon: "warning",
                         showCancelButton: true,
@@ -196,8 +263,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const tr = e.target.closest("tr");
         const itemId = tr.dataset.id;
-        const newQty = e.target.value;
+        const newQty = parseInt(e.target.value);
         const guestId = openCartBtn.dataset.guestId;
+
+        // Validasi client-side
+        if (newQty < 1) {
+            Swal.fire({
+                icon: "error",
+                title: "Jumlah tidak valid",
+                text: "Jumlah harus minimal 1",
+            });
+            e.target.value = 1;
+            return;
+        }
 
         try {
             const res = await fetch(`/admin/produk/guest/${guestId}/cart/update`, {
@@ -217,12 +295,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     timer: 1000,
                     showConfirmButton: false,
                 });
+
+                // Refresh cart table untuk update stok info
+                updateCartBadge();
             } else {
                 Swal.fire({
                     icon: "error",
                     title: "Gagal!",
                     text: data.message || "Gagal memperbarui jumlah",
                 });
+                // Reset ke nilai sebelumnya
+                updateCartBadge();
             }
         } catch (err) {
             Swal.fire({
@@ -230,6 +313,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 title: "Kesalahan Koneksi",
                 text: err.message,
             });
+            updateCartBadge();
         }
     });
 
@@ -274,12 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 tr.remove();
 
                 // Update badge
-                const badge = document.querySelector("#openCartModal .badge");
-                if (badge) {
-                    const current = parseInt(badge.textContent) - 1;
-                    if (current > 0) badge.textContent = current;
-                    else badge.remove();
-                }
+                updateCartBadge();
 
                 if (!cartTableBody.querySelector("tr")) {
                     cartTableBody.innerHTML = `
