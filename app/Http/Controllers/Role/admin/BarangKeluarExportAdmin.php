@@ -33,7 +33,7 @@ class BarangKeluarExportAdmin implements FromCollection, WithHeadings, WithMappi
      */
     public function collection()
     {
-        // Data dari Item_out (pegawai)
+        // Data dari Item_out (pegawai) - TIDAK BERUBAH
         $pegawaiItems = Item_out::with(['item', 'cart.user', 'approver'])
             ->where(function ($q) {
                 $q->whereBetween(DB::raw('DATE(released_at)'), [$this->start, $this->end])
@@ -47,15 +47,15 @@ class BarangKeluarExportAdmin implements FromCollection, WithHeadings, WithMappi
                 return $row;
             });
 
-        // Data dari Guest_carts_item (tamu)
+        // Data dari Guest_carts_item (tamu) - MODIFIKASI: Hanya yang memiliki released_at
         $guestItems = Guest_carts_item::with(['item', 'guestCart.guest'])
-            ->whereBetween(DB::raw('DATE(created_at)'), [$this->start, $this->end])
+            ->whereNotNull('released_at') // TAMBAHKAN INI
+            ->whereBetween(DB::raw('DATE(released_at)'), [$this->start, $this->end]) // Gunakan released_at untuk filter tanggal
             ->get()
             ->map(function ($row) {
                 $row->type = 'tamu';
                 $row->pengambil = $row->guestCart->guest->name ?? 'Tamu';
-                $row->released_at = $row->created_at;
-                $row->released_date = Carbon::parse($row->created_at)->format('d-m-Y');
+                $row->released_date = Carbon::parse($row->released_at)->format('d-m-Y');
                 return $row;
             });
 
@@ -149,12 +149,10 @@ class BarangKeluarExportAdmin implements FromCollection, WithHeadings, WithMappi
         ];
     }
 
+
     /**
      * Method untuk log export (jika diperlukan di Excel)
      */
-    /**
- * Method untuk log export (jika diperlukan di Excel)
- */
     public function logExport($format = 'excel')
     {
         $period = "Periode: " . date('d/m/Y', strtotime($this->start)) . " - " . date('d/m/Y', strtotime($this->end));
@@ -165,10 +163,10 @@ class BarangKeluarExportAdmin implements FromCollection, WithHeadings, WithMappi
 
         ExportLog::create([
             'super_admin_id' => Auth::id(),
-            'data_type'      => 'keluar',
-            'format'         => $format,
-            'file_path'      => "exports/{$fileName}",
-            'period'         => $period,
+            'data_type' => 'keluar',
+            'format' => $format,
+            'file_path' => "exports/{$fileName}",
+            'period' => $period,
         ]);
 
         return $fileName;

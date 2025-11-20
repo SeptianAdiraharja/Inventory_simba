@@ -322,7 +322,7 @@ class PermintaanController extends Controller
         }
     }
 
-    public function cancelItem(string $id)
+     public function cancelItem(string $id)
     {
         try {
             DB::transaction(function () use ($id) {
@@ -333,11 +333,8 @@ class PermintaanController extends Controller
                     throw new \Exception('Akses tidak sah untuk keranjang ini.');
                 }
 
-                // Loop setiap item dalam cart
+                // 🔹 HANYA UPDATE STATUS, TIDAK ADA PENGEMBALIAN STOK
                 foreach ($cart->cartItems as $cartItem) {
-                    // Kembalikan stok item
-                    $cartItem->item->increment('stock', $cartItem->quantity);
-
                     // Update status cart_item jadi rejected
                     $cartItem->update([
                         'status' => 'rejected',
@@ -353,7 +350,7 @@ class PermintaanController extends Controller
                 ]);
             });
 
-            return redirect()->back()->with('success', 'Permintaan berhasil di-cancel dan stok dikembalikan.');
+            return redirect()->back()->with('success', 'Permintaan berhasil dibatalkan.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }

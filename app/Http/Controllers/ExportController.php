@@ -278,7 +278,7 @@ class ExportController extends Controller
         $items = collect();
 
         if ($startDate && $endDate) {
-            // Data dari Item_out (pegawai)
+            // Data dari Item_out (pegawai) - TIDAK BERUBAH
             $pegawaiItems = Item_out::with('item', 'cart.user', 'approver')
                 ->whereBetween('created_at', [
                     $startDate . ' 00:00:00',
@@ -296,19 +296,20 @@ class ExportController extends Controller
                     return $row;
                 });
 
-            // Data dari Guest_carts_item (tamu)
+            // Data dari Guest_carts_item (tamu) - MODIFIKASI: Hanya yang memiliki released_at
             $guestItems = Guest_carts_item::with('item', 'guestCart.guest')
-                ->whereBetween('created_at', [
+                ->whereNotNull('released_at') // TAMBAHKAN INI: Hanya yang memiliki released_at
+                ->whereBetween('released_at', [ // Gunakan released_at untuk filter tanggal
                     $startDate . ' 00:00:00',
                     $endDate . ' 23:59:59'
                 ])
-                ->orderBy('created_at', 'DESC')
+                ->orderBy('released_at', 'DESC') // Urutkan berdasarkan released_at
                 ->get()
                 ->map(function ($row) {
                     $row->total_price = ($row->item->price ?? 0) * ($row->quantity ?? 0);
                     $row->type = 'tamu';
                     $row->pengambil = $row->guestCart->guest->name ?? 'Tamu';
-                    $row->released_at = $row->created_at;
+                    // Tidak perlu set released_at lagi karena sudah ada
                     return $row;
                 });
 
