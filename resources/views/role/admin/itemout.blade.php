@@ -1,4 +1,5 @@
 @extends('layouts.index')
+@section('title', 'Daftar Permintaan Pegawai')
 @section('content')
 
 @if(request('q'))

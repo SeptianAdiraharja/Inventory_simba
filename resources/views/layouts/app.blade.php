@@ -6,7 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
 
-        <title>Profile  </title>
+        <title>Profile</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

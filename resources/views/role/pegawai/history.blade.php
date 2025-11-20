@@ -1,5 +1,5 @@
 @extends('layouts.index')
-
+@section('title', 'Riwayat Permintaan Barang')
 @section('content')
 <style>
 /* =============================

@@ -13,8 +13,23 @@
     <meta name="robots" content="noindex, nofollow" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    {{-- ============================== --}}
+    {{-- TITLE OTOMATIS SESUAI ROLE + PAGE --}}
+    {{-- ============================== --}}
+    @php
+    $role = auth('web')->check() ? auth('web')->user()->role : 'guest';
 
-    <title>Dashboard</title>
+    // Auto-format role: super_admin → Super Admin
+    $formattedRole = $role === 'guest'
+        ? 'SIMBA'
+        : ucwords(str_replace('_', ' ', $role));
+
+    // Judul halaman dari section
+    $pageTitle = trim($__env->yieldContent('title') ?: 'Dashboard');
+@endphp
+
+<title>{{ $formattedRole }} | {{ $pageTitle }}</title>
+
 
     <meta name="description" content="" />
 

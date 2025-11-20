@@ -1,5 +1,5 @@
 @extends('layouts.index')
-
+@section('title', 'Daftar Barang')
 @section('content')
 
 <style>
