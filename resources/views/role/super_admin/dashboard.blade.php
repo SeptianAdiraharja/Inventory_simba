@@ -1,4 +1,5 @@
 @extends('layouts.index')
+@section('title', 'Dashboard Super Admin')
 @section('content')
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 

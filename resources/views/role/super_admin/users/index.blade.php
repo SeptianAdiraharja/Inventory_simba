@@ -1,5 +1,5 @@
 @extends('layouts.index')
-
+@section('title', 'Daftar Pengguna')
 @section('content')
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
@@ -130,7 +130,6 @@
 
             {{-- SEARCH --}}
             <div class="position-relative">
-              <i class="ri-search-line position-absolute ms-3 mt-2 text-muted"></i>
               <input type="text" name="search"
                     value="{{ request('search') }}"
                     class="form-control rounded-pill shadow-sm ps-5 search-input"

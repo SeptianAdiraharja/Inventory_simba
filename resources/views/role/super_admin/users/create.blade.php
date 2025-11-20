@@ -1,5 +1,5 @@
 @extends('layouts.index')
-
+@section('title', 'Tambah Akun Pengguna')
 @section('content')
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
@@ -83,7 +83,7 @@
 
           <div class="p-3 border rounded-3 shadow-sm kategori-columns"
               style="border-left:4px solid #FF9800 !important; background:#fff;">
-              
+
               @foreach($categories as $category)
                 <div class="form-check mb-2">
                   <input class="form-check-input"
@@ -92,7 +92,7 @@
                         name="categories[]"
                         value="{{ $category->id }}"
                         {{ !empty($user) && $user->categories->contains($category->id) ? 'checked' : '' }}>
-                  
+
                   <label class="form-check-label" for="cat{{ $category->id }}">
                     {{ $category->name }}
                   </label>

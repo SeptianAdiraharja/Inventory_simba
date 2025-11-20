@@ -1,4 +1,5 @@
 @extends('layouts.index')
+@section('title', 'Daftar Produk untuk Guest')
 @section('content')
 
 <style>

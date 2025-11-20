@@ -1,5 +1,5 @@
 @extends('layouts.index')
-
+@section('title', 'Tampil Barang')
 @section('content')
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 

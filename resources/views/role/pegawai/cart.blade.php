@@ -1,5 +1,5 @@
 @extends('layouts.detail')
-
+@section('title', 'Detail Keranjang')
 @section('content')
 <div class="card border-0 shadow-sm rounded-3">
 
