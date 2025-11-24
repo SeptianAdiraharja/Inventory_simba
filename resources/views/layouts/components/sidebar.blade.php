@@ -114,6 +114,12 @@
                 <span>Ekspor Data</span>
             </a>
         </li>
+        <li class="menu-item {{ Route::is('super_admin.manual_book.index') ? 'active' : '' }}">
+            <a href="{{ route('super_admin.manual_book.index') }}" class="menu-link d-flex align-items-center text-white position-relative">
+                <i class="ri ri-book-open-line me-2"></i>
+                <span>Buku Panduan</span>
+            </a>
+        </li>
         @endif
 
         <!-- ADMIN MENU -->

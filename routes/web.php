@@ -12,8 +12,9 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\PermintaanController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\KopSuratController;
-use App\Models\Visitor; // ✅ Tambahan
+use App\Models\Visitor; 
 use App\Models\User;
+use App\Http\Controllers\ManualBookController;
 use Illuminate\Support\Facades\Log;
 
 // Role Controllers
@@ -139,6 +140,10 @@ Route::middleware(['auth', 'role:super_admin'])
 
         // Kop Surat
         Route::resource('kop_surat', KopSuratController::class);
+
+        //Manualbook
+        Route::get('/manual-book', [ManualBookController::class, 'index'])
+        ->name('manual_book.index');
 });
 
 /*
