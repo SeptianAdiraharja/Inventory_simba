@@ -73,10 +73,9 @@
 
         {{-- tanggal masuk --}}
          <div class="mb-4">
-          <label class="form-label fw-semibold text-dark">Tanggal Kedaluwarsa</label>
+          <label class="form-label fw-semibold text-dark">Tanggal Masuk</label>
           <div x-show="useTanggalMasuk" x-transition>
             <input type="date" name="tanggal_masuk" id="tanggal_masuk"
-                   min="{{ \Carbon\Carbon::today()->toDateString() }}"
                    value="{{ old('tanggal_masuk') }}"
                    class="form-control shadow-sm border-0"
                    style="border-left:4px solid #FF9800 !important;"

@@ -29,8 +29,12 @@
     </div>
 
     <div class="card-body bg-white p-4 rounded-bottom-4">
-      <form action="{{ route('super_admin.item_ins.update', $item_in->id) }}" method="POST"
-            x-data="{ useExpired: {{ $item_in->expired_at ? 'true' : 'false' }} }">
+      <form action="{{ route('super_admin.item_ins.update', $item_in->id) }}" 
+      method="POST"
+      x-data="{
+        useExpired: {{ $item_in->expired_at ? 'true' : 'false' }},
+        useTanggalMasuk: {{ $item_in->tanggal_masuk ? 'true' : 'false' }}
+      }">
         @csrf
         @method('PUT')
 
@@ -73,7 +77,6 @@
           <label class="form-label fw-semibold text-dark">Tanggal Masuk</label>
           <div x-show="useTanggalMasuk" x-transition>
             <input type="date" name="tanggal_masuk" id="tanggal_masuk"
-                   min="{{ \Carbon\Carbon::today()->toDateString() }}"
                    value="{{ $item_in->tanggal_masuk ? $item_in->tanggal_masuk->format('Y-m-d') : '' }}"
                    class="form-control shadow-sm border-0"
                    style="border-left:4px solid #FF9800 !important;"

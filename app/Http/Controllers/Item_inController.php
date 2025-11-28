@@ -87,7 +87,7 @@ class Item_inController extends Controller
             'item_id'     => 'required|exists:items,id',
             'quantity'    => 'required|integer|min:1',
             'supplier_id' => 'required|exists:suppliers,id',
-            'tanggal_masuk'  => 'nullable|date|after_or_equal:today',
+            'tanggal_masuk'  => 'nullable|date',
             'expired_at'  => 'nullable|date|after_or_equal:today',
         ]);
 
@@ -128,7 +128,7 @@ class Item_inController extends Controller
             'item_id'     => 'required|exists:items,id',
             'quantity'    => 'required|integer|min:1',
             'supplier_id' => 'required|exists:suppliers,id',
-            'tanggal_masuk'  => 'nullable|date|after_or_equal:today',
+            'tanggal_masuk'  => 'nullable|date',
             'expired_at'  => 'nullable|date|after_or_equal:today',
         ]);
 

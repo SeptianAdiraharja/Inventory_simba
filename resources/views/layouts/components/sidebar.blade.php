@@ -130,10 +130,10 @@
             <a href="{{ route('admin.request') }}" class="menu-link d-flex align-items-center justify-content-between text-white position-relative">
                 <div class="d-flex align-items-center">
                     <i class="ri ri-file-list-3-line me-2"></i>
-                    <span>Request</span>
+                    <span>Permintaan</span>
                 </div>
                 @if($pendingCount > 0)
-                    <span class="badge rounded-pill bg-danger ms-2">{{ $pendingCount }}</span>
+                    <span class="badge rounded-pill bg-danger ms-2" id="badgePending">{{ $pendingCount }}</span>
                 @endif
             </a>
         </li>
@@ -145,7 +145,7 @@
                     <span>ScanQr</span>
                 </div>
                 @if($approvedCount > 0)
-                    <span class="badge rounded-pill bg-success ms-2">{{ $approvedCount }}</span>
+                    <span class="badge rounded-pill bg-success ms-2" id="badgeApproved">{{ $approvedCount }}</span>
                 @endif
             </a>
         </li>
@@ -282,6 +282,43 @@
         flex: 1;
     }
 </style>
+
+<script>
+function refreshNotificationCount() {
+    fetch("{{ route('notifications.count') }}")
+        .then(res => res.json())
+        .then(data => {
+            const pendingBadge = document.getElementById("badgePending");
+            const approvedBadge = document.getElementById("badgeApproved");
+
+            if (pendingBadge) {
+                if (data.pending > 0) {
+                    pendingBadge.textContent = data.pending;
+                    pendingBadge.style.display = 'inline-flex';
+                } else {
+                    pendingBadge.style.display = 'none';
+                }
+            }
+
+            if (approvedBadge) {
+                if (data.approved > 0) {
+                    approvedBadge.textContent = data.approved;
+                    approvedBadge.style.display = 'inline-flex';
+                } else {
+                    approvedBadge.style.display = 'none';
+                }
+            }
+        })
+        .catch(err => console.error('Notif Update Error:', err));
+}
+
+// Refresh tiap 10 detik
+setInterval(refreshNotificationCount, 10000);
+
+// Jalankan saat halaman load
+refreshNotificationCount();
+</script>
+
 
 <!-- 🕐 Super Realtime Clock (Anti-Delay, Auto Sync) -->
 <script>

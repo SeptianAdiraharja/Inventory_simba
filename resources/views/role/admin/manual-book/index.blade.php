@@ -61,6 +61,7 @@
     <div class="row">
         <div class="col-12">
             <div class="tab-content" id="panduanContent">
+
                 <!-- Tab 1: Permintaan Barang -->
                 <div class="tab-pane fade show active" id="request" role="tabpanel">
                     <div class="card">
@@ -70,14 +71,19 @@
                                 Mengelola Permintaan Barang dari Pegawai
                             </h3>
                         </div>
+
                         <div class="card-body">
-                            <div class="row align-items-center mb-4">
-                                <div class="col-md-8">
-                                    <h4 class="text-primary">Langkah-langkah:</h4>
+
+                            <!-- Bagian Langkah-Langkah -->
+                            <div class="row mb-4">
+                                <h4 class="text-primary">Langkah-langkah:</h4>
+                                <div class="col-md-12">
                                     <ol class="list-group list-group-numbered">
                                         <li class="list-group-item border-0 px-0">Buka halaman <strong>Permintaan</strong> dari menu Admin</li>
                                         <li class="list-group-item border-0 px-0">Anda akan melihat daftar permintaan dari pegawai</li>
-                                        <li class="list-group-item border-0 px-0">Klik tombol <span class="badge bg-primary">Lihat Semua Barang</span> untuk melihat detail barang yang diminta</li>
+                                        <li class="list-group-item border-0 px-0">
+                                            Klik tombol <span class="badge bg-primary">Lihat Semua Barang</span> untuk melihat detail barang yang diminta
+                                        </li>
                                         <li class="list-group-item border-0 px-0">Di halaman detail, Anda dapat:
                                             <ul class="mt-2">
                                                 <li>Setujui semua barang sekaligus</li>
@@ -85,29 +91,45 @@
                                                 <li>Setujui atau tolak per barang</li>
                                             </ul>
                                         </li>
-                                        <li class="list-group-item border-0 px-0">Jika menolak permintaan, isi alasan penolakan pada kotak yang muncul</li>
-                                        <li class="list-group-item border-0 px-0">Setelah semua barang diproses, sistem akan mengarahkan ke halaman Scan QR</li>
+                                        <li class="list-group-item border-0 px-0">
+                                            Jika menolak permintaan, isi alasan penolakan pada kotak yang muncul
+                                        </li>
+                                        <li class="list-group-item border-0 px-0">
+                                            Setelah semua barang diproses, sistem akan mengarahkan ke halaman Scan QR
+                                        </li>
                                     </ol>
                                 </div>
-                                <div class="col-md-4 text-center">
-                                    <div id="carouselRequest" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+                            </div>
+
+                            <!-- Carousel di Bagian Bawah -->
+                            <div class="row justify-content-center">
+                                <div class="col-12 text-center">
+                                    <div id="carouselRequest" class="carousel slide mx-auto" 
+                                        data-bs-ride="carousel" data-bs-interval="3500">
+
                                         <div class="carousel-inner">
                                             <div class="carousel-item active">
-                                                <img src="{{ asset('assets/img/panduan_admin/request/request.png') }}" class="d-block w-100 rounded shadow" alt="Halaman Permintaan">
+                                                <img src="{{ asset('assets/img/panduan_admin/request/request.png') }}" 
+                                                    class="d-block w-100 rounded shadow" alt="Halaman Permintaan">
                                             </div>
                                             <div class="carousel-item">
-                                                <img src="{{ asset('assets/img/panduan_admin/request/requestapprove.png') }}" class="d-block w-100 rounded shadow" alt="Approve Permintaan">
+                                                <img src="{{ asset('assets/img/panduan_admin/request/requestapprove.png') }}" 
+                                                    class="d-block w-100 rounded shadow" alt="Approve Permintaan">
                                             </div>
                                             <div class="carousel-item">
-                                                <img src="{{ asset('assets/img/panduan_admin/request/requestrejectall.png') }}" class="d-block w-100 rounded shadow" alt="Reject Semua">
+                                                <img src="{{ asset('assets/img/panduan_admin/request/requestrejectall.png') }}" 
+                                                    class="d-block w-100 rounded shadow" alt="Reject Semua">
                                             </div>
                                             <div class="carousel-item">
-                                                <img src="{{ asset('assets/img/panduan_admin/request/requestrejectmodal.png') }}" class="d-block w-100 rounded shadow" alt="Modal Reject">
+                                                <img src="{{ asset('assets/img/panduan_admin/request/requestrejectmodal.png') }}" 
+                                                    class="d-block w-100 rounded shadow" alt="Modal Reject">
                                             </div>
                                             <div class="carousel-item">
-                                                <img src="{{ asset('assets/img/panduan_admin/request/requestrejectresult.png') }}" class="d-block w-100 rounded shadow" alt="Hasil Reject">
+                                                <img src="{{ asset('assets/img/panduan_admin/request/requestrejectresult.png') }}" 
+                                                    class="d-block w-100 rounded shadow" alt="Hasil Reject">
                                             </div>
                                         </div>
+
                                         <button class="carousel-control-prev" type="button" data-bs-target="#carouselRequest" data-bs-slide="prev">
                                             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                             <span class="visually-hidden">Previous</span>
@@ -117,14 +139,16 @@
                                             <span class="visually-hidden">Next</span>
                                         </button>
                                     </div>
+
                                     <p class="text-muted small mt-2">Contoh tampilan halaman permintaan</p>
                                 </div>
                             </div>
 
-                            <div class="alert alert-info">
+                            <div class="alert alert-info mt-4">
                                 <i class="ri-information-line me-2"></i>
                                 <strong>Tips:</strong> Pastikan memeriksa ketersediaan barang sebelum menyetujui permintaan.
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -138,10 +162,13 @@
                                 Melakukan Scan QR Code Barang
                             </h3>
                         </div>
+
                         <div class="card-body">
-                            <div class="row align-items-center mb-4">
-                                <div class="col-md-8">
-                                    <h4 class="text-primary">Langkah-langkah:</h4>
+
+                            <!-- Bagian Langkah-Langkah -->
+                            <div class="row mb-4">
+                                <h4 class="text-primary">Langkah-langkah:</h4>
+                                <div class="col-md-12">
                                     <ol class="list-group list-group-numbered">
                                         <li class="list-group-item border-0 px-0">Buka halaman <strong>Scan QR</strong> dari menu Admin</li>
                                         <li class="list-group-item border-0 px-0">Arahkan kamera perangkat ke QR Code pada barang</li>
@@ -151,8 +178,12 @@
                                         <li class="list-group-item border-0 px-0">Sistem akan mencatat barang keluar secara otomatis</li>
                                     </ol>
                                 </div>
-                                <div class="col-md-4 text-center">
-                                    <div id="carouselScan" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+                            </div>
+
+                            <!-- Carousel di Bagian Bawah -->
+                            <div class="row justify-content-center">
+                                <div class="col-12 text-center">
+                                    <div id="carouselScan" class="carousel slide mx-auto" data-bs-ride="carousel" data-bs-interval="3500">
                                         <div class="carousel-inner">
                                             <div class="carousel-item active">
                                                 <img src="{{ asset('assets/img/panduan_admin/itemout/itemout.png') }}" class="d-block w-100 rounded shadow" alt="Halaman Item Out">
@@ -173,6 +204,7 @@
                                                 <img src="{{ asset('assets/img/panduan_admin/itemout/itemoutresult.png') }}" class="d-block w-100 rounded shadow" alt="Hasil">
                                             </div>
                                         </div>
+
                                         <button class="carousel-control-prev" type="button" data-bs-target="#carouselScan" data-bs-slide="prev">
                                             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                             <span class="visually-hidden">Previous</span>
@@ -182,14 +214,16 @@
                                             <span class="visually-hidden">Next</span>
                                         </button>
                                     </div>
+
                                     <p class="text-muted small mt-2">Contoh proses scanning QR Code</p>
                                 </div>
                             </div>
 
-                            <div class="alert alert-info">
+                            <div class="alert alert-info mt-3">
                                 <i class="ri-information-line me-2"></i>
                                 <strong>Tips:</strong> Pastikan pencahayaan cukup dan QR Code tidak rusak untuk proses scanning yang lancar.
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -204,68 +238,72 @@
                             </h3>
                         </div>
                         <div class="card-body">
-                            <div class="row align-items-center mb-4">
-                                <div class="col-md-8">
-                                    <h4 class="text-primary">Fitur yang tersedia:</h4>
-                                    <div class="row mt-3">
-                                        <div class="col-md-6 mb-3">
-                                            <div class="card border-primary">
-                                                <div class="card-body">
-                                                    <h5 class="card-title text-primary">Edit Barang</h5>
-                                                    <p class="card-text">Digunakan ketika pegawai ingin mengganti barang tanpa pengajuan ulang</p>
-                                                    <ol class="small">
-                                                        <li>Cari transaksi yang ingin diubah</li>
-                                                        <li>Klik tombol <span class="badge bg-warning text-dark">Edit</span></li>
-                                                        <li>Pilih barang pengganti</li>
-                                                        <li>Simpan perubahan</li>
-                                                    </ol>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <div class="card border-success">
-                                                <div class="card-body">
-                                                    <h5 class="card-title text-success">Refund Barang</h5>
-                                                    <p class="card-text">Digunakan untuk mengembalikan barang ke gudang</p>
-                                                    <ol class="small">
-                                                        <li>Cari transaksi yang akan direfund</li>
-                                                        <li>Klik tombol <span class="badge bg-success">Refund</span></li>
-                                                        <li>Konfirmasi pengembalian</li>
-                                                        <li>Barang akan kembali ke stok gudang</li>
-                                                    </ol>
-                                                </div>
-                                            </div>
+                            
+                            <!-- Bagian Card Edit & Refund -->
+                            <div class="row mb-4">
+                                <h4 class="text-primary">Fitur yang tersedia:</h4>
+                                <div class="col-md-6 mt-3">
+                                    <div class="card border-primary h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-primary">Edit Barang</h5>
+                                            <p class="card-text">Digunakan ketika pegawai ingin mengganti barang tanpa pengajuan ulang</p>
+                                            <ol class="small">
+                                                <li>Cari transaksi yang ingin diubah</li>
+                                                <li>Klik tombol <span class="badge bg-warning text-dark">Edit</span></li>
+                                                <li>Pilih barang pengganti</li>
+                                                <li>Simpan perubahan</li>
+                                            </ol>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4 text-center">
-                                    <div id="carouselTransaksi" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+                                <div class="col-md-6 mt-3">
+                                    <div class="card border-success h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-success">Refund Barang</h5>
+                                            <p class="card-text">Digunakan untuk mengembalikan barang ke gudang</p>
+                                            <ol class="small">
+                                                <li>Cari transaksi yang akan direfund</li>
+                                                <li>Klik tombol <span class="badge bg-success">Refund</span></li>
+                                                <li>Konfirmasi pengembalian</li>
+                                                <li>Barang akan kembali ke stok gudang</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bagian Carousel Gambar -->
+                            <div class="row justify-content-center">
+                                <div class="col-12">
+                                    <div id="carouselTransaksi" class="carousel slide text-center" 
+                                        data-bs-ride="carousel" data-bs-interval="3000">
                                         <div class="carousel-inner">
                                             <div class="carousel-item active">
-                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksiedit.png') }}" class="d-block w-100 rounded shadow" alt="Edit Transaksi">
+                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksiedit.png') }}" class="d-block mx-auto w-100 rounded shadow" alt="Edit Transaksi">
                                             </div>
                                             <div class="carousel-item">
-                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksieditmodal.png') }}" class="d-block w-100 rounded shadow" alt="Modal Edit">
+                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksieditmodal.png') }}" class="d-block mx-auto w-100 rounded shadow" alt="Modal Edit">
                                             </div>
                                             <div class="carousel-item">
-                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksieditcode.png') }}" class="d-block w-100 rounded shadow" alt="Edit Code">
+                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksieditcode.png') }}" class="d-block mx-auto w-100 rounded shadow" alt="Edit Code">
                                             </div>
                                             <div class="carousel-item">
-                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksieditsimpan.png') }}" class="d-block w-100 rounded shadow" alt="Simpan Edit">
+                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksieditsimpan.png') }}" class="d-block mx-auto w-100 rounded shadow" alt="Simpan Edit">
                                             </div>
                                             <div class="carousel-item">
-                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksieditvalidasi.png') }}" class="d-block w-100 rounded shadow" alt="Validasi Edit">
+                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksieditvalidasi.png') }}" class="d-block mx-auto w-100 rounded shadow" alt="Validasi Edit">
                                             </div>
                                             <div class="carousel-item">
-                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksirefund.png') }}" class="d-block w-100 rounded shadow" alt="Refund">
+                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksirefund.png') }}" class="d-block mx-auto w-100 rounded shadow" alt="Refund">
                                             </div>
                                             <div class="carousel-item">
-                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksirefundmodal.png') }}" class="d-block w-100 rounded shadow" alt="Modal Refund">
+                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksirefundmodal.png') }}" class="d-block mx-auto w-100 rounded shadow" alt="Modal Refund">
                                             </div>
                                             <div class="carousel-item">
-                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksirefundvaldiasi.png') }}" class="d-block w-100 rounded shadow" alt="Validasi Refund">
+                                                <img src="{{ asset('assets/img/panduan_admin/transaksi/transaksirefundvaldiasi.png') }}" class="d-block mx-auto w-100 rounded shadow" alt="Validasi Refund">
                                             </div>
                                         </div>
+
                                         <button class="carousel-control-prev" type="button" data-bs-target="#carouselTransaksi" data-bs-slide="prev">
                                             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                             <span class="visually-hidden">Previous</span>
@@ -275,12 +313,15 @@
                                             <span class="visually-hidden">Next</span>
                                         </button>
                                     </div>
+
                                     <p class="text-muted small mt-2">Contoh tampilan halaman transaksi</p>
                                 </div>
                             </div>
+
                         </div>
                     </div>
                 </div>
+
 
                 <!-- Tab 4: Barang Rusak -->
                 <div class="tab-pane fade" id="rusak" role="tabpanel">
@@ -293,7 +334,7 @@
                         </div>
                         <div class="card-body">
                             <div class="row align-items-center mb-4">
-                                <div class="col-md-8">
+                                <div class="col-md-6 mb-4">
                                     <h4 class="text-primary">Langkah-langkah:</h4>
                                     <ol class="list-group list-group-numbered">
                                         <li class="list-group-item border-0 px-0">Buka halaman <strong>Barang Rusak / Reject</strong></li>
@@ -310,7 +351,7 @@
                                         <li class="list-group-item border-0 px-0">Data akan tersimpan dan dapat dilihat di <strong>Data Barang Rusak / Reject</strong></li>
                                     </ol>
                                 </div>
-                                <div class="col-md-4 text-center">
+                                <div class="col-12 text-center">
                                     <div id="carouselRusak" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
                                         <div class="carousel-inner">
                                             <div class="carousel-item active">
@@ -350,7 +391,7 @@
                         </div>
                         <div class="card-body">
                             <div class="row align-items-center mb-4">
-                                <div class="col-md-8">
+                                <div class="col-md-6  mb-4">
                                     <h4 class="text-primary">Langkah-langkah:</h4>
                                     <ol class="list-group list-group-numbered">
                                         <li class="list-group-item border-0 px-0">Buka halaman <strong>Export Barang Keluar</strong></li>
@@ -366,7 +407,7 @@
                                         <li class="list-group-item border-0 px-0">File akan diunduh secara otomatis</li>
                                     </ol>
                                 </div>
-                                <div class="col-md-4 text-center">
+                                <div class="col-12 text-center">
                                     <div id="carouselExport" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
                                         <div class="carousel-inner">
                                             <div class="carousel-item active">
@@ -499,93 +540,85 @@
         </div>
     </div>
 
-    <!-- Help Section -->
-    <div class="row mt-5">
-        <div class="col-12">
-            <div class="card bg-light">
-                <div class="card-body text-center">
-                    <h4 class="text-primary mb-3">Butuh Bantuan Lebih Lanjut?</h4>
-                    <p class="mb-3">Jika mengalami kesulitan atau memiliki pertanyaan tentang penggunaan aplikasi, silakan hubungi:</p>
-                    <div class="row justify-content-center">
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <i class="ri-phone-line display-6 text-primary mb-3"></i>
-                                    <h5>Telepon</h5>
-                                    <p class="mb-0">(021) 1234-5678</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <i class="ri-whatsapp-line display-6 text-success mb-3"></i>
-                                    <h5>WhatsApp</h5>
-                                    <p class="mb-0">0812-3456-7890</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <i class="ri-mail-line display-6 text-danger mb-3"></i>
-                                    <h5>Email</h5>
-                                    <p class="mb-0">support@perusahaan.com</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <style>
     /* Override semua komponen Primary menjadi warna orange */
     :root {
-        --bs-primary: #FF9800 !important;
-        --bs-primary-rgb: 255, 152, 0 !important;
+        --bs-primary: #FF9800;
+        --bs-primary-rgb: 255, 152, 0;
     }
 
-    .bg-primary { background-color: #FF9800 !important; }
-    .text-primary { color: #FF9800 !important; }
-    .border-primary { border-color: #FF9800 !important; }
-    .btn-primary {
-        background-color: #FF9800 !important;
-        border-color: #FF9800 !important;
+    /* Header lebih lembut */
+    .bg-primary {
+        background-color: #ffa726 !important;
     }
-    .btn-primary:hover {
-        background-color: #e68900 !important;
-        border-color: #e68900 !important;
-    }
-    .badge.bg-primary { background-color: #FF9800 !important; }
 
-    /* Nav tab active color */
+    /* Teks lebih besar agar mudah dibaca */
+    body, p, li, .card-body, .list-group-item {
+        font-size: 17px;
+        line-height: 1.6;
+    }
+
+    h3.card-title, h4, h5 {
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .nav-tabs .nav-link {
+        font-size: 18px;
+        padding: 14px 10px;
+    }
+
+    /* Tab aktif dibuat lebih jelas */
     .nav-tabs .nav-link.active {
-        color: #FF9800 !important;
+        background-color: #FFF3E0 !important;
+        border-color: #FF9800 !important;
+        font-weight: 700;
     }
 
-    /* Carousel styling improvements */
-    .carousel-control-prev,
-    .carousel-control-next {
-        width: 5%;
+    /* Elemen interaktif diperbesar */
+    button, .btn, .badge {
+        font-size: 16px !important;
     }
 
+    /* Carousel Gambar Standar */
+    .carousel-item img {
+        width: 100%;
+        max-height: 360px;
+        object-fit: contain;
+        background: #FFF7ED;
+        border-radius: 12px;
+        padding: 8px;
+    }
+
+    /* Kontrol navigasi carousel lebih besar */
     .carousel-control-prev-icon,
     .carousel-control-next-icon {
-        background-color: rgba(0,0,0,0.3);
+        width: 45px;
+        height: 45px;
+        background-color: rgba(0,0,0,0.35);
         border-radius: 50%;
-        padding: 10px;
     }
 
-    .carousel-item img {
-        transition: transform 0.5s ease;
+    /* Numbered step lebih besar dan jelas */
+    .list-group-numbered > .list-group-item::before {
+        color: white;
+        font-weight: bold;
     }
 
-    .carousel:hover .carousel-item img {
-        transform: scale(1.02);
+    /* Tips box dibuat lebih friendly */
+    .alert-info {
+        background-color: #FFF3E0 !important;
+        color: #6A4E23;
+        border-left: 5px solid #FF9800;
     }
+
+    /* Spasi lebih lega antar section */
+    .row.mb-4, .alert {
+        margin-bottom: 32px !important;
+    }
+
 </style>
 
 <script>

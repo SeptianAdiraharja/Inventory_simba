@@ -94,6 +94,23 @@ Route::middleware('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| Notifkasi (Authenticated Users)
+|--------------------------------------------------------------------------
+*/
+Route::get('/notifications/count', function () {
+    return response()->json([
+        'pending' => \App\Models\Cart::where('status', 'pending')->count(),
+        'approved' => \App\Models\Cart::whereIn('status', ['approved', 'approved_partially'])
+            ->whereHas('user', fn($u) => $u->where('role', 'pegawai'))
+            ->whereHas('cartItems', fn($q) => $q->whereNull('scanned_at'))
+            ->whereDoesntHave('cartItems', fn($q) =>
+                $q->whereNotNull('scanned_at')
+            , '=', 0)
+            ->count(),
+    ]);
+})->name('notifications.count');
+/*
+|--------------------------------------------------------------------------
 | Super Admin Routes
 |--------------------------------------------------------------------------
 */
