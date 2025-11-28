@@ -189,7 +189,7 @@
                         <td>{{ $i+1 }}</td>
                         <td>{{ $row->item->name }}</td>
                         <td>{{ $row->supplier->name ?? '-' }}</td>
-                        <td>{{ $row->created_at->format('d-m-Y') }}</td>
+                        <td>{{ $row->tanggal_masuk->format('d-m-Y') }}</td>
                         <td>{{ $row->quantity }}</td>
                         <td>{{ $row->item->unit->name ?? '-' }}</td>
                         <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>

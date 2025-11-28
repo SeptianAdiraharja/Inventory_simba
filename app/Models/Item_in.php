@@ -13,12 +13,14 @@ class Item_in extends Model
         'item_id',
         'quantity',
         'supplier_id',
+        'tanggal_masuk',
         'expired_at',
         'created_by',
     ];
 
     protected $casts = [
     'expired_at' => 'datetime',
+    'tanggal_masuk' => 'datetime',
     ];
 
     public function getStatusAttribute()

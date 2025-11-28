@@ -33,7 +33,7 @@
     </div>
 
     <div class="card-body bg-white p-4 rounded-bottom-4">
-      <form action="{{ route('super_admin.item_ins.store') }}" method="POST" x-data="{ useExpired: true }">
+      <form action="{{ route('super_admin.item_ins.store') }}" method="POST" x-data="{ useTanggalMasuk: true, useExpired: true }">
         @csrf
 
         {{-- Item --}}
@@ -69,6 +69,26 @@
                  placeholder="Isi jumlah barang" required
                  style="border-left:4px solid #FF9800 !important;">
           @error('quantity') <small class="text-danger">{{ $message }}</small> @enderror
+        </div>
+
+        {{-- tanggal masuk --}}
+         <div class="mb-4">
+          <label class="form-label fw-semibold text-dark">Tanggal Kedaluwarsa</label>
+          <div x-show="useTanggalMasuk" x-transition>
+            <input type="date" name="tanggal_masuk" id="tanggal_masuk"
+                   min="{{ \Carbon\Carbon::today()->toDateString() }}"
+                   value="{{ old('tanggal_masuk') }}"
+                   class="form-control shadow-sm border-0"
+                   style="border-left:4px solid #FF9800 !important;"
+                   x-bind:required="useTanggalMasuk">
+          </div>
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" id="toggleTanggalMasuk" x-model="useTanggalMasuk">
+            <label class="form-check-label text-muted" for="toggleTanggalMasuk">
+              Gunakan tanggal Masuk
+            </label>
+          </div>
+          @error('tanggal_masuk') <small class="text-danger">{{ $message }}</small> @enderror
         </div>
 
         {{-- Tanggal Expired --}}

@@ -68,6 +68,23 @@
                  style="border-left:4px solid #FF9800 !important;" required>
         </div>
 
+         {{-- TanggalMasuk --}}
+        <div class="mb-4">
+          <label class="form-label fw-semibold text-dark">Tanggal Masuk</label>
+          <div x-show="useTanggalMasuk" x-transition>
+            <input type="date" name="tanggal_masuk" id="tanggal_masuk"
+                   min="{{ \Carbon\Carbon::today()->toDateString() }}"
+                   value="{{ $item_in->tanggal_masuk ? $item_in->tanggal_masuk->format('Y-m-d') : '' }}"
+                   class="form-control shadow-sm border-0"
+                   style="border-left:4px solid #FF9800 !important;"
+                   x-bind:required="useTanggalMasuk" x-bind:disabled="!useTanggalMasuk">
+          </div>
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" id="tonggleTanggalMasuk" x-model="useTanggalMasuk">
+            <label class="form-check-label text-muted" for="tonggleTanggalMasuk">Gunakan tanggal Masuk</label>
+          </div>
+        </div>
+
         {{-- Expired --}}
         <div class="mb-4">
           <label class="form-label fw-semibold text-dark">Tanggal Kedaluwarsa</label>

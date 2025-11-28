@@ -87,6 +87,7 @@ class Item_inController extends Controller
             'item_id'     => 'required|exists:items,id',
             'quantity'    => 'required|integer|min:1',
             'supplier_id' => 'required|exists:suppliers,id',
+            'tanggal_masuk'  => 'nullable|date|after_or_equal:today',
             'expired_at'  => 'nullable|date|after_or_equal:today',
         ]);
 
@@ -94,6 +95,7 @@ class Item_inController extends Controller
             'item_id'     => $request->item_id,
             'quantity'    => $request->quantity,
             'supplier_id' => $request->supplier_id,
+            'tanggal_masuk' => $request->tanggal_masuk ?? null,
             'expired_at'  => $request->expired_at ?? null,
             'created_by'  => Auth::id(),
         ]);
@@ -126,6 +128,7 @@ class Item_inController extends Controller
             'item_id'     => 'required|exists:items,id',
             'quantity'    => 'required|integer|min:1',
             'supplier_id' => 'required|exists:suppliers,id',
+            'tanggal_masuk'  => 'nullable|date|after_or_equal:today',
             'expired_at'  => 'nullable|date|after_or_equal:today',
         ]);
 
@@ -152,6 +155,7 @@ class Item_inController extends Controller
             'item_id'     => $request->item_id,
             'quantity'    => $request->quantity,
             'supplier_id' => $request->supplier_id,
+            'tanggal_masuk' => $request->tanggal_masuk,
             'expired_at'  => $request->expired_at,
         ]);
 
