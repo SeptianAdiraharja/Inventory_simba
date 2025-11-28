@@ -13,7 +13,7 @@
         <div class="bg-white bg-opacity-75 rounded-4 p-4 shadow">
           <h1 class="fw-bold text-dark mb-3">Sistem Informasi Manajemen Barang</h1>
           <p class="text-dark mb-4">
-            Sistem digital untuk mengelola data aset UPTD Pelatihan Kesehatan agar lebih efisien, transparan, dan terintegrasi.
+            Sistem digital untuk mengelola data barang UPTD Pelatihan Kesehatan agar lebih efisien, transparan, dan terintegrasi.
           </p>
           <a href="#tutorial" class="btn bg-dark bg-opacity-75 text-white fw-semibold px-4 py-2 rounded-3 border-0">
             <i class="bi bi-info-circle me-2"></i> Lihat Panduan Penggunaan
@@ -63,16 +63,16 @@
       <!-- 🧾 Teks Deskripsi -->
       <div class="col-lg-6" data-aos="fade-left">
         <div class="about-text">
-          <h4 class="fw-bold text-dark mb-3">Digitalisasi Pengelolaan Aset</h4>
+          <h4 class="fw-bold text-dark mb-3">Digitalisasi Pengelolaan barang</h4>
           <p>
-            Sistem ini membantu proses pendataan, pelaporan, dan pemantauan aset milik UPTD Pelatihan Kesehatan secara digital,
+            Sistem ini membantu proses pendataan, pelaporan, dan pemantauan arus penggunaan barang milik UPTD Pelatihan Kesehatan secara digital,
             sehingga pengelolaan menjadi lebih efisien, akurat, dan transparan.
           </p>
           <ul class="list-unstyled mt-3">
-            <li><i class="bi bi-check-circle-fill text-warning me-2"></i> Pendataan aset otomatis dan terintegrasi.</li>
+            <li><i class="bi bi-check-circle-fill text-warning me-2"></i> Pendataan barang otomatis dan terintegrasi.</li>
             <li><i class="bi bi-check-circle-fill text-warning me-2"></i> Mengurangi risiko kehilangan atau duplikasi data.</li>
             <li><i class="bi bi-check-circle-fill text-warning me-2"></i> Laporan real-time untuk audit dan evaluasi.</li>
-            <li><i class="bi bi-check-circle-fill text-warning me-2"></i> Efisiensi administrasi aset berbasis web.</li>
+            <li><i class="bi bi-check-circle-fill text-warning me-2"></i> Efisiensi administrasi barang berbasis web.</li>
           </ul>
         </div>
       </div>
@@ -103,42 +103,36 @@
   </div>
 </section>
 
- <!-- 📘 TUTORIAL -->
-    <section id="tutorial" class="bg-white py-5 text-black">
+ <!-- 🎥 TUTORIAL -->
+<section id="tutorial" class="bg-white py-5 text-black">
     <div class="container" data-aos="fade-up">
+
         <div class="section-title text-center mb-5">
-        <h2 class="fw-bold">Tata Cara Penggunaan Bagi Pegawai</h2>
-        <p>Panduan langkah-langkah penggunaan sistem SIMBA untuk pegawai.</p>
+            <h2 class="fw-bold">Tata Cara Penggunaan Bagi Pegawai</h2>
+            <p>Panduan penggunaan sistem SIMBA melalui video interaktif.</p>
         </div>
 
-        <div class="row gy-5">
-        @php
-            $tutorials = [
-            ['judul' => 'Login ke Sistem', 'deskripsi' => 'Gunakan akun yang diberikan oleh admin untuk login ke sistem SIMBA.', 'gambar' => 'assets/img/tutorial/login-pegawai.png'],
-            ['judul' => 'Masuk ke Dashboard Pegawai', 'deskripsi' => 'Setelah login, Anda akan diarahkan ke Dashboard Pegawai untuk mengakses fitur utama.', 'gambar' => 'assets/img/tutorial/dashboard-pegawai.png'],
-            ['judul' => 'Pilih Barang dan Masukkan ke Keranjang', 'deskripsi' => 'Pilih barang yang dibutuhkan dan tambahkan ke keranjang untuk proses permintaan.', 'gambar' => 'assets/img/tutorial/keranjang.png'],
-            ['judul' => 'Lihat Status Barang', 'deskripsi' => 'Pantau status barang yang telah diajukan pada menu Status Barang.', 'gambar' => 'assets/img/tutorial/status-barang.png'],
-            ['judul' => 'Pengajuan Diterima', 'deskripsi' => 'Setelah diajukan, barang akan diproses oleh pihak gudang.', 'gambar' => 'assets/img/tutorial/laporan.png'],
-            ['judul' => 'Kelola Akun Pegawai', 'deskripsi' => 'Perbarui profil dan kelola informasi akun sesuai kebutuhan.', 'gambar' => 'assets/img/tutorial/akun.png'],
-            ];
-        @endphp
-
-        @foreach ($tutorials as $step)
-            <div class="col-lg-4 col-md-6 d-flex align-items-stretch" data-aos="fade-up">
-            <div class="card border-0 shadow-sm w-100 h-100 tutorial-card">
-                <div class="overflow-hidden rounded-top">
-                <img src="{{ asset($step['gambar']) }}" class="card-img-top tutorial-img" alt="{{ $step['judul'] }}">
-                </div>
-                <div class="card-body">
-                <h5 class="fw-bold text-dark">{{ $step['judul'] }}</h5>
-                <p class="text-muted">{{ $step['deskripsi'] }}</p>
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="ratio ratio-16x9 shadow-lg rounded-4 overflow-hidden">
+                    <iframe 
+                        src="https://www.youtube.com/embed/fSorx0s5jG0" 
+                        title="Tutorial SIMBA"
+                        allowfullscreen
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        class="border-0">
+                    </iframe>
                 </div>
             </div>
-            </div>
-        @endforeach
         </div>
+
+        <div class="text-center mt-4">
+            <p class="text-muted">Jika video tidak muncul, pastikan koneksi internet stabil atau hubungi administrator.</p>
+        </div>
+
     </div>
-    </section>
+</section>
+
 
 <!-- 📍 LOKASI -->
 <section id="lokasi" class="py-5 bg-white text-black">

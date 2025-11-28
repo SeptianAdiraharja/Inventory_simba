@@ -28,7 +28,7 @@
     <div class="col-12">
       <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body">
-          <h4 class="fw-bold mb-1">Buku Panduan SIMBA</h4>
+          <h4 class="fw-bold mb-1">Buku Panduan Super Admin SIMBA</h4>
           <p class="text-muted mb-0">Panduan penggunaan sistem informasi manajemen barang - penjelasan tiap halaman, fitur lanjutan, dan cara penggunaan.</p>
         </div>
       </div>
@@ -53,13 +53,13 @@
             <div id="carouselDashboard" class="carousel slide mt-3" data-bs-ride="carousel">
               <div class="carousel-inner rounded-3 shadow-sm">
                 <div class="carousel-item active">
-                  <img src="/mnt/data/ini.png" class="d-block w-100" alt="Dashboard screenshot 1">
+                  <img src="{{ asset('assets/img/manual_book/mbbarang1.png') }}" class="d-block w-100" alt="Dashboard screenshot 1">
                 </div>
                 <div class="carousel-item">
-                  <img src="/mnt/data/ini.png" class="d-block w-100" alt="Dashboard screenshot 2">
+                  <img src="{{ asset('assets/img/manual_book/mbbarang2.png') }}" class="d-block w-100" alt="Dashboard screenshot 2">
                 </div>
                 <div class="carousel-item">
-                  <img src="/mnt/data/ini.png" class="d-block w-100" alt="Dashboard screenshot 3">
+                  <img src="{{ asset('assets/img/manual_book/mbbarang3.png') }}" class="d-block w-100" alt="Dashboard screenshot 3">
                 </div>
               </div>
               <button class="carousel-control-prev" type="button" data-bs-target="#carouselDashboard" data-bs-slide="prev">
@@ -91,7 +91,7 @@
             </ul>
 
             <div class="mt-3">
-              <img src="/mnt/data/ini.png" class="img-fluid rounded" alt="Kategori example">
+              <img src="{{ asset('assets/img/manual_book/mbkategori.gif') }}" class="img-fluid rounded" alt="Kategori example">
             </div>
           </div>
         </div>
@@ -118,18 +118,8 @@
                 <li>Muncul preview label — pilih jumlah label / ukuran kertas (A4 / roll).</li>
                 <li>Tekan <code>Print</code> — gunakan print CSS khusus agar hasil rapi.</li>
               </ol>
-
-              <pre class="bg-light p-2 rounded"><code>// Contoh route & controller (pseudo)
-Route::get('items/{id}/barcode', [ItemController::class,'barcode']);
-public function barcode($id){
-  $item = Item::findOrFail($id);
-  $barcode = DNS1D::getBarcodePNG($item->code, 'C39');
-  return view('items.barcode', compact('item','barcode'));
-}
-</code></pre>
-
               <div class="mt-2">
-                <img src="/mnt/data/ini.png" class="img-fluid rounded" alt="Barcode preview">
+                <img src="{{ asset('assets/img/manual_book/mbbarcode.gif') }}" class="img-fluid rounded" alt="Barcode preview">
               </div>
             </div>
 
@@ -145,24 +135,19 @@ public function barcode($id){
                 <li>Konfirmasi import — data akan disimpan (gunakan DB transaction).</li>
               </ol>
 
-              <pre class="bg-light p-2 rounded"><code>// Contoh pseudo (Laravel Excel)
-use Maatwebsite\Excel\Facades\Excel;
-Excel::import(new ItemsImport, $request->file('file'));
-</code></pre>
-
               <div class="mt-2">
-                <img src="/mnt/data/ini.png" class="img-fluid rounded" alt="Import excel">
+                <img src="{{ asset('assets/img/manual_book/mbimport.gif') }}" class="img-fluid rounded" alt="Import excel">
               </div>
             </div>
 
             {{-- SUB: Filter & Monitoring Expired / Supplier --}}
             <div class="mb-3">
               <h6 class="fw-semibold">Filter & Monitoring</h6>
-              <p class="text-muted">Terdapat opsi filter untuk melihat:</p>
+              <p class="text-muted">Tersedia opsi filter untuk memudahkan pemantauan stok barang, di antaranya:</p>
               <ul>
-                <li>Semua barang dari supplier tertentu</li>
-                <li>Barang yang sudah <strong>kedaluwarsa</strong> dan yang <strong>hampir kedaluwarsa</strong></li>
-                <li>Barang berdasarkan kategori atau stok minimum</li>
+                <li>Filter berdasarkan rentang tanggal (Dari Tanggal – Sampai Tanggal)</li>
+                <li>Urutkan stok barang (Semua, Paling Banyak, Paling Sedikit)</li>
+                <li>Pencarian barang berdasarkan nama</li>
               </ul>
 
               <div class="alert alert-warning">
@@ -175,10 +160,13 @@ Excel::import(new ItemsImport, $request->file('file'));
               <div id="carouselBarang" class="carousel slide" data-bs-ride="carousel">
                 <div class="carousel-inner rounded-3 shadow-sm">
                   <div class="carousel-item active">
-                    <img src="/mnt/data/ini.png" class="d-block w-100" alt="Barang screen 1">
+                    <img src="{{ asset('assets/img/manual_book/mbbarangfilter.png') }}" class="d-block w-100" alt="Barang screen 1">
                   </div>
                   <div class="carousel-item">
-                    <img src="/mnt/data/ini.png" class="d-block w-100" alt="Barang screen 2">
+                    <img src="{{ asset('assets/img/manual_book/mbbarangfilter1.png') }}" class="d-block w-100" alt="Barang screen 2">
+                  </div>
+                  <div class="carousel-item">
+                    <img src="{{ asset('assets/img/manual_book/mbbarangfilter2.png') }}" class="d-block w-100" alt="Barang screen 2">
                   </div>
                 </div>
                 <button class="carousel-control-prev" type="button" data-bs-target="#carouselBarang" data-bs-slide="prev">
@@ -203,7 +191,7 @@ Excel::import(new ItemsImport, $request->file('file'));
           <div class="card-body">
             <p>Form untuk mencatat penerimaan barang dari supplier. Pastikan mencatat Tanggal, Supplier, Item, dan Qty. Data ini akan menambah stok pada item terkait.</p>
 
-            <img src="/mnt/data/ini.png" class="img-fluid rounded" alt="Barang masuk">
+            <img src="{{ asset('assets/img/manual_book/mbbarangmasuk.gif') }}" class="img-fluid rounded" alt="Barang masuk">
           </div>
         </div>
       </section>
@@ -223,18 +211,10 @@ Excel::import(new ItemsImport, $request->file('file'));
               <li>Audit: Simpan log perubahan (siapa menonaktifkan atau menghapus) untuk kepentingan keamanan.</li>
             </ul>
 
-            <pre class="bg-light p-2 rounded"><code>// Model User
-use Illuminate\\Database\\Eloquent\\SoftDeletes;
-class User extends Authenticatable {
-  use SoftDeletes;
-}
-// Contoh soft delete
-User::find($id)->delete(); // soft delete
-User::withTrashed()->find($id)->restore(); // restore
-</code></pre>
+          
 
             <div class="mt-3">
-              <img src="/mnt/data/ini.png" class="img-fluid rounded" alt="List pengguna">
+              <img src="{{ asset('assets/img/manual_book/mblistpegawai.gif') }}" class="img-fluid rounded" alt="List pengguna">
             </div>
           </div>
         </div>
@@ -264,7 +244,7 @@ User::withTrashed()->find($id)->restore(); // restore
             </div>
 
             <div class="mt-3">
-              <img src="/mnt/data/ini.png" class="img-fluid rounded" alt="Export example">
+              <img src="{{ asset('assets/img/manual_book/mbexport.gif') }}" class="img-fluid rounded" alt="Export example">
             </div>
 
             <p class="mt-3 text-muted">Implementasi: bisa menggunakan package dompdf/laravel-dompdf untuk PDF dan Maatwebsite Excel untuk Excel. Simpan template kop surat di DB agar bisa dipilih sebelum export.</p>
@@ -358,7 +338,17 @@ User::withTrashed()->find($id)->restore(); // restore
 .breadcrumb-link{position:relative;transition:all 0.25s ease;}
 .breadcrumb-link::after{content:'';position:absolute;bottom:-2px;left:0;width:0;height:2px;background:#FF9800;transition:width 0.25s ease;}
 .breadcrumb-link:hover::after{width:100%;}
-.carousel-inner img{height:360px;object-fit:cover;}
+#carouselDashboard .carousel-inner {
+  max-height: 450px;
+}
+
+#carouselDashboard .carousel-item img {
+  object-fit: contain;
+  width: 100%;
+  height: 450px;
+  background-color: #ffffff;
+  padding: 10px;
+}
 </style>
 
 @endsection
