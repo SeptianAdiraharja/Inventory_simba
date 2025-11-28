@@ -12,7 +12,7 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\PermintaanController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\KopSuratController;
-use App\Models\Visitor; 
+use App\Models\Visitor;
 use App\Models\User;
 use App\Http\Controllers\ManualBookController;
 use Illuminate\Support\Facades\Log;
@@ -28,6 +28,7 @@ use App\Http\Controllers\Role\admin\ProdukController;
 use App\Http\Controllers\Role\admin\RejectController;
 use App\Http\Controllers\Role\admin\TransaksiItemOutController;
 use App\Http\Controllers\Role\admin\AdminPegawaiController;
+use App\Http\Controllers\Role\Admin\ManualBookAdminController;
 use App\Http\Controllers\SearchController;
 
 /*
@@ -223,7 +224,7 @@ Route::middleware(['auth', 'role:admin'])
     // Transaksi & Refund
     Route::controller(TransaksiItemOutController::class)->group(function () {
         Route::get('/transaksi', 'index')->name('transaksi.out');
-        Route::get('/transaksi/search', 'search')->name('transaksi.search');
+        Route::get('/transaksi/search', 'index')->name('transaksi.search');
         Route::post('/refund', 'refundBarang')->name('pegawai.refund');
         Route::post('/edit-item', 'updateItem')->name('pegawai.updateItem');
         Route::post('/guest/refund', 'refundBarangGuest')->name('guest.refund');
@@ -238,6 +239,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/rejects/process', 'processScan')->name('rejects.process');
         Route::get('/rejects/check/{barcode}', 'checkBarcode')->name('rejects.check');
     });
+
+     Route::get('/manual-book', [ManualBookAdminController::class, 'index'])->name('manual_book.index');
 });
 
 /*

@@ -191,6 +191,13 @@
                 <span>Data Barang Rusak / Reject</span>
             </a>
         </li>
+
+        <li class="menu-item {{ Route::is('manual_book.index') ? 'active' : '' }}">
+            <a href="{{ route('admin.manual_book.index') }}" class="menu-link d-flex align-items-center text-white position-relative">
+                <i class="ri ri-book-open-line me-2"></i>
+                <span>Panduan Pemakaian</span>
+            </a>
+        </li>
         @endif
     </ul>
 

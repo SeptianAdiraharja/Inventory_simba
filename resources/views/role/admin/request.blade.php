@@ -3,7 +3,9 @@
 @section('content')
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
-  {{-- 🔍 Info Pencarian --}}
+  {{-- ============================================================
+  🔍 INFO PENCARIAN
+  ============================================================ --}}
   @if(isset($search) && $search)
   <div class="alert alert-warning border-0 shadow-sm rounded-3">
     <i class="bi bi-search me-1"></i> Menampilkan hasil pencarian untuk:
@@ -14,7 +16,9 @@
   </div>
   @endif
 
-  {{-- 🧭 BREADCRUMB --}}
+  {{-- ============================================================
+  🧭 BREADCRUMB NAVIGATION
+  ============================================================ --}}
   <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 smooth-fade">
     <div class="d-flex align-items-center flex-wrap gap-2">
       <div class="breadcrumb-icon d-flex align-items-center justify-content-center rounded-circle"
@@ -41,7 +45,9 @@
     </div>
   </div>
 
-  {{-- 📦 DAFTAR PERMINTAAN --}}
+  {{-- ============================================================
+  📦 DAFTAR PERMINTAAN BARANG
+  ============================================================ --}}
   <div class="card shadow-sm border-0 rounded-4 smooth-card animate__animated animate__fadeInUp">
     <div class="card-header border-0 d-flex justify-content-between align-items-center px-4 py-3 rounded-top-4"
          style="background-color:#FF9800;">
@@ -68,9 +74,14 @@
 
         <tbody>
           @forelse($requests as $index => $req)
+          {{-- ============================================================
+          BARIS UTAMA PERMINTAAN
+          ============================================================ --}}
           <tr id="cart-row-{{ $req->cart_id }}">
+            {{-- Nomor Urut --}}
             <td class="text-center text-muted fw-semibold">{{ $requests->firstItem() + $index }}</td>
 
+            {{-- Informasi Pengguna --}}
             <td>
               <strong class="text-dark">{{ $req->name }}</strong><br>
               <small class="text-muted">
@@ -78,8 +89,10 @@
               </small>
             </td>
 
+            {{-- Email Pengguna --}}
             <td class="text-muted">{{ $req->email }}</td>
 
+            {{-- Status Permintaan --}}
             <td class="text-center">
               <span id="main-status-{{ $req->cart_id }}"
                     class="badge rounded-pill px-3 py-2 fw-semibold
@@ -92,8 +105,10 @@
               </span>
             </td>
 
+            {{-- Jumlah Total Barang --}}
             <td class="text-center fw-semibold text-dark">{{ $req->total_quantity }}</td>
 
+            {{-- Tombol Aksi --}}
             <td class="text-center">
               <div class="btn-group">
                 <button class="btn btn-sm rounded-pill dropdown-toggle fw-semibold text-dark border"
@@ -114,12 +129,18 @@
             </td>
           </tr>
 
-          {{-- DETAIL --}}
+          {{-- ============================================================
+          BARIS DETAIL (AKAN DIMUAT SAAT DIKLIK)
+          ============================================================ --}}
           <tr class="collapse-row">
             <td colspan="7" class="p-0">
               <div id="detail-content-{{ $req->cart_id }}"
                    class="detail-content-wrapper collapse bg-light border-top"
                    data-cart-id="{{ $req->cart_id }}" data-loaded="false">
+                {{--
+                  KONTEN DETAIL AKAN DIMUAT MELALUI AJAX
+                  Biasanya memuat partial view yang berisi tabel detail barang
+                --}}
                 <p class="text-center text-muted m-0 p-3">
                   Klik "Lihat Semua Barang" untuk membuka detail.
                 </p>
@@ -128,6 +149,9 @@
           </tr>
 
           @empty
+          {{-- ============================================================
+          STATE KOSONG - TIDAK ADA DATA
+          ============================================================ --}}
           <tr>
             <td colspan="7" class="text-center py-5">
               <div class="text-muted">
@@ -143,13 +167,17 @@
     </div>
   </div>
 
-  {{-- PAGINATION --}}
+  {{-- ============================================================
+  PAGINATION
+  ============================================================ --}}
   <div class="mt-4 d-flex justify-content-center">
     {{ $requests->links('pagination::bootstrap-5') }}
   </div>
 </div>
 
-{{-- 🟥 MODAL TOLAK --}}
+{{-- ============================================================
+🟥 MODAL TOLAK BARANG
+============================================================ --}}
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow rounded-4">
@@ -186,55 +214,93 @@
   </div>
 </div>
 
-{{-- SCRIPT --}}
+{{-- ============================================================
+SCRIPTS
+============================================================ --}}
 @push('scripts')
 <script src="{{ asset('js/admin-request.js') }}"></script>
 @endpush
 
-{{-- STYLE --}}
+{{-- ============================================================
+STYLES
+============================================================ --}}
 @push('styles')
 <style>
+/*
+  VARIABEL CSS DAN STYLE GLOBAL
+  Warna utama: #FF9800 (Orange)
+  Warna sekunder: #FFF3E0 (Light Orange Background)
+*/
+
 body {
   background-color: #fffaf4;
 }
+
+/* Animasi fade in halus */
 .smooth-fade {
   animation: smoothFade 0.8s ease;
 }
+
 @keyframes smoothFade {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
+/* Style untuk breadcrumb */
 .breadcrumb-item + .breadcrumb-item::before {
   content: "›";
   color: #ffb74d;
   margin: 0 6px;
 }
+
 .breadcrumb-icon:hover {
   transform: scale(1.1);
   background-color: #ffecb3;
   transition: 0.3s ease;
 }
+
+/* Efek hover pada card */
 .smooth-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(255, 152, 0, 0.2);
   transition: all 0.3s ease;
 }
+
+/* Highlight baris tabel saat hover */
 .table-hover tbody tr:hover {
   background-color: #fff3e0 !important;
 }
+
+/* Style dropdown menu */
 .dropdown-menu .dropdown-item:hover {
   background-color: #fff8e1;
 }
+
+/* Style tombol */
 .btn-outline-primary:hover,
 .btn-outline-light:hover {
   background-color: #FF9800;
   color: #fff !important;
   transition: 0.3s;
 }
+
+/* Responsive design */
 @media (max-width: 768px) {
-  .breadcrumb-extra { display: none; }
-  h5 { font-size: 1rem; }
-  .table { font-size: 0.9rem; }
+  .breadcrumb-extra {
+    display: none;
+  }
+  h5 {
+    font-size: 1rem;
+  }
+  .table {
+    font-size: 0.9rem;
+  }
 }
 </style>
 @endpush

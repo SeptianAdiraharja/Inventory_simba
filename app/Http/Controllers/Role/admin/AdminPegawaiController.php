@@ -110,7 +110,6 @@ class AdminPegawaiController extends Controller
                 break;
 
             case 'paling_laris':
-                // Asumsi ada relasi item_outs untuk tracking barang laris
                 $itemsQuery->withCount(['itemOuts as total_keluar' => function($query) {
                     $query->select(DB::raw('COALESCE(SUM(quantity), 0)'));
                 }])->orderBy('total_keluar', 'desc');
@@ -146,17 +145,19 @@ class AdminPegawaiController extends Controller
         // Pagination dengan menyimpan parameter query
         $items = $itemsQuery->paginate(12)->appends($request->except('page'));
 
-        if ($items->isEmpty() && $request->has('sort') && $request->sort == 'stok_menipis') {
-            session()->flash('info', 'Tidak ada barang dengan stok menipis saat ini.');
+        // 🔥 PERBAIKAN: Pindahkan pengecekan setelah $items didefinisikan
+        if ($request->has('q') && $items->isEmpty()) {
+            session()->flash('search_warning',
+                $request->has('kategori') && $request->kategori != 'none'
+                ? "Barang dengan nama '{$request->q}' dan kategori '{$request->kategori}' tidak ditemukan."
+                : "Barang dengan nama '{$request->q}' tidak ditemukan."
+            );
+        } elseif ($request->has('kategori') && $request->kategori != 'none' && $items->isEmpty()) {
+            session()->flash('search_warning', "Tidak ada barang dalam kategori '{$request->kategori}'.");
         }
 
-        // Debug info (bisa dihapus setelah testing)
-        if ($request->has('sort')) {
-            Log::info('Filter applied', [
-                'sort' => $request->sort,
-                'total_items' => $items->total(),
-                'query' => $request->all()
-            ]);
+        if ($items->isEmpty() && $request->has('sort') && $request->sort == 'stok_menipis') {
+            session()->flash('info', 'Tidak ada barang dengan stok menipis saat ini.');
         }
 
         // Tampilkan ke view produk pegawai
@@ -164,7 +165,7 @@ class AdminPegawaiController extends Controller
             'pegawai',
             'items',
             'categories',
-            'assignedCategories' 
+            'assignedCategories'
         ));
     }
 

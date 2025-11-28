@@ -28,9 +28,28 @@ class PermintaanController extends Controller
             $query->whereIn('category_id', $assignedCategories->pluck('id'));
         }
 
-        $sort = $request->get('sort', 'stok_terbanyak');
+        // 🔥 TAMBAHKAN: Filter pencarian
+        if ($request->has('q') && !empty($request->q)) {
+            $searchTerm = $request->q;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('code', 'LIKE', "%{$searchTerm}%")
+                ->orWhereHas('category', function($categoryQuery) use ($searchTerm) {
+                    $categoryQuery->where('name', 'LIKE', "%{$searchTerm}%");
+                });
+            });
+        }
+
+        // 🔥 TAMBAHKAN: Filter kategori
+        if ($request->has('kategori') && $request->kategori != 'none') {
+            $query->whereHas('category', function($q) use ($request) {
+                $q->where('name', $request->kategori);
+            });
+        }
+
         $query->where('stock', '>', 0);
 
+        $sort = $request->get('sort', 'stok_terbanyak');
         switch ($sort) {
             case 'stok_terbanyak':
                 $query->orderBy('stock', 'desc');
@@ -59,6 +78,17 @@ class PermintaanController extends Controller
         }
 
         $items = $query->paginate(12)->appends($request->all());
+
+        // 🔥 PERBAIKAN: Pindahkan pengecekan setelah $items didefinisikan
+        if ($request->has('q') && $items->isEmpty()) {
+            session()->flash('search_warning',
+                $request->has('kategori') && $request->kategori != 'none'
+                ? "Barang dengan nama '{$request->q}' dan kategori '{$request->kategori}' tidak ditemukan."
+                : "Barang dengan nama '{$request->q}' tidak ditemukan."
+            );
+        } elseif ($request->has('kategori') && $request->kategori != 'none' && $items->isEmpty()) {
+            session()->flash('search_warning', "Tidak ada barang dalam kategori '{$request->kategori}'.");
+        }
 
         return view('role.pegawai.produk', compact('categories', 'items', 'assignedCategories'));
     }

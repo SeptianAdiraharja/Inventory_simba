@@ -4,7 +4,7 @@
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
   {{-- ======================== --}}
-  {{-- 🧭 BREADCRUMB ORANYE --}}
+  {{-- 🧭 BREADCRUMB NAVIGATION --}}
   {{-- ======================== --}}
   <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 animate__animated animate__fadeInDown smooth-fade">
     <div class="d-flex align-items-center gap-2">
@@ -34,7 +34,7 @@
   </div>
 
   {{-- ======================== --}}
-  {{-- 📦 KONTEN UTAMA --}}
+  {{-- 📦 MAIN CONTENT AREA --}}
   {{-- ======================== --}}
   <div class="card shadow-lg border-0 rounded-4 overflow-hidden animate__animated animate__fadeInUp">
     <div class="card-body bg-light">
@@ -42,7 +42,7 @@
         <i class="bi bi-box-arrow-up"></i> Export Data Barang Keluar
       </h4>
 
-      {{-- =============== FILTER DATA =============== --}}
+      {{-- =============== DATA FILTER SECTION =============== --}}
       <div class="card border-0 shadow-sm rounded-4 mb-4 animate__animated animate__fadeInUp">
         <div class="card-body bg-white p-4 rounded-4">
           <h6 class="fw-semibold text-secondary mb-3">
@@ -67,7 +67,7 @@
         </div>
       </div>
 
-       {{-- 🔹 Pilihan Kop Surat --}}
+      {{-- =============== LETTERHEAD SELECTION =============== --}}
       @if(isset($items) && count($items) > 0)
         <div class="card shadow-sm border-0 mb-4">
           <div class="card-header bg-light fw-semibold">
@@ -95,6 +95,7 @@
                 </select>
               </div>
 
+              {{-- Letterhead Preview Area --}}
               <div class="col-12">
                 <div id="kop_preview_full"
                     class="border rounded p-4 mt-3 bg-white text-center text-muted"
@@ -107,7 +108,7 @@
         </div>
       @endif
 
-      {{-- =============== HASIL FILTER =============== --}}
+      {{-- =============== FILTER RESULTS =============== --}}
       @if(isset($items) && $items->count() > 0)
       <div class="card border-0 shadow-sm rounded-4 mb-4 animate__animated animate__fadeInUp">
         <div class="card-body bg-white p-4 rounded-4">
@@ -117,16 +118,17 @@
               <span class="text-muted">({{ $startDate }} s/d {{ $endDate }})</span>
             </h6>
             <div>
-             {{-- TOMBOL EXCEL INI --}}
+              {{-- EXCEL EXPORT BUTTON --}}
               <a href="#"
                 class="btn text-white btn-sm rounded-3 shadow-sm me-2 export-excel"
                 style="background-color:#4CAF50;"
                 data-start-date="{{ $startDate }}"
-                data-end-date="{{ $endDate }}">
+                data-end-date="{{ $endDate }}"
+                data-route="{{ route('admin.barang_keluar.excel') }}">
                   <i class="bi bi-file-earmark-excel"></i> Excel
               </a>
 
-              {{-- TOMBOL PDF --}}
+              {{-- PDF EXPORT BUTTON --}}
               <form method="GET" action="{{ route('admin.barang_keluar.pdf') }}" class="d-inline" id="pdf-form">
                   <input type="hidden" name="start_date" value="{{ $startDate }}">
                   <input type="hidden" name="end_date" value="{{ $endDate }}">
@@ -139,6 +141,7 @@
             </div>
           </div>
 
+          {{-- DATA TABLE --}}
           <div class="table-responsive">
               <table class="table table-bordered align-middle text-center mb-0 table-hover">
                   <thead style="background:#FFF3E0;" class="fw-semibold">
@@ -154,23 +157,29 @@
                   <tbody>
                       @foreach ($items as $i => $itemOut)
                       @php
+                          // Initialize variables
                           $namaBarang = '';
                           $pengambil = '';
                           $jenis = '';
 
-                          // Cek apakah data dari Item_out atau Guest_carts_item
+                          /**
+                           * Determine data source and extract information
+                           * Check if data comes from Item_out or Guest_carts_item
+                           */
                           if (isset($itemOut->type)) {
                               if ($itemOut->type === 'pegawai') {
+                                  // Data from employee
                                   $namaBarang = $itemOut->item->name ?? 'Barang Dihapus';
                                   $pengambil = $itemOut->cart->user->name ?? 'Tamu/Non-User';
                                   $jenis = 'Pegawai';
                               } else {
+                                  // Data from guest
                                   $namaBarang = $itemOut->item->name ?? 'Barang Dihapus';
                                   $pengambil = $itemOut->guestCart->guest->name ?? 'Tamu';
                                   $jenis = 'Tamu';
                               }
                           } else {
-                              // Fallback untuk kompatibilitas
+                              // Fallback for compatibility
                               $namaBarang = $itemOut->item->name ?? 'Barang Dihapus';
                               $pengambil = $itemOut->cart->user->name ??
                                           ($itemOut->guestCart->guest->name ?? 'Tamu/Non-User');
@@ -196,6 +205,7 @@
         </div>
       </div>
       @elseif(request()->has('start_date') && request()->has('end_date'))
+      {{-- NO DATA MESSAGE --}}
       <div class="alert alert-warning border-0 rounded-4 shadow-sm p-3 text-center fw-semibold animate__animated animate__fadeIn">
         <i class="bi bi-exclamation-circle me-1"></i> Tidak ada data barang keluar pada rentang tanggal tersebut.
       </div>
@@ -206,125 +216,69 @@
 
 @endsection
 
-{{-- 📜 SCRIPT --}}
+{{-- ======================== --}}
+{{-- 📜 JAVASCRIPT SECTION --}}
+{{-- ======================== --}}
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const kopSelect = document.getElementById('kop_surat');
-    const kopHidden = document.getElementById('kop_surat_hidden');
-    const previewDiv = document.getElementById('kop_preview_full');
-    const excelButtons = document.querySelectorAll('.export-excel');
-    const pdfForm = document.getElementById('pdf-form');
-
-     // Inisialisasi
-    if (kopSelect) kopSelect.selectedIndex = 0;
-    if (kopHidden) kopHidden.value = '';
-
-     kopSelect?.addEventListener('change', () => {
-        const opt = kopSelect.options[kopSelect.selectedIndex];
-
-        if (!opt.value) {
-            previewDiv.innerHTML = `<em>Pilih kop surat untuk melihat preview lengkap</em>`;
-            if (kopHidden) kopHidden.value = '';
-            return;
-        }
-
-        // Update preview
-        previewDiv.innerHTML = `
-            <table style="width:100%; border:none;">
-                <tr>
-                    <td style="width:120px; text-align:center;">
-                        <img src="${opt.dataset.logo}" style="width:90px; height:100px; object-fit:contain;">
-                    </td>
-                    <td style="text-align:center; vertical-align:middle; line-height:1.5;">
-                        <div style="font-size:14px; font-weight:600;">${opt.dataset.instansi.toUpperCase()}</div>
-                        <div style="font-size:18px; font-weight:900; margin-top:4px;">${opt.dataset.unit.toUpperCase()}</div>
-                        <div style="font-size:13px; margin-top:4px;">
-                            ${opt.dataset.alamat}<br>
-                            Telepon: ${opt.dataset.telepon} <br> Website: ${opt.dataset.website} |
-                            ${opt.dataset.website ? `Email: ${opt.dataset.email}<br>` : ''}
-                            ${opt.dataset.kota}
-                        </div>
-                    </td>
-                    <td style="width:120px;"></td>
-                </tr>
-            </table>
-        `;
-
-        // Update hidden input untuk form PDF
-        if (kopHidden) {
-            kopHidden.value = opt.value;
-        }
-    });
-
-
-    // Handle tombol Excel
-    excelButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-
-            const startDate = this.getAttribute('data-start-date');
-            const endDate = this.getAttribute('data-end-date');
-            const kopSuratId = kopSelect?.value;
-
-            if (!kopSuratId) {
-                alert('Silakan pilih kop surat terlebih dahulu sebelum export Excel.');
-                return;
-            }
-
-            // Build URL dengan semua parameter
-            const url = `{{ route('admin.barang_keluar.excel') }}?start_date=${startDate}&end_date=${endDate}&kop_surat=${kopSuratId}`;
-
-            // Redirect ke URL download
-            window.location.href = url;
-        });
-    });
-
-    // Validasi form PDF
-    pdfForm?.addEventListener('submit', function(e) {
-        const selectedKop = kopSelect?.value;
-        if (!selectedKop) {
-            e.preventDefault();
-            alert('Silakan pilih kop surat terlebih dahulu sebelum export PDF.');
-            return false;
-        }
-    });
-});
-</script>
+<script src="{{ asset('js/export-barang-keluar.js') }}"></script>
 @endpush
 
+
+{{-- ======================== --}}
+{{-- 🎨 CUSTOM STYLES --}}
+{{-- ======================== --}}
 @push('styles')
 <style>
-  body { background-color: #fffaf4; }
+  /* Global Styles */
+  body {
+    background-color: #fffaf4;
+  }
 
+  /* Breadcrumb Styling */
   .breadcrumb-item + .breadcrumb-item::before {
     content: "›";
     color: #ffb74d;
     margin: 0 6px;
   }
 
-  .breadcrumb-icon { transition: 0.3s ease; }
+  .breadcrumb-icon {
+    transition: 0.3s ease;
+  }
+
   .breadcrumb-icon:hover {
     transform: scale(1.1);
     background-color: #ffecb3;
   }
 
-  .smooth-fade { animation: smoothFade 0.8s ease; }
-  @keyframes smoothFade {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+  /* Animation Classes */
+  .smooth-fade {
+    animation: smoothFade 0.8s ease;
   }
 
+  @keyframes smoothFade {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Table Styling */
   .table-hover tbody tr:hover {
     background-color: #fff3e0 !important;
     transition: 0.25s ease;
   }
 
+  /* Button Interactions */
   .btn:hover {
     transform: scale(1.03);
     transition: 0.2s ease-in-out;
   }
 
+  /* Responsive Design */
   @media (max-width:768px){
     .breadcrumb-extra{display:none;}
     h4{font-size:1.1rem;}
@@ -332,4 +286,3 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 </style>
 @endpush
-

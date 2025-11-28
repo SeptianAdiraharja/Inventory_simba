@@ -266,7 +266,9 @@
                         'admin/guests*',
                         'admin/pegawai*',
                         'admin/rejects*',
-                        'admin/produk*'
+                        'admin/produk*',
+                        'admin/transaksi*'
+
                     ];
 
                     $showSearch = false;
@@ -282,7 +284,7 @@
                 }
             @endphp
 
-            @if($showSearch)
+             @if($showSearch)
                 <!-- ============================= -->
                 <!-- 🔍 SEARCH BAR (CENTERED) -->
                 <!-- ============================= -->
@@ -296,10 +298,8 @@
                             if (request()->is('admin/guests*')) {
                                 $actionUrl = route('admin.guests.index');
                             } elseif (request()->is('admin/produk*')) {
-                                // PERBAIKAN: Cek apakah ini halaman produk guest dengan ID
                                 if (request()->is('admin/produk/guest/*')) {
-                                    // Ambil ID guest dari URL
-                                    $guestId = request()->segment(4); // segment ke-4 adalah ID guest
+                                    $guestId = request()->segment(4);
                                     $actionUrl = route('admin.produk.byGuest', $guestId);
                                 } else {
                                     $actionUrl = route('admin.produk.index');
@@ -315,11 +315,55 @@
                                 $actionUrl = route('admin.pegawai.index');
                             } elseif (request()->is('admin/rejects*')) {
                                 $actionUrl = route('admin.rejects.search');
+                             } elseif (request()->is('admin/transaksi*')) {
+                                $actionUrl = route('admin.transaksi.search');
                             } else {
                                 $actionUrl = '#';
                             }
                         }
+
+                        // Check if there are no search results
+                        $hasSearchResults = isset($items) && $items->count() > 0;
+                        $hasSearchQuery = request()->has('q') && !empty(request('q'));
+                        $hasCategoryFilter = request()->has('kategori') && request('kategori') != 'none';
                     @endphp
+
+                    {{-- NOTIFICATION ALERT --}}
+                    @if($hasSearchQuery && !$hasSearchResults)
+                        <div class="position-absolute top-0 start-50 translate-middle-x mt-5" style="z-index: 9999;">
+                            <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+                                <div class="d-flex align-items-center">
+                                    <i class="ri-alert-line me-2"></i>
+                                    <div>
+                                        <strong>Pencarian tidak ditemukan!</strong>
+                                        <div class="small">
+                                            Barang dengan nama "<strong>{{ request('q') }}</strong>"
+                                            @if($hasCategoryFilter)
+                                                dan kategori "<strong>{{ request('kategori') }}</strong>"
+                                            @endif
+                                            tidak ditemukan.
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+                                </div>
+                            </div>
+                        </div>
+                    @elseif($hasCategoryFilter && !$hasSearchResults && !$hasSearchQuery)
+                        <div class="position-absolute top-0 start-50 translate-middle-x mt-5" style="z-index: 9999;">
+                            <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
+                                <div class="d-flex align-items-center">
+                                    <i class="ri-information-line me-2"></i>
+                                    <div>
+                                        <strong>Kategori kosong!</strong>
+                                        <div class="small">
+                                            Tidak ada barang dalam kategori "<strong>{{ request('kategori') }}</strong>".
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
 
                     <form
                         action="{{ $actionUrl }}"
@@ -328,8 +372,8 @@
                         style="max-width: 600px; width: 100%; transition: all 0.2s ease;"
                         id="search-form"
                     >
+                        {{-- ... kategori dropdown dan input search ... --}}
                         @if($showCategoryDropdown && $assignedCategories->count() > 0)
-                            {{-- Dropdown kategori HANYA yang di-assign --}}
                             <select name="kategori"
                                     class="form-select border-0 bg-transparent text-secondary fw-medium"
                                     style="width: 150px; font-size: 14px; outline: none; box-shadow: none;"
@@ -342,7 +386,6 @@
                                 @endforeach
                             </select>
                         @elseif($showCategoryDropdown && $assignedCategories->count() === 0)
-                            {{-- Jika tidak ada kategori yang di-assign, tampilkan semua kategori --}}
                             @php
                                 $allCategories = \App\Models\Category::all();
                             @endphp
@@ -361,10 +404,8 @@
                             @endif
                         @endif
 
-                        {{-- Icon search --}}
                         <i class="ri ri-search-line icon-lg lh-0 me-2 text-secondary opacity-75"></i>
 
-                        {{-- Input pencarian --}}
                         <input type="text"
                             name="q"
                             class="form-control border-0 bg-transparent shadow-none text-secondary"
@@ -373,30 +414,9 @@
                             style="font-size: 14px;"
                             value="{{ request('q') }}" />
 
-                        {{-- Tombol submit tersembunyi untuk kategori dropdown --}}
                         <button type="submit" style="display: none;"></button>
                     </form>
                 </div>
-
-                @if(Auth::user()->role === 'admin' && (request()->is('admin/pegawai/*/produk') || request()->is('admin/request*') || request()->is('admin/itemout*') || request()->is('admin/pegawai*') || request()->is('admin/transaksi*') || request()->is('admin/rejects*')))
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const searchForm = document.getElementById('search-form');
-                            if (searchForm) {
-                                // Untuk halaman produk pegawai, request, itemout, pegawai, transaksi, dan rejects, form dihandle oleh JavaScript
-                                searchForm.addEventListener('submit', function(e) {
-                                    e.preventDefault();
-                                    const currentUrl = window.location.href;
-                                    const formData = new FormData(searchForm);
-                                    const searchParams = new URLSearchParams(formData);
-
-                                    // Redirect ke URL yang sama dengan parameter pencarian
-                                    window.location.href = currentUrl.split('?')[0] + '?' + searchParams.toString();
-                                });
-                            }
-                        });
-                    </script>
-                @endif
             @endif
         @endif
     @endauth

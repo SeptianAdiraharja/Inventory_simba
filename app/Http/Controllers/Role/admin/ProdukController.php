@@ -71,6 +71,13 @@ class ProdukController extends Controller
             $query->where('name', 'like', "%{$search}%");
         }
 
+        // Filter berdasarkan kategori
+        if ($request->has('kategori') && $request->kategori != 'none') {
+            $query->whereHas('category', function($q) use ($request) {
+                $q->where('name', $request->kategori);
+            });
+        }
+
         // Sorting berdasarkan parameter
         if ($request->has('sort')) {
             switch ($request->sort) {
@@ -81,7 +88,6 @@ class ProdukController extends Controller
                     $query->where('stock', '>', 0)->orderBy('stock', 'asc');
                     break;
                 case 'paling_laris':
-                    // Jika ada kolom sold_count, gunakan itu. Jika tidak, gunakan created_at sebagai fallback
                     if (Schema::hasColumn('items', 'sold_count')) {
                         $query->orderBy('sold_count', 'desc');
                     } else {
@@ -101,12 +107,10 @@ class ProdukController extends Controller
                     $query->orderBy('name', 'desc');
                     break;
                 default:
-                    // Default: stok terbanyak ke terkecil
                     $query->orderBy('stock', 'desc');
                     break;
             }
         } else {
-            // Default: stok terbanyak ke terkecil
             $query->orderBy('stock', 'desc');
         }
 
@@ -120,13 +124,17 @@ class ProdukController extends Controller
         $maxReleasePerWeek = 3;
         $isLimitReached = $releaseCountThisWeek >= $maxReleasePerWeek;
 
+        // Ambil kategori untuk dropdown
+        $assignedCategories = Category::all();
+
         return view('role.admin.produk', compact(
             'guest',
             'items',
             'cartItems',
             'releaseCountThisWeek',
             'maxReleasePerWeek',
-            'isLimitReached'
+            'isLimitReached',
+            'assignedCategories' // pastikan ini tersedia
         ));
     }
 

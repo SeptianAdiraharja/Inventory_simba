@@ -13,7 +13,7 @@ class RequestController extends Controller
     /* =======================================================
        🧭 INDEX – Daftar Request dengan Filter & Auto Cleanup
     ======================================================== */
-    public function index(Request $request)
+   public function index(Request $request)
     {
         // =========================================================
         // 🧹 Auto Cleanup – Hapus cart_items dari cart yang final > 3 hari
@@ -67,6 +67,7 @@ class RequestController extends Controller
                     ->orWhere('users.email', 'like', "%{$search}%");
                 });
             })
+
             // =========================================================
             // 🎯 Filter tambahan berdasarkan status (dropdown/tab)
             // =========================================================
@@ -83,7 +84,7 @@ class RequestController extends Controller
                 'carts.id', 'users.name', 'users.email', 'users.role',
                 'carts.status', 'carts.created_at', 'carts.updated_at'
             )
-            ->orderByDesc('carts.created_at')
+            ->orderBy('carts.created_at') 
             ->paginate(10)
             ->appends(['q' => $search, 'status' => $status]);
 

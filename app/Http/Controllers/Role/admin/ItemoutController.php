@@ -55,17 +55,17 @@ class ItemoutController extends Controller
             });
         }
 
-        // ✅ Pagination database yang benar
-        $approvedItems = $approvedItemsQuery->latest()->paginate(10);
+        // ✅ Pagination database yang benar - DIUBAH: dari latest() menjadi oldest()
+        $approvedItems = $approvedItemsQuery->oldest()->paginate(10);
 
         // 🔹 Guest items (jika masih perlu)
         $guestItemOuts = Guest::with(['guestCart.guestCartItems.item'])
             ->whereHas('guestCart.guestCartItems')
-            ->orderByDesc('created_at')
+            ->orderBy('created_at') // 🔄 DIUBAH: dari orderByDesc menjadi orderBy
             ->paginate(10);
 
         return view('role.admin.itemout', [
-            'approvedItems' => $approvedItems, // ← Pagination normal
+            'approvedItems' => $approvedItems,
             'guestItemOuts' => $guestItemOuts,
             'search' => $search,
         ]);

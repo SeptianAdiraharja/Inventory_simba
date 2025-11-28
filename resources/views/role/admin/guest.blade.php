@@ -11,13 +11,18 @@
 
 <div class="container-fluid py-4 animate__animated animate__fadeIn">
 
-  {{-- 🧭 BREADCRUMB --}}
+  {{-- ================================
+       🧭 BREADCRUMB NAVIGATION
+  ================================= --}}
   <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 smooth-fade">
     <div class="d-flex align-items-center flex-wrap gap-2">
+      {{-- Breadcrumb Icon --}}
       <div class="breadcrumb-icon d-flex align-items-center justify-content-center rounded-circle"
            style="width:38px;height:38px;background:#FFF3E0;color:#FF9800;">
         <i class="bi bi-house-door-fill fs-5"></i>
       </div>
+
+      {{-- Breadcrumb Links --}}
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0 align-items-center">
           <li class="breadcrumb-item">
@@ -32,6 +37,7 @@
       </nav>
     </div>
 
+    {{-- Timestamp --}}
     <div class="breadcrumb-extra text-end">
       <small class="text-muted">
         <i class="bi bi-calendar-check me-1"></i>{{ now()->format('d M Y, H:i') }}
@@ -39,15 +45,19 @@
     </div>
   </div>
 
-  {{-- 🧾 CARD UTAMA --}}
+  {{-- ================================
+       🧾 MAIN GUEST LIST CARD
+  ================================= --}}
   <div class="card shadow-sm border-0 rounded-4 animate__animated animate__fadeInUp smooth-card">
+
+    {{-- Card Header --}}
     <div class="card-header text-white d-flex flex-wrap justify-content-between align-items-center py-3 px-4 rounded-top-4"
          style="background-color:#FF9800;">
       <h5 class="card-title mb-0 fw-semibold d-flex align-items-center">
         <i class="bi bi-people-fill me-2 text-white"></i> Daftar Guest
       </h5>
 
-      {{-- Tombol Tambah Guest --}}
+      {{-- Add Guest Button --}}
       <button class="btn btn-light btn-sm fw-semibold rounded-pill shadow-sm px-3 smooth-btn"
               x-data
               @click="$dispatch('open-modal', 'createGuestModal')">
@@ -55,27 +65,36 @@
       </button>
     </div>
 
-    {{-- 🟠 MODAL TAMBAH GUEST --}}
+    {{-- ================================
+         🟠 CREATE GUEST MODAL
+    ================================= --}}
     <x-modal name="createGuestModal" :show="false">
       <form action="{{ route('admin.guests.store') }}" method="POST" class="p-4">
         @csrf
         <h5 class="fw-bold mb-3" style="color:#FF9800;">Tambah Guest Baru</h5>
 
+        {{-- Name Field --}}
         <div class="mb-3">
           <label class="form-label fw-semibold">Nama</label>
-          <input type="text" name="name" class="form-control rounded-3 border-2" style="border-color:#FFB74D;" required>
+          <input type="text" name="name" class="form-control rounded-3 border-2"
+                 style="border-color:#FFB74D;" required>
         </div>
 
+        {{-- Phone Field --}}
         <div class="mb-3">
           <label class="form-label fw-semibold">Nomor Telepon</label>
-          <input type="text" name="phone" class="form-control rounded-3 border-2" style="border-color:#FFB74D;" required>
+          <input type="text" name="phone" class="form-control rounded-3 border-2"
+                 style="border-color:#FFB74D;" required>
         </div>
 
+        {{-- Description Field --}}
         <div class="mb-3">
           <label class="form-label fw-semibold">Deskripsi</label>
-          <textarea name="description" class="form-control rounded-3 border-2" rows="3" style="border-color:#FFB74D;"></textarea>
+          <textarea name="description" class="form-control rounded-3 border-2" rows="3"
+                    style="border-color:#FFB74D;"></textarea>
         </div>
 
+        {{-- Action Buttons --}}
         <div class="d-flex justify-content-end gap-2 mt-3">
           <button type="button" class="btn btn-light border rounded-pill px-3 smooth-btn"
                   style="border-color:#FF9800;color:#FF9800;"
@@ -90,7 +109,9 @@
       </form>
     </x-modal>
 
-    {{-- 📋 TABEL DATA GUEST --}}
+    {{-- ================================
+         📋 GUEST DATA TABLE
+    ================================= --}}
     <div class="card-body bg-light p-4">
       <div class="table-responsive">
         <table class="table table-bordered table-hover align-middle bg-white rounded-4 overflow-hidden shadow-sm">
@@ -116,6 +137,8 @@
                 <td>{{ $guest->created_at->format('d-m-Y H:i') }}</td>
                 <td>
                   <div class="d-flex justify-content-center gap-2 flex-wrap">
+
+                    {{-- Edit Button --}}
                     <button class="btn btn-sm rounded-pill fw-semibold shadow-sm smooth-btn"
                             style="background-color:#FFF3E0;color:#FF9800;border:1px solid #FF9800;"
                             data-bs-toggle="modal"
@@ -123,6 +146,7 @@
                       <i class="bi bi-pencil-square me-1"></i> Edit
                     </button>
 
+                    {{-- Select Products Button --}}
                     <a href="{{ route('admin.produk.byGuest', $guest->id) }}"
                        class="btn btn-sm text-white fw-semibold shadow-sm rounded-pill px-3 smooth-btn"
                        style="background-color:#FF9800;">
@@ -132,10 +156,17 @@
                 </td>
               </tr>
 
-              {{-- ✏️ MODAL EDIT GUEST --}}
-              <div class="modal fade" id="editGuestModal{{ $guest->id }}" tabindex="-1" aria-labelledby="editGuestLabel{{ $guest->id }}" aria-hidden="true">
+              {{-- ================================
+                   ✏️ EDIT GUEST MODAL
+              ================================= --}}
+              <div class="modal fade" id="editGuestModal{{ $guest->id }}"
+                   tabindex="-1"
+                   aria-labelledby="editGuestLabel{{ $guest->id }}"
+                   aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                   <div class="modal-content border-0 shadow-lg rounded-4">
+
+                    {{-- Modal Header --}}
                     <div class="modal-header text-white rounded-top-4" style="background-color:#FF9800;">
                       <h5 class="modal-title fw-semibold">
                         <i class="bi bi-pencil-square me-2"></i> Edit Data Guest
@@ -143,21 +174,28 @@
                       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
 
+                    {{-- Edit Form --}}
                     <form action="{{ route('admin.guests.update', $guest->id) }}" method="POST">
                       @csrf
                       @method('PUT')
                       <div class="modal-body bg-light p-4">
                         <div class="row g-3">
+
+                          {{-- Name Field --}}
                           <div class="col-md-6">
                             <label class="form-label fw-semibold">Nama</label>
                             <input type="text" name="name" class="form-control rounded-3 border-2"
                                    style="border-color:#FFB74D;" value="{{ $guest->name }}" required>
                           </div>
+
+                          {{-- Phone Field --}}
                           <div class="col-md-6">
                             <label class="form-label fw-semibold">Telepon</label>
                             <input type="text" name="phone" class="form-control rounded-3 border-2"
                                    style="border-color:#FFB74D;" value="{{ $guest->phone }}" required>
                           </div>
+
+                          {{-- Description Field --}}
                           <div class="col-12">
                             <label class="form-label fw-semibold">Deskripsi</label>
                             <textarea name="description" class="form-control rounded-3 border-2"
@@ -166,6 +204,7 @@
                         </div>
                       </div>
 
+                      {{-- Modal Footer --}}
                       <div class="modal-footer bg-white border-0 rounded-bottom-4">
                         <button type="button" class="btn btn-light border rounded-pill px-4 smooth-btn"
                                 style="border-color:#FF9800;color:#FF9800;"
@@ -181,7 +220,9 @@
                   </div>
                 </div>
               </div>
+
             @empty
+              {{-- Empty State --}}
               <tr>
                 <td colspan="7" class="text-center py-4 text-muted">
                   <i class="bi bi-info-circle me-1"></i> Belum ada data guest
@@ -192,6 +233,7 @@
         </table>
       </div>
 
+      {{-- Pagination --}}
       <div class="mt-4 d-flex justify-content-center">
         {{ $guests->links() }}
       </div>
@@ -203,47 +245,81 @@
 
 @push('styles')
 <style>
+/* ================================
+   🎨 CUSTOM STYLES
+================================= */
+
+/* Background Color */
 body {
   background-color: #fffaf4 !important;
 }
+
+/* Breadcrumb Styling */
 .breadcrumb-item + .breadcrumb-item::before {
   content: "›";
   color: #ffb74d;
   margin: 0 6px;
 }
+
 .breadcrumb-icon:hover {
   transform: scale(1.1);
   background-color: #ffecb3;
   transition: 0.3s ease;
 }
+
+/* Table Hover Effects */
 .table-hover tbody tr:hover {
   background-color: #fff3e0 !important;
   transition: 0.2s ease;
 }
-.smooth-fade { animation: smoothFade 0.8s ease; }
-@keyframes smoothFade {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+
+/* Animation Classes */
+.smooth-fade {
+  animation: smoothFade 0.8s ease;
 }
-.smooth-card { transition: all 0.3s ease; }
+
+@keyframes smoothFade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card Hover Effects */
+.smooth-card {
+  transition: all 0.3s ease;
+}
+
 .smooth-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(255, 152, 0, 0.25);
 }
+
+/* Button Animations */
 .smooth-btn {
   transition: all 0.3s ease-in-out;
 }
+
 .smooth-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3);
 }
+
+/* Table Row Animations */
 .table-row-smooth {
   transition: all 0.25s ease;
 }
+
 .table-row-smooth:hover {
   background-color: #fff8e1 !important;
   transform: scale(1.01);
 }
+
+/* Responsive Design */
 @media (max-width:768px){
   .breadcrumb-extra{display:none;}
   h5{font-size:1rem;}

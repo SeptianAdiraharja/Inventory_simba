@@ -3,32 +3,42 @@
 @section('content')
 
 <style>
+  /* ===== VARIABLES & BASE STYLES ===== */
+  :root {
+    --primary-orange: #FF9800;
+    --light-orange: #FFB74D;
+    --warning-bg: #fff3cd;
+    --danger-bg: #f8d7da;
+    --success-color: #43A047;
+  }
+
   body {
     background-color: #f4f6f9;
   }
 
-  /* === Empty State === */
-.empty-state {
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 2rem 0;
-}
+  /* ===== EMPTY STATE STYLES ===== */
+  .empty-state {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 2rem 0;
+  }
 
-.empty-state i {
-  opacity: 0.5;
-  margin-bottom: 1rem;
-}
+  .empty-state i {
+    opacity: 0.5;
+    margin-bottom: 1rem;
+  }
 
-.empty-state h4 {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
+  .empty-state h4 {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
 
-.empty-state p {
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
+  .empty-state p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
 
+  /* ===== FILTER SECTION STYLES ===== */
   .filter-section {
     background: white;
     border-radius: 16px;
@@ -59,12 +69,12 @@
   }
 
   .filter-dropdown:hover {
-    border-color: #FF9800;
+    border-color: var(--primary-orange);
     background-color: #FFFBF5;
   }
 
   .filter-dropdown:focus {
-    border-color: #FF9800;
+    border-color: var(--primary-orange);
     box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
   }
 
@@ -81,26 +91,31 @@
     border-top: 5px solid #6B7280;
   }
 
-  /* === Breadcrumb === */
+  /* ===== BREADCRUMB STYLES ===== */
   .breadcrumb-icon {
-    width: 38px; height: 38px;
+    width: 38px;
+    height: 38px;
     background: #FFF3E0;
-    color: #FF9800;
+    color: var(--primary-orange);
     border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: 0.3s;
   }
+
   .breadcrumb-icon:hover {
     transform: scale(1.1);
     background-color: #ffecb3;
   }
+
   .breadcrumb-item + .breadcrumb-item::before {
     content: "›";
     color: #ffb74d;
     margin: 0 6px;
   }
 
-  /* === Card Produk === */
+  /* ===== CARD PRODUCT STYLES ===== */
   .card {
     border-radius: 1.25rem;
     border: none;
@@ -108,16 +123,18 @@
     transition: all 0.3s ease;
     position: relative;
   }
+
   .card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(255, 152, 0, 0.2);
   }
+
   .card-body h5 {
     font-size: 1.05rem;
     color: #5d4037;
   }
 
-  /* === Label Stok === */
+  /* ===== STOCK LABEL STYLES ===== */
   .stock-label {
     position: absolute;
     top: 10px;
@@ -130,13 +147,13 @@
   }
 
   .stock-low {
-    background-color: #fff3cd;
+    background-color: var(--warning-bg);
     color: #856404;
     border: 1px solid #ffeaa7;
   }
 
   .stock-out {
-    background-color: #f8d7da;
+    background-color: var(--danger-bg);
     color: #721c24;
     border: 1px solid #f5c6cb;
   }
@@ -150,47 +167,54 @@
     background-color: #f8f9fa;
   }
 
+  /* ===== BUTTON STYLES ===== */
   .btn {
     border-radius: 50px !important;
     transition: all 0.25s ease;
     font-weight: 500;
   }
+
   .btn-primary {
-    background: linear-gradient(90deg, #FF9800, #FFB74D);
+    background: linear-gradient(90deg, var(--primary-orange), var(--light-orange));
     border: none;
   }
+
   .btn-primary:hover {
     background: linear-gradient(90deg, #FB8C00, #FFA726);
     box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
   }
+
   .btn-success {
-    background: linear-gradient(90deg, #43A047, #66BB6A);
+    background: linear-gradient(90deg, var(--success-color), #66BB6A);
     border: none;
   }
+
   .btn-outline-secondary {
-    border: 2px solid #FF9800;
-    color: #FF9800;
+    border: 2px solid var(--primary-orange);
+    color: var(--primary-orange);
     font-weight: 600;
   }
+
   .btn-outline-secondary:hover {
     background-color: #FFF3E0;
-    color: #FF9800;
+    color: var(--primary-orange);
   }
 
-  /* === Floating Cart === */
+  /* ===== FLOATING CART STYLES ===== */
   #openCartModal {
-    background: linear-gradient(90deg, #FF9800, #FFB74D);
+    background: linear-gradient(90deg, var(--primary-orange), var(--light-orange));
     border: none;
     box-shadow: 0 10px 20px rgba(255, 152, 0, 0.4);
     transition: all 0.3s ease;
     position: relative;
   }
+
   #openCartModal:hover {
     transform: scale(1.1);
     box-shadow: 0 12px 25px rgba(255, 152, 0, 0.5);
   }
 
-  /* === PERBAIKAN: Badge di luar border === */
+  /* ===== CART BADGE STYLES ===== */
   .cart-badge {
     position: absolute;
     top: -8px;
@@ -218,16 +242,19 @@
     100% { transform: scale(1); }
   }
 
+  /* ===== MODAL STYLES ===== */
   .modal-content {
     border-radius: 1.25rem;
     border: none;
     overflow: hidden;
   }
+
   .modal-header {
-    background: linear-gradient(90deg, #FF9800, #FFB74D);
+    background: linear-gradient(90deg, var(--primary-orange), var(--light-orange));
     color: white;
     border-bottom: none;
   }
+
   .modal-footer {
     border-top: 1px solid #ffe0b2;
     background-color: #fff8e1;
@@ -238,15 +265,17 @@
     transition: 0.25s;
   }
 
+  /* ===== ANIMATION STYLES ===== */
   .smooth-fade {
     animation: smoothFade 0.8s ease;
   }
+
   @keyframes smoothFade {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* === Toast & Snackbar === */
+  /* ===== TOAST & SNACKBAR STYLES ===== */
   #toast-container {
     z-index: 1060;
   }
@@ -283,7 +312,8 @@
   }
 </style>
 
-<!-- 🧭 Breadcrumb -->
+<!-- ===== BREADCRUMB SECTION ===== -->
+<!-- Menampilkan navigasi dan informasi waktu saat ini -->
 <div class="bg-white shadow-sm rounded-4 px-4 py-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3 smooth-fade">
   <div class="d-flex align-items-center gap-2">
     <div class="breadcrumb-icon">
@@ -307,14 +337,14 @@
   </div>
 </div>
 
+<!-- ===== FILTER SECTION ===== -->
+<!-- Form untuk filtering dan sorting produk -->
 <div class="filter-section smooth-fade">
   <form action="{{ route('admin.pegawai.produk', ['id' => $pegawai->id]) }}" method="GET" id="filterForm">
     <div class="row align-items-center">
-
       <!-- Bagian kiri (dropdown sort + hidden input) -->
       <div class="col-md-9">
         <div class="d-flex flex-wrap align-items-center gap-4">
-
           <!-- Sort Dropdown -->
           <div>
             <span class="filter-label">Urutkan:</span>
@@ -344,13 +374,13 @@
             </select>
           </div>
 
+          <!-- Hidden inputs untuk mempertahankan parameter pencarian -->
           @if(request('q'))
             <input type="hidden" name="q" value="{{ request('q') }}">
           @endif
           @if(request('kategori'))
             <input type="hidden" name="kategori" value="{{ request('kategori') }}">
           @endif
-
         </div>
       </div>
 
@@ -362,20 +392,12 @@
           <i class="ri-refresh-line me-1"></i> Refresh
         </button>
       </div>
-
     </div>
   </form>
 </div>
 
-<script>
-function resetFilters() {
-  const baseUrl = "{{ route('admin.pegawai.produk', ['id' => $pegawai->id]) }}";
-  window.location.href = baseUrl;
-}
-</script>
-
-
-<!-- 🛒 Floating Cart Button - DIPERBAIKI -->
+<!-- ===== FLOATING CART BUTTON ===== -->
+<!-- Tombol keranjang mengambang dengan badge notifikasi -->
 <div class="position-fixed" style="bottom:25px; right:25px; z-index:1050;">
   <button class="btn btn-primary shadow-lg rounded-circle d-flex align-items-center justify-content-center"
     id="openCartModal"
@@ -385,15 +407,13 @@ function resetFilters() {
     style="width:70px; height:70px; font-size:1.5rem;">
     <i class="ri-shopping-cart-2-line"></i>
   </button>
-  <!-- 🆕 Badge berada di luar tombol -->
+  <!-- Badge untuk menampilkan jumlah item di keranjang -->
   <span class="cart-badge" id="cartBadge">0</span>
 </div>
 
-<!-- 📦 Daftar Produk -->
-<!-- 📦 Daftar Produk -->
+<!-- ===== PRODUCT LIST SECTION ===== -->
 <div class="row gy-4 mt-3 animate__animated animate__fadeInUp">
-
-  {{-- 🔥 TAMBAHKAN: Empty State ketika tidak ada produk --}}
+  {{-- Empty State ketika tidak ada produk --}}
   @if($items->isEmpty())
     <div class="col-12 text-center py-5">
       <div class="empty-state">
@@ -425,15 +445,16 @@ function resetFilters() {
       </div>
     </div>
   @else
-    {{-- Tampilkan items seperti biasa --}}
+    {{-- Tampilkan items produk --}}
     @foreach ($items as $item)
     <div class="col-xl-3 col-lg-4 col-md-6">
+      <!-- Card Produk -->
       <div class="card shadow-sm" data-item-id="{{ $item->id }}" data-stock="{{ $item->stock }}">
         <div class="card-img-container">
           <img src="{{ asset('storage/' . $item->image) }}" class="card-img-top"
                alt="{{ $item->name }}" style="height:220px; object-fit:cover; border-radius:1.25rem 1.25rem 0 0;">
 
-          <!-- 🔥 LABEL STOK -->
+          <!-- Label Status Stok -->
           @if($item->stock == 0)
             <span class="stock-label stock-out">
               <i class="ri-error-warning-line me-1"></i>Barang Habis
@@ -463,6 +484,7 @@ function resetFilters() {
             </p>
           </div>
 
+          {{-- Tombol Aksi --}}
           @if($item->stock > 0)
             <button type="button" class="btn btn-primary mt-3 w-100 scan-btn"
                     data-bs-toggle="modal" data-bs-target="#scanModal-{{ $item->id }}"
@@ -479,7 +501,7 @@ function resetFilters() {
       </div>
     </div>
 
-    <!-- 🔍 Modal Scan Barang -->
+    <!-- ===== MODAL SCAN BARANG ===== -->
     @if($item->stock > 0)
     <div class="modal fade" id="scanModal-{{ $item->id }}" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
@@ -499,6 +521,8 @@ function resetFilters() {
             <div class="modal-body">
               <input type="hidden" name="pegawai_id" value="{{ $pegawai->id ?? '' }}">
               <input type="hidden" name="item_id" value="{{ $item->id }}">
+
+              <!-- Input Jumlah Barang -->
               <div class="mb-3">
                 <label class="form-label fw-semibold">Jumlah Barang</label>
                 <input type="number" name="quantity" class="form-control form-control-lg rounded-3 border-warning quantity-input"
@@ -510,6 +534,8 @@ function resetFilters() {
                   </small>
                 @endif
               </div>
+
+              <!-- Input Barcode -->
               <div class="mb-3">
                 <label class="form-label fw-semibold">Masukkan / Scan Barcode</label>
                 <input type="text" name="barcode" class="form-control form-control-lg rounded-3 border-warning barcode-input"
@@ -533,10 +559,10 @@ function resetFilters() {
     @endif
     @endforeach
   @endif
-
 </div>
 
-<!-- 🧾 Modal Cart -->
+<!-- ===== MODAL CART ===== -->
+<!-- Modal untuk menampilkan keranjang barang pegawai -->
 <div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
@@ -547,7 +573,7 @@ function resetFilters() {
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
 
-      <!-- 🔥 PROGRESS BAR - TAMBAHAN BARU -->
+      <!-- Progress Bar Pengeluaran Mingguan -->
       <div class="px-4 pt-3 border-bottom">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <small class="fw-semibold text-dark">Progress Pengeluaran Minggu Ini:</small>
@@ -565,6 +591,7 @@ function resetFilters() {
         </small>
       </div>
 
+      <!-- Content Keranjang -->
       <div class="modal-body bg-light">
         <div id="cartContent">
           <table class="table table-hover align-middle">
@@ -586,6 +613,8 @@ function resetFilters() {
           </table>
         </div>
       </div>
+
+      <!-- Footer Modal -->
       <div class="modal-footer">
         <button type="button" class="btn btn-success" id="saveCartButton">
           <i class="ri-send-plane-line me-1"></i> Simpan Keranjang
@@ -598,13 +627,15 @@ function resetFilters() {
   </div>
 </div>
 
-<!-- 🔔 Toast Container -->
+<!-- ===== TOAST CONTAINER ===== -->
+<!-- Container untuk menampilkan notifikasi toast -->
 <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1060;"></div>
 
-<!-- 📱 Snackbar -->
+<!-- ===== SNACKBAR ===== -->
+<!-- Element untuk menampilkan snackbar notifications -->
 <div id="snackbar" class="snackbar"></div>
 
-<!-- 🧭 Pagination -->
+<!-- ===== PAGINATION ===== -->
 @if ($items->hasPages())
   <div class="d-flex justify-content-center mt-4">
     {{ $items->appends(request()->query())->links('pagination::bootstrap-5') }}
@@ -614,8 +645,12 @@ function resetFilters() {
 @endsection
 
 @push('scripts')
+<!-- ===== JAVASCRIPT CONFIGURATION ===== -->
 <script>
-// Data global untuk JavaScript
+/**
+ * Konfigurasi global untuk aplikasi
+ * Menyimpan data yang diperlukan untuk operasi JavaScript
+ */
 window.PegawaiApp = {
     id: {{ $pegawai->id }},
     csrf: "{{ csrf_token() }}",
@@ -627,5 +662,7 @@ window.PegawaiApp = {
     }
 };
 </script>
+
+<!-- ===== EXTERNAL JAVASCRIPT ===== -->
 <script src="{{ asset('js/admin-produk-pegawai.js') }}"></script>
 @endpush

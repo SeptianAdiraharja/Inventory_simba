@@ -21,6 +21,8 @@ class TransaksiItemOutController extends Controller
 {
     public function index(Request $request)
     {
+        $searchQuery = $request->get('q');
+
         $items = Item::all();
 
         // 🔹 QUERY PEGAWAI - Hanya tampilkan yang memiliki scanned_at di cart_items
@@ -31,6 +33,22 @@ class TransaksiItemOutController extends Controller
         ->whereIn('status', ['approved', 'approved_partially', 'completed'])
         ->whereHas('cartItems', function($query) {
             $query->whereNotNull('scanned_at');
+        })
+        ->when($searchQuery, function($query) use ($searchQuery) {
+            $query->where(function($q) use ($searchQuery) {
+                // Search by user name
+                $q->whereHas('user', function($userQuery) use ($searchQuery) {
+                    $userQuery->where('name', 'like', '%' . $searchQuery . '%');
+                })
+                // Search by item name in cart items
+                ->orWhereHas('cartItems.item', function($itemQuery) use ($searchQuery) {
+                    $itemQuery->where('name', 'like', '%' . $searchQuery . '%');
+                })
+                // Search by item code in cart items
+                ->orWhereHas('cartItems.item', function($itemQuery) use ($searchQuery) {
+                    $itemQuery->where('code', 'like', '%' . $searchQuery . '%');
+                });
+            });
         })
         ->orderBy('created_at', 'desc')
         ->get();
@@ -55,25 +73,35 @@ class TransaksiItemOutController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
-        // 🔹 PERBAIKAN: QUERY GUEST - Hanya tampilkan yang sudah direlease (released_at NOT NULL)
+        // 🔹 QUERY GUEST - Hanya tampilkan yang sudah direlease (released_at NOT NULL)
         $guestItemOuts = Guest::with([
-            'guestCart.guestCartItems' => function($query) {
-                // Hanya ambil items yang sudah direlease
-                $query->whereNotNull('released_at');
-            },
-            'guestCart.guestCartItems.item'
+        'guestCart.guestCartItems' => function($query) {
+            $query->whereNotNull('released_at');
+        },
+        'guestCart.guestCartItems.item'
         ])
         ->whereHas('guestCart.guestCartItems', function($query) {
-            // Hanya guest yang memiliki items yang sudah direlease
             $query->whereNotNull('released_at');
+        })
+        ->when($searchQuery, function($query) use ($searchQuery) {
+            $query->where(function($q) use ($searchQuery) {
+                $q->where('name', 'like', '%' . $searchQuery . '%')
+                ->orWhereHas('guestCart.guestCartItems.item', function($itemQuery) use ($searchQuery) {
+                    $itemQuery->where('name', 'like', '%' . $searchQuery . '%')
+                            ->orWhere('code', 'like', '%' . $searchQuery . '%');
+                });
+            });
         })
         ->orderByDesc('created_at')
         ->paginate(10);
 
+
+
         return view('role.admin.data_transaksi', [
             'finishedCarts' => $finishedCartsPaginated,
             'guestItemOuts' => $guestItemOuts,
-            'items' => $items
+            'items' => $items,
+            'searchQuery' => $searchQuery,
         ]);
     }
 
