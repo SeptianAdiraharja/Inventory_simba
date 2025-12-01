@@ -84,7 +84,7 @@ class RequestController extends Controller
                 'carts.id', 'users.name', 'users.email', 'users.role',
                 'carts.status', 'carts.created_at', 'carts.updated_at'
             )
-            ->orderBy('carts.created_at') 
+            ->orderBy('carts.created_at')
             ->paginate(10)
             ->appends(['q' => $search, 'status' => $status]);
 

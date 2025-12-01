@@ -409,7 +409,7 @@
                         <input type="text"
                             name="q"
                             class="form-control border-0 bg-transparent shadow-none text-secondary"
-                            placeholder="Cari produk..."
+                            placeholder="Cari..."
                             aria-label="Search..."
                             style="font-size: 14px;"
                             value="{{ request('q') }}" />

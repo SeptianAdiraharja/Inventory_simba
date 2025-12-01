@@ -72,6 +72,7 @@ Route::get('/', function () {
 
     return view('welcome', compact('totalPengunjung', 'pegawaiAktif'));
 })->name('welcome');
+
 /*
 |--------------------------------------------------------------------------
 | Banned User Management
