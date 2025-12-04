@@ -127,9 +127,9 @@ class ItemsSheetImport implements ToModel, WithHeadingRow, WithValidation, Skips
             $existingItem = $this->existingItems[$itemName];
 
             // Update data barang yang sudah ada
-            $existingItem->update([
+            $existingItem->fill([
                 'category_id' => $row['category_id'] ?? $existingItem->category_id,
-                'stock'       => ($row['stock'] ?? 0) + $existingItem->stock, // Tambah stok
+                'stock'       => ($row['stock'] ?? 0) + $existingItem->stock,
                 'price'       => $row['price'] ?? $existingItem->price,
                 'expired_at'  => isset($row['expired_at']) && $row['expired_at']
                                     ? date('Y-m-d', strtotime($row['expired_at']))
@@ -140,8 +140,8 @@ class ItemsSheetImport implements ToModel, WithHeadingRow, WithValidation, Skips
 
             $this->updatedCount++;
 
-            // Return null karena sudah update, tidak perlu create baru
-            return null;
+            // RETURN model yang sudah di-update, JANGAN return null
+            return $existingItem;
         }
 
         // Generate kode baru jika item belum ada
