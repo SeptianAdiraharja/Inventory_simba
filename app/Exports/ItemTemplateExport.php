@@ -37,6 +37,7 @@ class TemplateSheet implements FromArray, WithHeadings, WithTitle
     {
         return [
             'name',
+            'code',
             'category_id',
             'price',
             'expired_at',
@@ -52,6 +53,7 @@ class TemplateSheet implements FromArray, WithHeadings, WithTitle
         return [
             [
                 'Contoh Barang',
+                '123-123-123',
                 1,
                 10000,
                 '',

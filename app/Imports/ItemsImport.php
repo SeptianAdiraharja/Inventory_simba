@@ -63,6 +63,7 @@ class ItemsSheetImport implements ToModel, WithHeadingRow, WithValidation, Skips
     {
         return [
             'name' => 'required|string|max:255',
+            'code' => 'required|string|max:225',
             'category_id' => 'required|exists:categories,id',
             'stock' => 'nullable|numeric|min:0',
             'price' => 'nullable|numeric|min:0',
@@ -79,6 +80,7 @@ class ItemsSheetImport implements ToModel, WithHeadingRow, WithValidation, Skips
     {
         return [
             'name.required' => 'Nama barang harus diisi',
+            'code.required' => 'Code Barang Harus diisi',
             'category_id.required' => 'Kategori harus diisi',
             'category_id.exists' => 'Kategori tidak ditemukan di database',
             'supplier_id.exists' => 'Supplier tidak ditemukan di database',
