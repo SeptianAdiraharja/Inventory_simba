@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Milon\Barcode\DNS1D;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class Item extends Model
 {
@@ -134,6 +135,10 @@ class Item extends Model
 
     public function getBarcodePngBase64Attribute()
     {
+        if (empty($this->code)) {
+            return null;
+        }
+
         $dns1d = new DNS1D();
         $png = $dns1d->getBarcodePNG($this->code, 'C128', 2, 60);
         return 'data:image/png;base64,' . $png;
@@ -159,7 +164,51 @@ class Item extends Model
                 $item->code = self::generateUniqueCode($item->category_id);
             }
         });
+
+        // Pastikan barcode ada setelah save
+        static::saved(function ($item) {
+            // Generate barcode PNG dan simpan jika belum ada
+            if (empty($item->barcode_png_path)) {
+                $item->generateAndSaveBarcode();
+            }
+        });
     }
+
+    public function generateAndSaveBarcode()
+    {
+        if (empty($this->code)) {
+            return;
+        }
+
+        $dns1d = new DNS1D();
+        $barcodeImage = $dns1d->getBarcodePNG($this->code, 'C128', 2, 60);
+
+        // Konversi base64 ke binary
+        $binaryData = base64_decode($barcodeImage);
+
+        // Path untuk menyimpan barcode
+        $directory = 'public/barcodes/' . date('Y/m');
+        $filename = 'barcode-' . $this->code . '-' . time() . '.png';
+        $path = $directory . '/' . $filename;
+
+        // Buat direktori jika belum ada
+        if (!Storage::exists($directory)) {
+            Storage::makeDirectory($directory);
+        }
+
+        // Simpan file
+        Storage::put($path, $binaryData);
+
+        // Update path barcode di database (tambahkan field di migration jika perlu)
+        // Atau Anda bisa simpan di cache/akses langsung dari storage
+    }
+
+    public function getBarcodeUrlAttribute()
+    {
+        return route('item.barcode', ['code' => $this->code]);
+    }
+
+
 
     private static function generateUniqueCode($categoryId)
     {

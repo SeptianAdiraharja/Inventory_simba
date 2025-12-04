@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\ItemTemplateExport;
 use App\Imports\ItemsImport;
+use Illuminate\Support\Facades\Log;
 
 class ItemController extends Controller
 {
@@ -210,23 +211,68 @@ class ItemController extends Controller
         return $pdf->stream('barcode-' . $item->code . '.pdf');
     }
 
-    /* =====================================================
-       📤 IMPORT — UPLOAD DAN SIMPAN DATA BARANG DARI EXCEL
-    ===================================================== */
      /* =====================================================
        📤 IMPORT — UPLOAD DAN SIMPAN DATA BARANG DARI EXCEL
     ===================================================== */
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:xlsx,csv,xls'
+            'file' => 'required|mimes:xlsx,xls,csv'
         ]);
 
-        Excel::import(new ItemsImport, $request->file('file'));
+        try {
+            $import = new ItemsImport();
+            \Maatwebsite\Excel\Facades\Excel::import($import, $request->file('file'));
 
-        return redirect()->route('super_admin.items.index')
-            ->with('success', 'Data barang berhasil diimport!');
+            // Ambil sheet pertama untuk mendapatkan stats
+            $sheetImport = $import->sheets()['Data_Barang'];
+
+            // Hitung hasil import
+            $totalRows = $sheetImport->getRowCount();
+            $createdCount = $sheetImport->getCreatedCount();
+            $updatedCount = $sheetImport->getUpdatedCount();
+            $failuresCount = $sheetImport->failuresCount();
+
+            // Format pesan sukses
+            $message = "Import selesai diproses! ";
+            $message .= "Total data diproses: {$totalRows} baris. ";
+
+            if ($createdCount > 0) {
+                $message .= "{$createdCount} data baru ditambahkan. ";
+            }
+
+            if ($updatedCount > 0) {
+                $message .= "{$updatedCount} data diperbarui. ";
+            }
+
+            if ($failuresCount > 0) {
+                $message .= "{$failuresCount} data gagal diimpor.";
+
+                // Ambil failures untuk logging
+                $failures = $sheetImport->getCustomFailures();
+                Log::info('Import failures:', $failures);
+
+                // Tampilkan detail error pertama jika ada
+                if (!empty($failures)) {
+                    $firstError = $failures[0];
+                    $message .= " Error: Baris {$firstError['row']} - " . implode(', ', $firstError['errors']);
+                }
+            }
+
+            // Tentukan tipe pesan
+            $alertType = $failuresCount > 0 ? 'warning' : 'success';
+
+            return redirect()->route('super_admin.items.index')
+                ->with($alertType, $message);
+
+        } catch (\Exception $e) {
+            Log::error('Import Error: ' . $e->getMessage());
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
+        }
     }
+    
     public function downloadTemplate()
     {
         return Excel::download(new ItemTemplateExport, 'template_import_items.xlsx');
