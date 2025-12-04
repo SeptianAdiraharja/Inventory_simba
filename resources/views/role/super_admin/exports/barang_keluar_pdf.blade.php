@@ -273,15 +273,13 @@
                         $totalQuantity += $jumlah;
                         $role = $row->role ?? ($row->guestCart ? 'Guest' : 'Pegawai');
                         $dikeluarkanOleh = $row->dikeluarkan ?? 'Petugas Gudang';
-                        $penerima = '-';
-                        if (!empty($row->cart?->user?->name)) {
-                            $penerima = $row->cart->user->name;
-                        } elseif (!empty($row->guestCart?->guest?->name)) {
-                            $penerima = $row->guestCart->guest->name;
-                        } elseif (!empty($row->user?->name)) {
-                            $penerima = $row->user->name;
-                        } elseif (!empty($row->guest?->name)) {
-                            $penerima = $row->guest->name;
+
+                        // 🔧 PERBAIKAN LOGIKA PENERIMA
+                        $penerima = $row->penerima ?? '-';
+
+                        // Jika $penerima masih '-' dan ada data guest
+                        if ($penerima === '-' && isset($row->guestCart) && isset($row->guestCart->guest)) {
+                            $penerima = $row->guestCart->guest->name ?? 'Guest';
                         }
                     @endphp
                     <tr>
@@ -289,7 +287,7 @@
                         <td>{{ $row->item->name ?? '-' }}</td>
                         <td>{{ $role }}</td>
                         <td>{{ $dikeluarkanOleh }}</td>
-                        <td>{{ $penerima }}</td>
+                        <td>{{ $penerima }}</td> {{-- 👈 Ini akan menampilkan data dengan benar --}}
                         <td>{{ optional($row->created_at)->format('d-m-Y') ?? '-' }}</td>
                         <td>{{ number_format($jumlah, 0, ',', '.') }}</td>
                         <td>{{ $row->item->unit->name ?? '-' }}</td>

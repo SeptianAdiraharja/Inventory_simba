@@ -15,6 +15,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\BarangMasukExport;
 use App\Exports\BarangKeluarExport;
+use App\Exports\BarangRejectExport;
 use App\Http\Controllers\Role\admin\BarangKeluarExportAdmin;
 use Illuminate\Support\Facades\Log;
 
@@ -186,46 +187,76 @@ class ExportController extends Controller
     /** 🔹 Download data */
     public function download(Request $request)
     {
-        // 🔹 Cek pilihan kop surat
-        if (!$request->has('kop_surat')) {
-            return back()->with('warning', 'Silakan pilih kop surat terlebih dahulu sebelum mengunduh.');
+        // 🔹 Cek pilihan kop surat untuk PDF saja
+        if ($request->query('format') === 'pdf' && !$request->has('kop_surat')) {
+            return back()->with('warning', 'Silakan pilih kop surat terlebih dahulu sebelum mengunduh PDF.');
         }
 
         $kopSuratId = $request->input('kop_surat');
-        $kopSurat   = KopSurat::find($kopSuratId);
+        $kopSurat = null;
 
-        if (!$kopSurat) {
-            return back()->with('warning', 'Kop surat yang dipilih tidak ditemukan.');
+        if ($kopSuratId) {
+            $kopSurat = KopSurat::find($kopSuratId);
+            if (!$kopSurat && $request->query('format') === 'pdf') {
+                return back()->with('warning', 'Kop surat yang dipilih tidak ditemukan.');
+            }
         }
 
         $startDate = $request->query('start_date');
-        $period    = $request->query('period', 'weekly');
-        $type      = $request->query('type', 'masuk');
-        $format    = $request->query('format', 'excel');
-        $endDate   = $this->calculateEndDate($startDate, $period);
+        $period = $request->query('period', 'weekly');
+        $type = $request->query('type', 'masuk');
+        $format = $request->query('format', 'excel');
+        $endDate = $this->calculateEndDate($startDate, $period);
         $periodeText = "{$startDate} s/d {$endDate}";
+
+        $endDate = $this->calculateEndDate($startDate, $period);
 
         $controllerData = $this->index($request)->getData();
         $items = $controllerData['items'] ?? collect();
 
+        // Debug: Cek field yang ada di data
+        if ($items->count() > 0 && $type === 'keluar') {
+            Log::info('Barang Keluar Data Sample:', [
+                'first_item' => $items->first()->toArray(),
+                'available_fields' => array_keys($items->first()->getAttributes())
+            ]);
+        }
+
+        // Hitung total
         $totalJumlah = $items->sum('quantity');
-        $grandTotal  = $items->sum('total_price');
-        $fileName    = "barang_{$type}{$startDate}_to{$endDate}_" . now()->format('Ymd_His');
+
+        // Untuk grand total, pastikan field yang benar
+        if ($type === 'keluar') {
+            // Coba beberapa kemungkinan nama field
+            $grandTotal = $items->sum(function($item) {
+                return ($item->total_price ??
+                    ($item->item->price * $item->quantity) ??
+                    0);
+            });
+        } else {
+            $grandTotal = $items->sum('total_price');
+        }
+
+        $fileName = "barang_{$type}_{$startDate}_to_{$endDate}_" . now()->format('Ymd_His');
 
         ExportLog::create([
             'super_admin_id' => Auth::id(),
-            'type'           => $period,
-            'data_type'      => $type,
-            'format'         => $format,
-            'file_path'      => "role/super_admin/exports/{$fileName}.{$format}",
-            'period'         => $periodeText,
+            'type' => $period,
+            'data_type' => $type,
+            'format' => $format,
+            'file_path' => "role/super_admin/exports/{$fileName}.{$format}",
+            'period' => $periodeText,
         ]);
 
         if ($format === 'excel') {
             return $type === 'masuk'
                 ? Excel::download(new BarangMasukExport($items, $totalJumlah, $grandTotal), "{$fileName}.xlsx")
-                : Excel::download(new BarangKeluarExport($items, $totalJumlah, $grandTotal), "{$fileName}.xlsx");
+                : ($type === 'keluar'
+                    ? Excel::download(new BarangKeluarExport($items, $totalJumlah, $grandTotal), "{$fileName}.xlsx")
+                    : Excel::download(new BarangRejectExport($items, $totalJumlah, $grandTotal), "{$fileName}.xlsx")
+                );
         }
+
 
         $options = [
             'isHtml5ParserEnabled' => true,
@@ -235,21 +266,19 @@ class ExportController extends Controller
 
         if ($type === 'masuk') {
             $pdf = Pdf::loadView('role.super_admin.exports.barang_masuk_pdf', compact(
-                'items','startDate','endDate','periodeText','totalJumlah','grandTotal','kopSurat'
+                'items', 'startDate', 'endDate', 'periodeText', 'totalJumlah', 'grandTotal', 'kopSurat'
             ))->setOptions($options);
         } elseif ($type === 'keluar') {
             $pdf = Pdf::loadView('role.super_admin.exports.barang_keluar_pdf', compact(
-                'items','startDate','endDate','periodeText','totalJumlah','grandTotal','kopSurat'
+                'items', 'startDate', 'endDate', 'periodeText', 'totalJumlah', 'grandTotal', 'kopSurat'
             ))->setOptions($options);
         } else {
             $pdf = Pdf::loadView('role.super_admin.exports.barang_reject_pdf', compact(
-                'items','startDate','endDate','periodeText','totalJumlah','kopSurat'
+                'items', 'startDate', 'endDate', 'periodeText', 'totalJumlah', 'kopSurat'
             ))->setOptions($options);
         }
 
-
         return $pdf->setPaper('a4', 'landscape')->download("{$fileName}.pdf");
-
     }
 
     /** 🔹 Bersihkan log */

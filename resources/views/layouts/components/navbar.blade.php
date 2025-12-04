@@ -131,14 +131,14 @@
 
                 <div class="p-3 border rounded-3 mb-3 bg-light">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0 fw-semibold text-primary">
+                        <h6 class="mb-0 fw-semibold text-warning">
                             <i class="ri-calendar-line me-2"></i>Pengajuan Minggu Ini
                         </h6>
-                        <span class="fw-bold text-primary">{{ $countThisWeek }}/5 kali</span>
+                        <span class="fw-bold text-warning">{{ $countThisWeek }}/5 kali</span>
                     </div>
 
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar {{ $isLimitReached ? 'bg-danger' : 'bg-primary' }}"
+                        <div class="progress-bar {{ $isLimitReached ? 'bg-danger' : 'bg-warning' }}"
                             role="progressbar"
                             style="width: {{ $progress }}%;"
                             aria-valuenow="{{ $progress }}"
@@ -156,7 +156,7 @@
                     @endif
                 </div>
                 <h4 class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="text-primary">Keranjang</span>
+                    <span class="text-warning">Keranjang</span>
                     <span class="badge bg-warning rounded-pill">
                         {{ $cartsitems ? $cartsitems->cartItems->count() : 0 }}
                     </span>
@@ -220,13 +220,13 @@
                     @else
                         <form action="{{ route('pegawai.permintaan.submit', $cartsitems->id ?? 0) }}" method="POST" class=" confirm-form">
                             @csrf
-                            <button type="submit" class="w-100 btn btn-primary btn-lg">
+                            <button type="submit" class="w-100 btn btn-warning btn-lg">
                                 Ajukan Permintaan
                             </button>
                         </form>
                     @endif
                 @else
-                    <a href="{{ route('pegawai.produk') }}" class="w-100 btn btn-outline-primary btn-lg">
+                    <a href="{{ route('pegawai.produk') }}" class="w-100 btn btn-outline-warnig btn-lg">
                         Lanjutkan Belanja
                     </a>
                 @endif

@@ -170,8 +170,7 @@
                       @if(request('type') == 'masuk')
                           <td>{{ $row->supplier->name ?? '-' }}</td>
                           <td>
-                              {{ optional($row->created_at)->format('d-m-Y H:i') }}
-                          </td>
+                              {{ \Carbon\Carbon::parse($row->created_at)->format('d-m-Y H:i') }}
                           <td>{{ $row->quantity }}</td>
                           <td>{{ $row->item->unit->name ?? '-' }}</td>
                           <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
@@ -189,8 +188,7 @@
                           <td>Rp {{ number_format($row->total_price,0,',','.') }}</td>
                       @elseif(request('type') == 'reject')
                           <td>{{ $row->role }}</td>
-                          <td>
-                              {{ optional($row->created_at)->format('d-m-Y H:i') }}
+                          <td> {{ \Carbon\Carbon::parse($row->created_at)->format('d-m-Y H:i') }} {{ $row->created_at ? \Carbon\Carbon::parse($row->created_at)->format('d-m-Y H:i') : '-' }}
                           </td>
                           <td>{{ $row->quantity }}</td>
                           <td>Rp {{ number_format($row->item->price,0,',','.') }}</td>
